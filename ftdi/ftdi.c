@@ -39,8 +39,9 @@ int ftdi_init(struct ftdi_context *ftdi) {
     ftdi->index = 0;
     ftdi->in_ep = 0x02;
     ftdi->out_ep = 0x81;
+    ftdi->bitbang_mode = 1; /* 1: Normal bitbang mode, 2: SPI bitbang mode */
+    
     ftdi->error_str = NULL;
-    ftdi->reading = 0;
 
     // all fine. Now allocate the readbuffer
     return ftdi_read_data_set_chunksize(ftdi, 4096);
@@ -373,7 +374,9 @@ int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask) {
     unsigned short usb_val;
 
     usb_val = bitmask; // low byte: bitmask
-    usb_val |= (1 << 8); // high byte: enable flag
+    /* FT2232C: Set bitbang_mode to 2 to enable SPI */
+    usb_val |= (ftdi->bitbang_mode << 8);
+
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
         ftdi->error_str = "Unable to enter bitbang mode. Perhaps not a BM type chip?";
         return -1;

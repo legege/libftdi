@@ -40,8 +40,9 @@ struct ftdi_context {
     // Endpoints
     int in_ep;
     int out_ep;      // 1 or 2
-
-    int reading;     // 0 or 1 - for performance increase in SPI mode
+    
+    /* 1: (default) Normal bitbang mode, 2: FT2232C SPI bitbang mode */
+    unsigned char bitbang_mode;
 
     // misc
     char *error_str;
