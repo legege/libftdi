@@ -510,8 +510,8 @@ int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency) {
 
 
 void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom) {
-    eeprom->vendor_id = 0403;
-    eeprom->product_id = 6001;
+    eeprom->vendor_id = 0x0403;
+    eeprom->product_id = 0x6001;
 
     eeprom->self_powered = 1;
     eeprom->remote_wakeup = 1;
@@ -523,7 +523,7 @@ void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom) {
 
     eeprom->use_serial = 0;
     eeprom->change_usb_version = 0;
-    eeprom->usb_version = 200;
+    eeprom->usb_version = 0x0200;
     eeprom->max_power = 0;
 
     eeprom->manufacturer = NULL;
