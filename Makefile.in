@@ -82,7 +82,9 @@ AUTOMAKE_OPTIONS = foreign 1.4
 
 SUBDIRS = src
 
-EXTRA_DIST = libftdi.spec COPYING.LIB
+EXTRA_DIST = libftdi.spec COPYING.LIB README ChangeLog libftdi-config.in
+
+bin_SCRIPTS = libftdi-config
 
 # Install the pkg-config file:
 pkgconfigdir = $(libdir)/pkgconfig
@@ -90,12 +92,15 @@ pkgconfig_DATA = libftdi.pc
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES =  libftdi.pc
+CONFIG_CLEAN_FILES =  libftdi-config libftdi.pc
+SCRIPTS =  $(bin_SCRIPTS)
+
 DATA =  $(pkgconfig_DATA)
 
-DIST_COMMON =  ./stamp-h.in COPYING.LIB Makefile.am Makefile.in \
-aclocal.m4 config.guess config.h.in config.sub configure configure.in \
-install-sh libftdi.pc.in ltmain.sh missing mkinstalldirs
+DIST_COMMON =  README ./stamp-h.in COPYING.LIB ChangeLog Makefile.am \
+Makefile.in aclocal.m4 config.guess config.h.in config.sub configure \
+configure.in install-sh libftdi-config.in libftdi.pc.in ltmain.sh \
+missing mkinstalldirs
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
@@ -146,8 +151,29 @@ distclean-hdr:
 	-rm -f config.h
 
 maintainer-clean-hdr:
+libftdi-config: $(top_builddir)/config.status libftdi-config.in
+	cd $(top_builddir) && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 libftdi.pc: $(top_builddir)/config.status libftdi.pc.in
 	cd $(top_builddir) && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+install-binSCRIPTS: $(bin_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	@list='$(bin_SCRIPTS)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    echo " $(INSTALL_SCRIPT) $$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`"; \
+	    $(INSTALL_SCRIPT) $$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`; \
+	  else if test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`"; \
+	    $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`; \
+	  else :; fi; fi; \
+	done
+
+uninstall-binSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	list='$(bin_SCRIPTS)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`; \
+	done
 
 install-pkgconfigDATA: $(pkgconfig_DATA)
 	@$(NORMAL_INSTALL)
@@ -331,7 +357,7 @@ installcheck: installcheck-recursive
 all-recursive-am: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
-install-exec-am:
+install-exec-am: install-binSCRIPTS
 install-exec: install-exec-recursive
 
 install-data-am: install-pkgconfigDATA
@@ -340,15 +366,15 @@ install-data: install-data-recursive
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-recursive
-uninstall-am: uninstall-pkgconfigDATA
+uninstall-am: uninstall-binSCRIPTS uninstall-pkgconfigDATA
 uninstall: uninstall-recursive
-all-am: Makefile $(DATA) config.h
+all-am: Makefile $(SCRIPTS) $(DATA) config.h
 all-redirect: all-recursive-am
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
 installdirs: installdirs-recursive
 installdirs-am:
-	$(mkinstalldirs)  $(DESTDIR)$(pkgconfigdir)
+	$(mkinstalldirs)  $(DESTDIR)$(bindir) $(DESTDIR)$(pkgconfigdir)
 
 
 mostlyclean-generic:
@@ -383,11 +409,12 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f config.status
 
 .PHONY: mostlyclean-hdr distclean-hdr clean-hdr maintainer-clean-hdr \
-uninstall-pkgconfigDATA install-pkgconfigDATA install-data-recursive \
-uninstall-data-recursive install-exec-recursive \
-uninstall-exec-recursive installdirs-recursive uninstalldirs-recursive \
-all-recursive check-recursive installcheck-recursive info-recursive \
-dvi-recursive mostlyclean-recursive distclean-recursive clean-recursive \
+uninstall-binSCRIPTS install-binSCRIPTS uninstall-pkgconfigDATA \
+install-pkgconfigDATA install-data-recursive uninstall-data-recursive \
+install-exec-recursive uninstall-exec-recursive installdirs-recursive \
+uninstalldirs-recursive all-recursive check-recursive \
+installcheck-recursive info-recursive dvi-recursive \
+mostlyclean-recursive distclean-recursive clean-recursive \
 maintainer-clean-recursive tags tags-recursive mostlyclean-tags \
 distclean-tags clean-tags maintainer-clean-tags distdir info-am info \
 dvi-am dvi check check-am installcheck-am installcheck all-recursive-am \
