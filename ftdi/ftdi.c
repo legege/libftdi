@@ -18,13 +18,26 @@
 #include "ftdi.h"
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
 
 /* Internal USB devfs functions. Do not use outside libftdi */
-static struct usbdevfs_urb * ftdi_usbdev_alloc_urb(int iso_packets);
-static int ftdi_usbdev_submit_urb(int fd, struct usbdevfs_urb *urb);
-static int ftdi_usbdev_reap_urb_ndelay(int fd, struct usbdevfs_urb **urb_return);
+
+/* Those two functions are borrowed from "usbstress" */
+static int ftdi_usbdev_parsedev(int fd, unsigned int *bus, unsigned int *dev, int vendorid, int productid);
+int ftdi_usbdev_open(int vendorid, int productid);
+
+int ftdi_usbdev_claim_interface(int fd, unsigned int interface);
+int ftdi_usbdev_release_interface(int fd, int interface);
+int ftdi_usbdev_bulk_write(int fd, unsigned int endpoint, const void *data,
+                    unsigned int size, unsigned int timeout);
+int ftdi_usbdev_control_msg(int fd, unsigned int requesttype, unsigned int request,
+                    unsigned int value, unsigned int index,
+                    void *data, unsigned int size, unsigned int timeout);
+struct usbdevfs_urb * ftdi_usbdev_alloc_urb(int iso_packets);
+int ftdi_usbdev_submit_urb(int fd, struct usbdevfs_urb *urb);
+int ftdi_usbdev_reap_urb_ndelay(int fd, struct usbdevfs_urb **urb_return);
 
 
 /* ftdi_init return codes:
@@ -33,7 +46,7 @@ static int ftdi_usbdev_reap_urb_ndelay(int fd, struct usbdevfs_urb **urb_return)
 */
 int ftdi_init(struct ftdi_context *ftdi)
 {
-    ftdi->usb_dev = NULL;
+    ftdi->usb_fd = -1;
     ftdi->usb_read_timeout = 5000;
     ftdi->usb_write_timeout = 5000;
 
@@ -78,81 +91,50 @@ void ftdi_deinit(struct ftdi_context *ftdi)
     }
 }
 
-
-void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usb)
-{
-    ftdi->usb_dev = usb;
-}
-
 /* ftdi_usb_open return codes:
    0: all fine
-  -1: usb_find_busses() failed
-  -2: usb_find_devices() failed
-  -3: usb device not found
-  -4: unable to open device
-  -5: unable to claim device
-  -6: reset failed
-  -7: set baudrate failed
+  -1: usb device not found or unable to open
+  -2: unable to claim device
+  -3: reset failed
+  -4: set baudrate failed
 */
 int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product) {
-    struct usb_bus *bus;
-    struct usb_device *dev;
-
-    usb_init();
-
-    if (usb_find_busses() < 0) {
-        ftdi->error_str = "usb_find_busses() failed";
-        return -1;
-    }
-
-    if (usb_find_devices() < 0) {
-        ftdi->error_str = "usb_find_devices() failed";
+    if ((ftdi->usb_fd = ftdi_usbdev_open(vendor, product)) < 0) {
+        ftdi->error_str = "Device not found or unable to open it (permission problem?)";
+        ftdi->usb_fd = -1;
+        return -1;                    
+    }             
+           
+    if (ftdi_usbdev_claim_interface(ftdi->usb_fd, ftdi->interface) != 0) {
+        ftdi->error_str = "unable to claim usb device. Make sure ftdi_sio is unloaded!";
+        close (ftdi->usb_fd);
+        ftdi->usb_fd = -1;
         return -2;
     }
 
-    for (bus = usb_busses; bus; bus = bus->next) {
-        for (dev = bus->devices; dev; dev = dev->next) {
-            if (dev->descriptor.idVendor == vendor && dev->descriptor.idProduct == product) {
-                ftdi->usb_dev = usb_open(dev);
-                if (ftdi->usb_dev) {
-                    if (usb_claim_interface(ftdi->usb_dev, ftdi->interface) != 0) {
-                        ftdi->error_str = "unable to claim usb device. Make sure ftdi_sio is unloaded!";
-                        return -5;
-                    }
+    if (ftdi_usb_reset (ftdi) != 0)
+        return -6;
 
-                    if (ftdi_usb_reset (ftdi) != 0)
-                        return -6;
+    if (ftdi_set_baudrate (ftdi, 9600) != 0)
+        return -7;
 
-                    if (ftdi_set_baudrate (ftdi, 9600) != 0)
-                        return -7;
-
-		    // Try to guess chip type
-		    // Bug in the BM type chips: bcdDevice is 0x200 for serial == 0
-		    if (dev->descriptor.bcdDevice == 0x400 || (dev->descriptor.bcdDevice == 0x200
-	                     && dev->descriptor.iSerialNumber == 0))
-			ftdi->type = TYPE_BM;
-		    else if (dev->descriptor.bcdDevice == 0x200)
-			ftdi->type = TYPE_AM;
-		    else if (dev->descriptor.bcdDevice == 0x500)
-			ftdi->type = TYPE_2232C;
-
-                    return 0;
-                } else {
-                    ftdi->error_str = "usb_open() failed";
-                    return -4;
-                }
-            }
-        }
-
-    }
-
-    // device not found
-    return -3;
+/*    
+    // Try to guess chip type
+    // Bug in the BM type chips: bcdDevice is 0x200 for serial == 0
+    if (dev->descriptor.bcdDevice == 0x400 || (dev->descriptor.bcdDevice == 0x200
+                && dev->descriptor.iSerialNumber == 0))
+        ftdi->type = TYPE_BM;
+    else if (dev->descriptor.bcdDevice == 0x200)
+        ftdi->type = TYPE_AM;
+    else if (dev->descriptor.bcdDevice == 0x500)
+        ftdi->type = TYPE_2232C;
+*/
+    return 0;
 }
 
 
 int ftdi_usb_reset(struct ftdi_context *ftdi) {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
+    if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0x40, 0, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
         ftdi->error_str = "FTDI reset failed";
         return -1;
     }
@@ -164,7 +146,7 @@ int ftdi_usb_reset(struct ftdi_context *ftdi) {
 }
 
 int ftdi_usb_purge_buffers(struct ftdi_context *ftdi) {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 1, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
+    if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0x40, 0, 1, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
         ftdi->error_str = "FTDI purge of RX buffer failed";
         return -1;
     }
@@ -172,7 +154,7 @@ int ftdi_usb_purge_buffers(struct ftdi_context *ftdi) {
     ftdi->readbuffer_offset = 0;
     ftdi->readbuffer_remaining = 0;
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 2, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
+    if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0x40, 0, 2, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
         ftdi->error_str = "FTDI purge of TX buffer failed";
         return -1;
     }
@@ -183,18 +165,23 @@ int ftdi_usb_purge_buffers(struct ftdi_context *ftdi) {
 
 /* ftdi_usb_close return codes
     0: all fine
-   -1: usb_release failed
-   -2: usb_close failed
+   -1: ftdi_usb_release failed
+   -2: close failed
 */
 int ftdi_usb_close(struct ftdi_context *ftdi) {
     int rtn = 0;
 
-    if (usb_release_interface(ftdi->usb_dev, ftdi->interface) != 0)
+    if (ftdi_usbdev_release_interface(ftdi->usb_fd, ftdi->interface) != 0) {
+        ftdi->error_str = "Unable to release interface";
         rtn = -1;
-
-    if (usb_close (ftdi->usb_dev) != 0)
+    }
+        
+        
+    if (close (ftdi->usb_fd) != 0) {
+        ftdi->error_str = "Unable to close file descriptor";
         rtn = -2;
-
+    }
+    
     return rtn;
 }
 
@@ -328,7 +315,7 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate) {
         return -1;
     }
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 3, value, index, NULL, 0, ftdi->usb_write_timeout) != 0) {
+    if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0x40, 3, value, index, NULL, 0, ftdi->usb_write_timeout) != 0) {
         ftdi->error_str = "Setting new baudrate failed";
         return -2;
     }
@@ -348,7 +335,7 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
         if (offset+write_size > size)
             write_size = size-offset;
 
-        ret = usb_bulk_write(ftdi->usb_dev, ftdi->in_ep, buf+offset, write_size, ftdi->usb_write_timeout);
+        ret = ftdi_usbdev_bulk_write(ftdi->usb_fd, ftdi->in_ep, buf+offset, write_size, ftdi->usb_write_timeout);
         if (ret == -1) {
             ftdi->error_str = "bulk write failed";
             return -1;
@@ -404,13 +391,6 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
         ftdi->readbuffer_remaining = 0;
         ftdi->readbuffer_offset = 0;
         
-        /*
-            // Old read functions, not status byte safe!
-            // returns how much received
-            ret = usb_bulk_read (ftdi->usb_dev, ftdi->out_ep, ftdi->readbuffer,
-                           ftdi->readbuffer_chunksize, ftdi->usb_read_timeout);
-        */
-        
         /* Real userspace URB processing to cope with
            a race condition where two or more status bytes
            could already be in the kernel USB buffer */
@@ -422,7 +402,7 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
         ftdi->urb->buffer_length = ftdi->readbuffer_chunksize;
     
         /* Submit URB to USB layer */
-        if (ftdi_usbdev_submit_urb(ftdi->usb_dev->fd, ftdi->urb) == -1) {
+        if (ftdi_usbdev_submit_urb(ftdi->usb_fd, ftdi->urb) == -1) {
             ftdi->error_str = "ftdi_usbdev_submit_urb for bulk read failed";
             return -1;
         }
@@ -440,7 +420,7 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
         
         waiting = 1;
         memset (&tv, 0, sizeof (struct timeval));
-        while (((ret = ftdi_usbdev_reap_urb_ndelay(ftdi->usb_dev->fd, &returned_urb)) == -1) && waiting) {
+        while (((ret = ftdi_usbdev_reap_urb_ndelay(ftdi->usb_fd, &returned_urb)) == -1) && waiting) {
             tv.tv_sec = 0;
             tv.tv_usec = 1000; // 1 msec
             select(0, NULL, NULL, NULL, &tv); //sub second wait
@@ -547,7 +527,7 @@ int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask) {
     /* FT2232C: Set bitbang_mode to 2 to enable SPI */
     usb_val |= (ftdi->bitbang_mode << 8);
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
+    if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0x40, 0x0B, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
         ftdi->error_str = "Unable to enter bitbang mode. Perhaps not a BM type chip?";
         return -1;
     }
@@ -557,7 +537,7 @@ int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask) {
 
 
 int ftdi_disable_bitbang(struct ftdi_context *ftdi) {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
+    if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0x40, 0x0B, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
         ftdi->error_str = "Unable to leave bitbang mode. Perhaps not a BM type chip?";
         return -1;
     }
@@ -569,7 +549,7 @@ int ftdi_disable_bitbang(struct ftdi_context *ftdi) {
 
 int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins) {
     unsigned short usb_val;
-    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0C, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1) {
+    if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0xC0, 0x0C, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1) {
         ftdi->error_str = "Read pins failed";
         return -1;
     }
@@ -588,7 +568,7 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency) {
     }
 
     usb_val = latency;
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x09, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
+    if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0x40, 0x09, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
         ftdi->error_str = "Unable to set latency timer";
         return -2;
     }
@@ -598,7 +578,7 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency) {
 
 int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency) {
     unsigned short usb_val;
-    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0A, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1) {
+    if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0xC0, 0x0A, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1) {
         ftdi->error_str = "Reading latency timer failed";
         return -1;
     }
@@ -794,7 +774,7 @@ int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom) {
     int i;
 
     for (i = 0; i < 64; i++) {
-        if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2) {
+        if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0xC0, 0x90, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2) {
             ftdi->error_str = "Reading eeprom failed";
             return -1;
         }
@@ -811,7 +791,7 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom) {
     for (i = 0; i < 64; i++) {
         usb_val = eeprom[i*2];
         usb_val += eeprom[(i*2)+1] << 8;
-        if (usb_control_msg(ftdi->usb_dev, 0x40, 0x91, usb_val, i, NULL, 0, ftdi->usb_write_timeout) != 0) {
+        if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0x40, 0x91, usb_val, i, NULL, 0, ftdi->usb_write_timeout) != 0) {
             ftdi->error_str = "Unable to write eeprom";
             return -1;
         }
@@ -822,7 +802,7 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom) {
 
 
 int ftdi_erase_eeprom(struct ftdi_context *ftdi) {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x92, 0, 0, NULL, 0, ftdi->usb_write_timeout) != 0) {
+    if (ftdi_usbdev_control_msg(ftdi->usb_fd, 0x40, 0x92, 0, 0, NULL, 0, ftdi->usb_write_timeout) != 0) {
         ftdi->error_str = "Unable to erase eeprom";
         return -1;
     }
@@ -831,22 +811,199 @@ int ftdi_erase_eeprom(struct ftdi_context *ftdi) {
 }
 
 
-/* Functions needed for userspace URB processing */
-static struct usbdevfs_urb * ftdi_usbdev_alloc_urb(int iso_packets)
+/* libusb like functions - currently linux only */
+static int check_usb_vfs(const unsigned char *dirname)
 {
-    return calloc(sizeof(struct usbdevfs_urb)
+  DIR *dir;
+  struct dirent *entry;
+  int found = 0;
+
+  dir = opendir(dirname);
+  if (!dir)
+    return 0;
+
+  while ((entry = readdir(dir)) != NULL) {
+    /* Skip anything starting with a . */
+    if (entry->d_name[0] == '.')
+      continue;
+
+    /* We assume if we find any files that it must be the right place */
+    found = 1;
+    break;
+  }
+
+  closedir(dir);
+
+  return found;
+}
+
+static int ftdi_usbdev_parsedev(int fd, unsigned int *bus, unsigned int *dev, int vendorid, int productid)
+{
+	char buf[16384];
+	char *start, *end, *lineend, *cp;
+	int devnum = -1, busnum = -1, vendor = -1, product = -1;
+	int ret;
+
+	if (lseek(fd, 0, SEEK_SET) == (off_t)-1)
+		return -1;
+	ret = read(fd, buf, sizeof(buf)-1);
+        if (ret == -1)
+                return -1;
+        end = buf + ret;
+        *end = 0;
+        start = buf;
+	ret = 0;
+        while (start < end) {
+                lineend = strchr(start, '\n');
+                if (!lineend)
+                        break;
+                *lineend = 0;
+                switch (start[0]) {
+		case 'T':  /* topology line */
+                        if ((cp = strstr(start, "Dev#="))) {
+                                devnum = strtoul(cp + 5, NULL, 0);
+                        } else
+                                devnum = -1;
+                        if ((cp = strstr(start, "Bus="))) {
+                                busnum = strtoul(cp + 4, NULL, 0);
+                        } else
+                                busnum = -1;
+			break;
+
+                case 'P':
+                        if ((cp = strstr(start, "Vendor="))) {
+                                vendor = strtoul(cp + 7, NULL, 16);
+                        } else
+                                vendor = -1;
+                        if ((cp = strstr(start, "ProdID="))) {
+                                product = strtoul(cp + 7, NULL, 16);
+                        } else
+                                product = -1;
+			if (vendor != -1 && product != -1 && devnum >= 1 && devnum <= 127 &&
+			    busnum >= 0 && busnum <= 999 &&
+			    (vendorid == vendor || vendorid == -1) &&
+			    (productid == product || productid == -1)) {
+				if (bus)
+					*bus = busnum;
+				if (dev)
+					*dev = devnum;
+				ret++;
+			}
+			break;
+		}
+                start = lineend + 1;
+	}
+	return ret;
+}
+
+int ftdi_usbdev_open(int vendorid, int productid)
+{
+    unsigned int busnum, devnum, fd, ret;
+    char usb_path[PATH_MAX+1] = "";
+    char usb_devices_path[PATH_MAX*2];
+    
+    /* Find the path to the virtual filesystem */
+    if (getenv("USB_DEVFS_PATH")) {
+            if (check_usb_vfs((char*)getenv("USB_DEVFS_PATH"))) {
+                strncpy(usb_path, (char*)getenv("USB_DEVFS_PATH"), sizeof(usb_path) - 1);
+                usb_path[sizeof(usb_path) - 1] = 0;
+            }
+    }
+
+    if (!usb_path[0]) {
+        if (check_usb_vfs("/proc/bus/usb")) {
+            strncpy(usb_path, "/proc/bus/usb", sizeof(usb_path) - 1);
+            usb_path[sizeof(usb_path) - 1] = 0;
+        } else if (check_usb_vfs("/sys/bus/usb")) { /* 2.6 Kernel with sysfs */
+            strncpy(usb_path, "/sys/bus/usb", sizeof(usb_path) -1);
+            usb_path[sizeof(usb_path) - 1] = 0;
+        } else if (check_usb_vfs("/dev/usb")) {
+            strncpy(usb_path, "/dev/usb", sizeof(usb_path) - 1);
+            usb_path[sizeof(usb_path) - 1] = 0;
+        } else
+            usb_path[0] = 0;	
+    }
+    
+    /* No path, no USB support */
+    if (!usb_path[0])
+        return -1;
+    
+    /* Parse device list */    
+    snprintf(usb_devices_path, sizeof(usb_devices_path), "%s/devices", usb_path);
+    if ((fd = open(usb_devices_path, O_RDONLY)) == -1)
+        return -2;
+    
+    ret = ftdi_usbdev_parsedev(fd, &busnum, &devnum, vendorid, productid);
+    close (fd);
+    
+    // Device not found
+    if (ret != 1)
+        return -3;
+
+    snprintf(usb_devices_path, sizeof(usb_devices_path), "%s/%03u/%03u", usb_path, busnum, devnum);
+    if ((fd = open(usb_devices_path, O_RDWR)) == -1)
+        return -4;
+        
+    return fd;
+}
+
+int ftdi_usbdev_claim_interface(int fd, unsigned int interface)
+{
+    return ioctl(fd, USBDEVFS_CLAIMINTERFACE, &interface);
+}
+
+int ftdi_usbdev_release_interface(int fd, int interface)
+{
+    return ioctl(fd, USBDEVFS_RELEASEINTERFACE, &interface);
+}
+
+
+int ftdi_usbdev_bulk_write(int fd, unsigned int endpoint, const void *data,
+                    unsigned int size, unsigned int timeout)
+{
+    struct usbdevfs_bulktransfer arg;
+
+    arg.ep = endpoint & ~USB_DIR_IN;
+    arg.len = size;
+    arg.timeout = timeout;
+    arg.data = (void *) data;
+
+    return ioctl(fd, USBDEVFS_BULK, &arg);
+}
+
+int ftdi_usbdev_control_msg(int fd, unsigned int requesttype,
+                 unsigned int request, unsigned int value, unsigned int index,
+                 void *data, unsigned int size, unsigned int timeout)
+{
+    struct usbdevfs_ctrltransfer arg;
+
+    arg.requesttype = requesttype;
+    arg.request = request;
+    arg.value = value;
+    arg.index = index;
+    arg.length = size;
+    arg.timeout = timeout;
+    arg.data = data;
+
+    return ioctl(fd, USBDEVFS_CONTROL, &arg);
+}
+
+/* Functions needed for userspace URB processing */
+struct usbdevfs_urb * ftdi_usbdev_alloc_urb(int iso_packets)
+{
+    return (struct usbdevfs_urb *)calloc(sizeof(struct usbdevfs_urb)
                     + iso_packets * sizeof(struct usbdevfs_iso_packet_desc),
                     1);
 }
 
 
-static int ftdi_usbdev_submit_urb(int fd, struct usbdevfs_urb *urb)
+int ftdi_usbdev_submit_urb(int fd, struct usbdevfs_urb *urb)
 {
     return ioctl(fd, USBDEVFS_SUBMITURB, urb);
 }
 
 
-static int ftdi_usbdev_reap_urb_ndelay(int fd, struct usbdevfs_urb **urb_return)
+int ftdi_usbdev_reap_urb_ndelay(int fd, struct usbdevfs_urb **urb_return)
 {
     return ioctl(fd, USBDEVFS_REAPURBNDELAY, urb_return);
 }

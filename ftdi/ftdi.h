@@ -17,34 +17,18 @@
 #ifndef __libftdi_h__
 #define __libftdi_h__
 
-/* libusb header */
-#include <usb.h>
+#include <sys/types.h>
+#include <limits.h>
 
 /* Kernel USB headers */
 #include <linux/usb.h>
 #include <linux/usbdevice_fs.h>
 
-/* Keep this in sync with libusb */
-struct usb_dev_handle {
-  int fd;
-
-  struct usb_bus *bus;
-  struct usb_device *device;
-
-  int config;
-  int interface;
-  int altsetting;
-
-  /* Added by RMT so implementations can store other per-open-device data */
-  void *impl_info;
-};
-
-
 enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2 };
 
 struct ftdi_context {
     // USB specific
-    struct usb_dev_handle *usb_dev;
+    int usb_fd;
     int usb_read_timeout;
     int usb_write_timeout;
     struct usbdevfs_urb *urb;
@@ -101,7 +85,6 @@ extern "C" {
 
     int ftdi_init(struct ftdi_context *ftdi);
     void ftdi_deinit(struct ftdi_context *ftdi);
-    void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usbdev);
     int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product);
     int ftdi_usb_close(struct ftdi_context *ftdi);
     int ftdi_usb_reset(struct ftdi_context *ftdi);
