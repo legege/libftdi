@@ -119,3 +119,4 @@ AC_SUBST(all_libraries)
 
 AC_SUBST(AUTODIRS)
 
+AC_OUTPUT([libftdi-config],[chmod a+x libftdi-config])

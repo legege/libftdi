@@ -136,3 +136,5 @@ else
   echo "Good - your configure finished. Start make now"
   echo ""
 fi
+
+AC_OUTPUT([libftdi-config],[chmod a+x libftdi-config])
