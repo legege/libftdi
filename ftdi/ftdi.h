@@ -19,7 +19,7 @@
 
 #include <usb.h>
 
-enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_FT2232C=2 };
+enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2 };
 
 struct ftdi_context {
     // USB specific

@@ -104,6 +104,16 @@ int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product) {
                     if (ftdi_set_baudrate (ftdi, 9600) != 0)
                         return -7;
 
+		    // Try to guess chip type
+		    // Bug in the BM type chips: bcdDevice is 0x200 for serial == 0
+		    if (dev->descriptor.bcdDevice == 0x400 || (dev->descriptor.bcdDevice == 0x200
+	                     && dev->descriptor.iSerialNumber == 0))
+			ftdi->type = TYPE_BM;
+		    else if (dev->descriptor.bcdDevice == 0x200)
+			ftdi->type = TYPE_AM;
+		    else if (dev->descriptor.bcdDevice == 0x500)
+			ftdi->type = TYPE_2232C;
+
                     return 0;
                 } else {
                     ftdi->error_str = "usb_open() failed";
@@ -255,7 +265,7 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
     }
     // Split into "value" and "index" values
     *value = (unsigned short)(encoded_divisor & 0xFFFF);
-    if(ftdi->type == TYPE_FT2232C) {
+    if(ftdi->type == TYPE_2232C) {
         *index = (unsigned short)(encoded_divisor >> 8);
         *index &= 0xFF00;
         *index |= ftdi->interface;
