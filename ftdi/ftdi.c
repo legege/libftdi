@@ -84,10 +84,10 @@ void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usb)
 */
 int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product)
 {
-    return ftdi_usb_desc_open(ftdi, vendor, product, NULL, NULL);
+    return ftdi_usb_open_desc(ftdi, vendor, product, NULL, NULL);
 }
 
-int ftdi_usb_desc_open(struct ftdi_context *ftdi, int vendor, int product,
+int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                        const char* description, const char* serial)
 {
     struct usb_bus *bus;
