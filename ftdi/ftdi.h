@@ -17,7 +17,7 @@
 #ifndef __libftdi_h__
 #define __libftdi_h__
 
-struct usb_dev_handle;
+#include <usb.h>
 
 struct ftdi_context {
     // USB specific
