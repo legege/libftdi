@@ -171,7 +171,7 @@ int ftdi_usb_close(struct ftdi_context *ftdi) {
     ftdi_convert_baudrate returns nearest supported baud rate to that requested.
     Function is only used internally
 */
-static int ftdi_convert_baudrate(int baudrate, int is_amchip,
+static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
                                  unsigned short *value, unsigned short *index) {
     static const char am_adjust_up[8] = {0, 0, 0, 1, 0, 3, 2, 1};
     static const char am_adjust_dn[8] = {0, 0, 0, 1, 0, 1, 2, 3};
@@ -187,7 +187,7 @@ static int ftdi_convert_baudrate(int baudrate, int is_amchip,
 
     divisor = 24000000 / baudrate;
 
-    if (is_amchip) {
+    if (ftdi->type == TYPE_AM) {
         // Round down to supported fraction (AM only)
         divisor -= am_adjust_dn[divisor & 7];
     }
@@ -205,14 +205,14 @@ static int ftdi_convert_baudrate(int baudrate, int is_amchip,
         if (try_divisor < 8) {
             // Round up to minimum supported divisor
             try_divisor = 8;
-        } else if (!is_amchip && try_divisor < 12) {
+        } else if (ftdi->type != TYPE_AM && try_divisor < 12) {
             // BM doesn't support divisors 9 through 11 inclusive
             try_divisor = 12;
         } else if (divisor < 16) {
             // AM doesn't support divisors 9 through 15 inclusive
             try_divisor = 16;
         } else {
-            if (is_amchip) {
+            if (ftdi->type == TYPE_AM) {
                 // Round up to supported fraction (AM only)
                 try_divisor += am_adjust_up[try_divisor & 7];
                 if (try_divisor > 0x1FFF8) {
@@ -255,7 +255,14 @@ static int ftdi_convert_baudrate(int baudrate, int is_amchip,
     }
     // Split into "value" and "index" values
     *value = (unsigned short)(encoded_divisor & 0xFFFF);
-    *index = (unsigned short)(encoded_divisor >> 16);
+    if(ftdi->type == TYPE_FT2232C) {
+        *index = (unsigned short)(encoded_divisor >> 8);
+        *index &= 0xFF00;
+        *index |= ftdi->interface;
+    }
+    else
+        *index = (unsigned short)(encoded_divisor >> 16);
+    
     // Return the nearest baud rate
     return best_baud;
 }
@@ -274,7 +281,7 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate) {
         baudrate = baudrate*4;
     }
 
-    actual_baudrate = convert_baudrate(baudrate, ftdi->type == TYPE_AM ? 1 : 0, &value, &index);
+    actual_baudrate = convert_baudrate(baudrate, ftdi, &value, &index);
     if (actual_baudrate <= 0) {
         ftdi->error_str = "Silly baudrate <= 0.";
         return -1;
