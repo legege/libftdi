@@ -1,5 +1,6 @@
 New in 0.5
 ----------
+* Open device by description and/or serial (Evgeny Sinelnikov)
 * Improved error handling (Evgeny Sinelnikov)
 
 New in 0.4
