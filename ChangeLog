@@ -1,3 +1,8 @@
+New in 0.6
+----------
+* Error handling cleanup (Rogier Wolff)
+* Fix for kernel 2.6 USB subsystem. Detects kernel at runtime.
+
 New in 0.5
 ----------
 * New autoconf suite

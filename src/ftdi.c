@@ -20,6 +20,12 @@
 
 #include "ftdi.h"
 
+#define ftdi_error_return(code, str) {  \
+	ftdi->error_str = str;          \
+        return code;                    \
+   }                  
+
+
 /* ftdi_init return codes:
    0: all fine
   -1: couldn't allocate read buffer
@@ -90,75 +96,60 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
 {
     struct usb_bus *bus;
     struct usb_device *dev;
+    char string[256];
 
     usb_init();
 
-    if (usb_find_busses() < 0) {
-        ftdi->error_str = "usb_find_busses() failed";
-        return -1;
-    }
+    if (usb_find_busses() < 0)
+        ftdi_error_return(-1, "usb_find_busses() failed");
 
-    if (usb_find_devices() < 0) {
-        ftdi->error_str = "usb_find_devices() failed";
-        return -2;
-    }
+    if (usb_find_devices() < 0)
+        ftdi_error_return(-2,"usb_find_devices() failed");
 
     for (bus = usb_busses; bus; bus = bus->next) {
         for (dev = bus->devices; dev; dev = dev->next) {
             if (dev->descriptor.idVendor == vendor
-                && dev->descriptor.idProduct == product) {
-                if (!(ftdi->usb_dev = usb_open(dev))) {
-                    ftdi->error_str = "usb_open() failed";
-                    return -4;
-                }
-                
-                char string[256];
+                    && dev->descriptor.idProduct == product) {
+                if (!(ftdi->usb_dev = usb_open(dev)))
+                    ftdi_error_return(-4, "usb_open() failed");
+
                 if (description != NULL) {
                     if (usb_get_string_simple(ftdi->usb_dev, dev->descriptor.iProduct, string, sizeof(string)) <= 0) {
-                        ftdi->error_str = "unable to fetch product description\n";
-                        if (usb_close (ftdi->usb_dev) != 0)
-                            return -10;
-                        return -8;
+                        usb_close (ftdi->usb_dev);
+                        ftdi_error_return(-8, "unable to fetch product description");
                     }
                     if (strncmp(string, description, sizeof(string)) != 0) {
-                        ftdi->error_str = "product description not matching\n";
-                        if (usb_close (ftdi->usb_dev) != 0)
-                            return -10;
+                        if (usb_close (ftdi->usb_dev) < 0)
+                            ftdi_error_return(-10, "product description not matching");
                         continue;
                     }
                 }
                 if (serial != NULL) {
                     if (usb_get_string_simple(ftdi->usb_dev, dev->descriptor.iSerialNumber, string, sizeof(string)) <= 0) {
-                        ftdi->error_str = "unable to fetch serial number\n";
-                        if (usb_close (ftdi->usb_dev) != 0)
-                            return -10;
-                        return -9;
+                        usb_close (ftdi->usb_dev);
+                        ftdi_error_return(-9, "unable to fetch serial number");
                     }
                     if (strncmp(string, serial, sizeof(string)) != 0) {
                         ftdi->error_str = "serial number not matching\n";
                         if (usb_close (ftdi->usb_dev) != 0)
-                            return -10;
+                            ftdi_error_return(-10, "unable to fetch serial number");
                         continue;
                     }
                 }
 
                 if (usb_claim_interface(ftdi->usb_dev, ftdi->interface) != 0) {
-                    ftdi->error_str = "unable to claim usb device. Make sure ftdi_sio is unloaded!";
-                    if (usb_close (ftdi->usb_dev) != 0)
-                        return -10;
-                    return -5;
+                    usb_close (ftdi->usb_dev);
+                    ftdi_error_return(-5, "unable to claim usb device. Make sure ftdi_sio is unloaded!");
                 }
 
                 if (ftdi_usb_reset (ftdi) != 0) {
-                    if (usb_close (ftdi->usb_dev) != 0)
-                        return -10;
-                    return -6;
+                    usb_close (ftdi->usb_dev);
+                    ftdi_error_return(-6, "ftdi_usb_reset failed");
                 }
-                    
+
                 if (ftdi_set_baudrate (ftdi, 9600) != 0) {
-                    if (usb_close (ftdi->usb_dev) != 0)
-                        return -10;
-                    return -7;
+                    usb_close (ftdi->usb_dev);
+                    ftdi_error_return(-7, "set baudrate failed");
                 }
 
                 // Try to guess chip type
@@ -171,13 +162,13 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                 else if (dev->descriptor.bcdDevice == 0x500)
                     ftdi->type = TYPE_2232C;
 
-                return 0;
+                ftdi_error_return(0, "all fine");
             }
         }
     }
 
     // device not found
-    return -3;
+    ftdi_error_return(-3, "device not found");
 }
 
 
@@ -187,24 +178,20 @@ int ftdi_usb_reset(struct ftdi_context *ftdi)
     struct utsname kernelver;
     int k_major, k_minor, k_myver;
 #endif
-        
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
-        ftdi->error_str = "FTDI reset failed";
-        return -1;
-    }
-    
+
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1,"FTDI reset failed");
+
 #if defined(__linux__)
     /* Kernel 2.6 (maybe higher versions, too) need an additional usb_reset */
     if (uname(&kernelver) == 0 && sscanf(kernelver.release, "%d.%d", &k_major, &k_minor) == 2) {
         k_myver = k_major*10 + k_minor;
-    
-        if (k_myver >= 26 && usb_reset(ftdi->usb_dev) != 0) {
-            ftdi->error_str = "USB reset failed";
-            return -2;
-        }
+
+        if (k_myver >= 26 && usb_reset(ftdi->usb_dev) != 0)
+            ftdi_error_return(-2, "USB reset failed");
     }
 #endif
-    
+
     // Invalidate data in the readbuffer
     ftdi->readbuffer_offset = 0;
     ftdi->readbuffer_remaining = 0;
@@ -214,19 +201,15 @@ int ftdi_usb_reset(struct ftdi_context *ftdi)
 
 int ftdi_usb_purge_buffers(struct ftdi_context *ftdi)
 {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 1, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
-        ftdi->error_str = "FTDI purge of RX buffer failed";
-        return -1;
-    }
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 1, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "FTDI purge of RX buffer failed");
+
     // Invalidate data in the readbuffer
     ftdi->readbuffer_offset = 0;
     ftdi->readbuffer_remaining = 0;
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 2, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
-        ftdi->error_str = "FTDI purge of TX buffer failed";
-        return -1;
-    }
-
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 2, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-2, "FTDI purge of TX buffer failed");
 
     return 0;
 }
@@ -346,7 +329,7 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
     }
     else
         *index = (unsigned short)(encoded_divisor >> 16);
-    
+
     // Return the nearest baud rate
     return best_baud;
 }
@@ -367,24 +350,18 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
     }
 
     actual_baudrate = ftdi_convert_baudrate(baudrate, ftdi, &value, &index);
-    if (actual_baudrate <= 0) {
-        ftdi->error_str = "Silly baudrate <= 0.";
-        return -1;
-    }
+    if (actual_baudrate <= 0)
+        ftdi_error_return (-1, "Silly baudrate <= 0.");
 
     // Check within tolerance (about 5%)
     if ((actual_baudrate * 2 < baudrate /* Catch overflows */ )
             || ((actual_baudrate < baudrate)
                 ? (actual_baudrate * 21 < baudrate * 20)
-                : (baudrate * 21 < actual_baudrate * 20))) {
-        ftdi->error_str = "Unsupported baudrate. Note: bitbang baudrates are automatically multiplied by 4";
-        return -1;
-    }
+                : (baudrate * 21 < actual_baudrate * 20)))
+        ftdi_error_return (-1, "Unsupported baudrate. Note: bitbang baudrates are automatically multiplied by 4");
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 3, value, index, NULL, 0, ftdi->usb_write_timeout) != 0) {
-        ftdi->error_str = "Setting new baudrate failed";
-        return -2;
-    }
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 3, value, index, NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return (-2, "Setting new baudrate failed");
 
     ftdi->baudrate = baudrate;
     return 0;
@@ -396,6 +373,7 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
     int ret;
     int offset = 0;
     int total_written = 0;
+
     while (offset < size) {
         int write_size = ftdi->writebuffer_chunksize;
 
@@ -403,15 +381,10 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
             write_size = size-offset;
 
         ret = usb_bulk_write(ftdi->usb_dev, ftdi->in_ep, buf+offset, write_size, ftdi->usb_write_timeout);
-        if (ret < 0) {
-            if (ret == -1)
-                ftdi->error_str = "bulk write failed";
-            else
-                ftdi->error_str = "usb failed";
-            return ret;
-        }
-        total_written += ret;
+        if (ret < 0)
+            ftdi_error_return(ret, "usb bulk write failed");
 
+        total_written += ret;
         offset += write_size;
     }
 
@@ -462,14 +435,8 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
         ftdi->readbuffer_offset = 0;
         /* returns how much received */
         ret = usb_bulk_read (ftdi->usb_dev, ftdi->out_ep, ftdi->readbuffer, ftdi->readbuffer_chunksize, ftdi->usb_read_timeout);
-
-        if (ret < 0) {
-            if (ret == -1)
-                ftdi->error_str = "bulk read failed";
-            else
-                ftdi->error_str = "usb failed";
-            return ret;
-        }
+        if (ret < 0)
+            ftdi_error_return(ret, "usb bulk read failed");
 
         if (ret > 2) {
             // skip FTDI status bytes.
@@ -537,10 +504,8 @@ int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksi
     ftdi->readbuffer_offset = 0;
     ftdi->readbuffer_remaining = 0;
 
-    if ((new_buf = (unsigned char *)realloc(ftdi->readbuffer, chunksize)) == NULL) {
-        ftdi->error_str = "out of memory for readbuffer";
-        return -1;
-    }
+    if ((new_buf = (unsigned char *)realloc(ftdi->readbuffer, chunksize)) == NULL)
+        ftdi_error_return(-1, "out of memory for readbuffer");
 
     ftdi->readbuffer = new_buf;
     ftdi->readbuffer_chunksize = chunksize;
@@ -565,10 +530,9 @@ int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask)
     /* FT2232C: Set bitbang_mode to 2 to enable SPI */
     usb_val |= (ftdi->bitbang_mode << 8);
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
-        ftdi->error_str = "Unable to enter bitbang mode. Perhaps not a BM type chip?";
-        return -1;
-    }
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "unable to enter bitbang mode. Perhaps not a BM type chip?");
+
     ftdi->bitbang_enabled = 1;
     return 0;
 }
@@ -576,10 +540,8 @@ int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask)
 
 int ftdi_disable_bitbang(struct ftdi_context *ftdi)
 {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
-        ftdi->error_str = "Unable to leave bitbang mode. Perhaps not a BM type chip?";
-        return -1;
-    }
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "unable to leave bitbang mode. Perhaps not a BM type chip?");
 
     ftdi->bitbang_enabled = 0;
     return 0;
@@ -589,10 +551,8 @@ int ftdi_disable_bitbang(struct ftdi_context *ftdi)
 int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins)
 {
     unsigned short usb_val;
-    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0C, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1) {
-        ftdi->error_str = "Read pins failed";
-        return -1;
-    }
+    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0C, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1)
+        ftdi_error_return(-1, "read pins failed");
 
     *pins = (unsigned char)usb_val;
     return 0;
@@ -603,16 +563,13 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency)
 {
     unsigned short usb_val;
 
-    if (latency < 1) {
-        ftdi->error_str = "Latency out of range. Only valid for 1-255";
-        return -1;
-    }
+    if (latency < 1)
+        ftdi_error_return(-1, "latency out of range. Only valid for 1-255");
 
     usb_val = latency;
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x09, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
-        ftdi->error_str = "Unable to set latency timer";
-        return -2;
-    }
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x09, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-2, "unable to set latency timer");
+
     return 0;
 }
 
@@ -620,10 +577,8 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency)
 int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency)
 {
     unsigned short usb_val;
-    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0A, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1) {
-        ftdi->error_str = "Reading latency timer failed";
-        return -1;
-    }
+    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0A, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1)
+        ftdi_error_return(-1, "reading latency timer failed");
 
     *latency = (unsigned char)usb_val;
     return 0;
@@ -819,10 +774,8 @@ int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     int i;
 
     for (i = 0; i < 64; i++) {
-        if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2) {
-            ftdi->error_str = "Reading eeprom failed";
-            return -1;
-        }
+        if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
+            ftdi_error_return(-1, "reading eeprom failed");
     }
 
     return 0;
@@ -837,10 +790,8 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     for (i = 0; i < 64; i++) {
         usb_val = eeprom[i*2];
         usb_val += eeprom[(i*2)+1] << 8;
-        if (usb_control_msg(ftdi->usb_dev, 0x40, 0x91, usb_val, i, NULL, 0, ftdi->usb_write_timeout) != 0) {
-            ftdi->error_str = "Unable to write eeprom";
-            return -1;
-        }
+        if (usb_control_msg(ftdi->usb_dev, 0x40, 0x91, usb_val, i, NULL, 0, ftdi->usb_write_timeout) != 0)
+            ftdi_error_return(-1, "unable to write eeprom");
     }
 
     return 0;
@@ -849,10 +800,14 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
 
 int ftdi_erase_eeprom(struct ftdi_context *ftdi)
 {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x92, 0, 0, NULL, 0, ftdi->usb_write_timeout) != 0) {
-        ftdi->error_str = "Unable to erase eeprom";
-        return -1;
-    }
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x92, 0, 0, NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "unable to erase eeprom");
 
     return 0;
+}
+
+
+char *ftdi_get_error_string (struct ftdi_context *ftdi)
+{
+    return ftdi->error_str;
 }

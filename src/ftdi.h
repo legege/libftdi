@@ -43,7 +43,7 @@ struct ftdi_context {
     // Endpoints
     int in_ep;
     int out_ep;      // 1 or 2
-    
+
     /* 1: (default) Normal bitbang mode, 2: FT2232C SPI bitbang mode */
     unsigned char bitbang_mode;
 
@@ -113,6 +113,9 @@ extern "C" {
     int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
     int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
     int ftdi_erase_eeprom(struct ftdi_context *ftdi);
+
+
+    char *ftdi_get_error_string(struct ftdi_context *ftdi);
 
 #ifdef __cplusplus
 }
