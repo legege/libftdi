@@ -46,11 +46,8 @@ int ftdi_init(struct ftdi_context *ftdi)
 
     ftdi->error_str = NULL;
 
-    /* All fine. Now allocate the readbuffer
-       Note: A readbuffer size above 64 bytes results in buggy input.
-             This seems to be a hardware limitation as noted
-	     in the ftdi_sio driver */
-    return ftdi_read_data_set_chunksize(ftdi, 64);
+    /* All fine. Now allocate the readbuffer */
+    return ftdi_read_data_set_chunksize(ftdi, 4096);
 }
 
 
@@ -419,7 +416,7 @@ int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunk
 
 int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
-    int offset = 0, ret = 1;
+    int offset = 0, ret = 1, i, num_of_chunks, chunk_remains;
 
     // everything we want is still in the readbuffer?
     if (size <= ftdi->readbuffer_remaining) {
@@ -458,8 +455,26 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
         if (ret > 2) {
             // skip FTDI status bytes.
             // Maybe stored in the future to enable modem use
+            num_of_chunks = ret / 64;
+            chunk_remains = ret % 64;
+            //printf("ret = %X, num_of_chunks = %X, chunk_remains = %X, readbuffer_offset = %X\n", ret, num_of_chunks, chunk_remains, ftdi->readbuffer_offset);
+
             ftdi->readbuffer_offset += 2;
             ret -= 2;
+
+            if (ret > 64) {
+                for (i = 1; i < num_of_chunks; i++)
+                    memmove (ftdi->readbuffer+ftdi->readbuffer_offset+62*i,
+                             ftdi->readbuffer+ftdi->readbuffer_offset+64*i,
+                             62);
+                if (chunk_remains > 2) {
+                    memmove (ftdi->readbuffer+ftdi->readbuffer_offset+62*i,
+                             ftdi->readbuffer+ftdi->readbuffer_offset+64*i,
+                             chunk_remains-2);
+                    ret -= 2*num_of_chunks;
+                } else
+                    ret -= 2*(num_of_chunks-1)+chunk_remains;
+            }
         } else if (ret <= 2) {
             // no more data to read?
             return offset;
