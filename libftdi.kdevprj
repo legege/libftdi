@@ -33,7 +33,7 @@ makefiles=Makefile.am,ftdi/Makefile.am
 project_name=libftdi
 project_type=normal_c
 sub_dir=ftdi/
-version=0.1
+version=0.2
 version_control=None
 workspace=1
 

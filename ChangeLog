@@ -1,0 +1,12 @@
+New in 0.2
+----------
+
+* EEPROM build fix by Daniel Kirkham (Melbourne, Australia)
+* Implemented basic ftdi_read_data() function
+* EEPROM write fixes
+
+
+New in 0.1
+------------
+
+* First public release
