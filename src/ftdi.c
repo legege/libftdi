@@ -56,7 +56,30 @@ int ftdi_init(struct ftdi_context *ftdi)
     /* All fine. Now allocate the readbuffer */
     return ftdi_read_data_set_chunksize(ftdi, 4096);
 }
-
+/* ftdi_select_interface
+   Call after ftdi_init
+   Open selected channels on a chip, otherwise use first channel
+   0: all fine
+   1: unknown interface
+*/
+int ftdi_select_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
+{
+    switch (interface) {
+    case INTERFACE_ANY:
+    case INTERFACE_A:
+        /* ftdi_usb_open_desc cares to set the right index, depending on the found chip*/
+        break;
+    case INTERFACE_B:
+        ftdi->interface = 1;
+        ftdi->index     = INTERFACE_B;
+        ftdi->in_ep     = 0x04;
+        ftdi->out_ep    = 0x83;
+        break;
+    default:
+        ftdi_error_return(-1, "Unknown interface");
+    }
+    return 0;
+}
 
 void ftdi_deinit(struct ftdi_context *ftdi)
 {
@@ -159,9 +182,11 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                     ftdi->type = TYPE_BM;
                 else if (dev->descriptor.bcdDevice == 0x200)
                     ftdi->type = TYPE_AM;
-                else if (dev->descriptor.bcdDevice == 0x500)
+                else if (dev->descriptor.bcdDevice == 0x500) {
                     ftdi->type = TYPE_2232C;
-
+                    if (!ftdi->index)
+                        ftdi->index = INTERFACE_A;
+                }
                 ftdi_error_return(0, "all fine");
             }
         }
@@ -474,6 +499,8 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
 
                 /* Did we read exactly the right amount of bytes? */
                 if (offset == size)
+                    //printf("read_data exact rem %d offset %d\n",
+                    //ftdi->readbuffer_remaining, offset);
                     return offset;
             } else {
                 // only copy part of the data or size <= readbuffer_chunksize
@@ -547,6 +574,20 @@ int ftdi_disable_bitbang(struct ftdi_context *ftdi)
     return 0;
 }
 
+
+int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned char mode)
+{
+    unsigned short usb_val;
+
+    usb_val = bitmask; // low byte: bitmask
+    usb_val |= (mode << 8);
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "unable to configure bitbang mode. Perhaps not a 2232C type chip?");
+
+    ftdi->bitbang_mode = mode;
+    ftdi->bitbang_enabled = (mode == BITMODE_BITBANG || mode == BITMODE_SYNCBB)?1:0;
+    return 0;
+}
 
 int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins)
 {

@@ -20,6 +20,63 @@
 #include <usb.h>
 
 enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2 };
+enum ftdi_mpsse_mode {
+    BITMODE_RESET  = 0x00,
+    BITMODE_BITBANG= 0x01,
+    BITMODE_MPSSE  = 0x02,
+    BITMODE_SYNCBB = 0x04,
+    BITMODE_MCU    = 0x08,
+    BITMODE_OPTO   = 0x10
+};
+
+/* Port interface code for FT2232C */
+enum ftdi_interface {
+    INTERFACE_ANY = 0,
+    INTERFACE_A   = 1,
+    INTERFACE_B   = 2
+};
+
+/* Shifting commands IN MPSSE Mode*/
+#define MPSSE_WRITE_NEG 0x01   /* Write TDI/DO on negative TCK/SK edge*/
+#define MPSSE_BITMODE   0x02   /* Write bits, not bytes */
+#define MPSSE_READ_NEG  0x04   /* Sample TDO/DI on negative TCK/SK edge */
+#define MPSSE_LSB       0x08   /* LSB first */
+#define MPSSE_DO_WRITE  0x10   /* Write TDI/DO */
+#define MPSSE_DO_READ   0x20   /* Read TDO/DI */
+#define MPSSE_WRITE_TMS 0x40   /* Write TMS/CS */
+
+/* FTDI MPSSE commands */
+#define SET_BITS_LOW   0x80
+/*BYTE DATA*/
+/*BYTE Direction*/
+#define SET_BITS_HIGH  0x82
+/*BYTE DATA*/
+/*BYTE Direction*/
+#define GET_BITS_LOW   0x81
+#define GET_BITS_HIGH  0x83
+#define LOOPBACK_START 0x84
+#define LOOPBACK_END   0x85
+#define TCK_DIVISOR    0x86
+/* Value Low */
+/* Value HIGH */ /*rate is 12000000/((1+value)*2) */
+#define DIV_VALUE(rate) (rate > 6000000)?0:((6000000/rate -1) > 0xffff)? 0xffff: (6000000/rate -1)
+
+/* Commands in MPSSE and Host Emulation Mode */
+#define SEND_IMMEDIATE 0x87 
+#define WAIT_ON_HIGH   0x88
+#define WAIT_ON_LOW    0x89
+
+/* Commands in Host Emulation Mode */
+#define READ_SHORT     0x90
+/* Address_Low */
+#define READ_EXTENDED  0x91
+/* Address High */
+/* Address Low  */
+#define WRITE_SHORT    0x92
+/* Address_Low */
+#define WRITE_EXTENDED 0x93
+/* Address High */
+/* Address Low  */
 
 struct ftdi_context {
     // USB specific
@@ -78,6 +135,8 @@ extern "C" {
 #endif
 
     int ftdi_init(struct ftdi_context *ftdi);
+    int ftdi_select_interfae(struct ftdi_context *ftdi, enum ftdi_interface interface);
+
     void ftdi_deinit(struct ftdi_context *ftdi);
     void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usbdev);
     int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product);
@@ -99,6 +158,7 @@ extern "C" {
 
     int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask);
     int ftdi_disable_bitbang(struct ftdi_context *ftdi);
+    int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned char mode);
     int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins);
 
     int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency);
@@ -113,7 +173,6 @@ extern "C" {
     int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
     int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
     int ftdi_erase_eeprom(struct ftdi_context *ftdi);
-
 
     char *ftdi_get_error_string(struct ftdi_context *ftdi);
 
