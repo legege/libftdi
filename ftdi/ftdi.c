@@ -27,6 +27,7 @@ int ftdi_init(struct ftdi_context *ftdi) {
     ftdi->usb_read_timeout = 5000;
     ftdi->usb_write_timeout = 5000;
 
+    ftdi->type = TYPE_BM;    /* chip type */
     ftdi->baudrate = -1;
     ftdi->bitbang_enabled = 0;
 
@@ -40,7 +41,7 @@ int ftdi_init(struct ftdi_context *ftdi) {
     ftdi->in_ep = 0x02;
     ftdi->out_ep = 0x81;
     ftdi->bitbang_mode = 1; /* 1: Normal bitbang mode, 2: SPI bitbang mode */
-    
+
     ftdi->error_str = NULL;
 
     // all fine. Now allocate the readbuffer
@@ -93,7 +94,7 @@ int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product) {
                 ftdi->usb_dev = usb_open(dev);
                 if (ftdi->usb_dev) {
                     if (usb_claim_interface(ftdi->usb_dev, ftdi->interface) != 0) {
-                        ftdi->error_str = "unable to claim usb device. You can still use it though...";
+                        ftdi->error_str = "unable to claim usb device. Make sure ftdi_sio is unloaded!";
                         return -5;
                     }
 
@@ -167,65 +168,128 @@ int ftdi_usb_close(struct ftdi_context *ftdi) {
 
 
 /*
+    ftdi_convert_baudrate returns nearest supported baud rate to that requested.
+    Function is only used internally
+*/
+static int ftdi_convert_baudrate(int baudrate, int is_amchip,
+                                 unsigned short *value, unsigned short *index) {
+    static const char am_adjust_up[8] = {0, 0, 0, 1, 0, 3, 2, 1};
+    static const char am_adjust_dn[8] = {0, 0, 0, 1, 0, 1, 2, 3};
+    static const char frac_code[8] = {0, 3, 2, 4, 1, 5, 6, 7};
+    int divisor, best_divisor, best_baud, best_baud_diff;
+    unsigned long encoded_divisor;
+    int i;
+
+    if (baudrate <= 0) {
+        // Return error
+        return -1;
+    }
+
+    divisor = 24000000 / baudrate;
+
+    if (is_amchip) {
+        // Round down to supported fraction (AM only)
+        divisor -= am_adjust_dn[divisor & 7];
+    }
+
+    // Try this divisor and the one above it (because division rounds down)
+    best_divisor = 0;
+    best_baud = 0;
+    best_baud_diff = 0;
+    for (i = 0; i < 2; i++) {
+        int try_divisor = divisor + i;
+        int baud_estimate;
+        int baud_diff;
+
+        // Round up to supported divisor value
+        if (try_divisor < 8) {
+            // Round up to minimum supported divisor
+            try_divisor = 8;
+        } else if (!is_amchip && try_divisor < 12) {
+            // BM doesn't support divisors 9 through 11 inclusive
+            try_divisor = 12;
+        } else if (divisor < 16) {
+            // AM doesn't support divisors 9 through 15 inclusive
+            try_divisor = 16;
+        } else {
+            if (is_amchip) {
+                // Round up to supported fraction (AM only)
+                try_divisor += am_adjust_up[try_divisor & 7];
+                if (try_divisor > 0x1FFF8) {
+                    // Round down to maximum supported divisor value (for AM)
+                    try_divisor = 0x1FFF8;
+                }
+            } else {
+                if (try_divisor > 0x1FFFF) {
+                    // Round down to maximum supported divisor value (for BM)
+                    try_divisor = 0x1FFFF;
+                }
+            }
+        }
+        // Get estimated baud rate (to nearest integer)
+        baud_estimate = (24000000 + (try_divisor / 2)) / try_divisor;
+        // Get absolute difference from requested baud rate
+        if (baud_estimate < baudrate) {
+            baud_diff = baudrate - baud_estimate;
+        } else {
+            baud_diff = baud_estimate - baudrate;
+        }
+        if (i == 0 || baud_diff < best_baud_diff) {
+            // Closest to requested baud rate so far
+            best_divisor = try_divisor;
+            best_baud = baud_estimate;
+            best_baud_diff = baud_diff;
+            if (baud_diff == 0) {
+                // Spot on! No point trying
+                break;
+            }
+        }
+    }
+    // Encode the best divisor value
+    encoded_divisor = (best_divisor >> 3) | (frac_code[best_divisor & 7] << 14);
+    // Deal with special cases for encoded value
+    if (encoded_divisor == 1) {
+        encoded_divisor = 0;	// 3000000 baud
+    } else if (encoded_divisor == 0x4001) {
+        encoded_divisor = 1;	// 2000000 baud (BM only)
+    }
+    // Split into "value" and "index" values
+    *value = (unsigned short)(encoded_divisor & 0xFFFF);
+    *index = (unsigned short)(encoded_divisor >> 16);
+    // Return the nearest baud rate
+    return best_baud;
+}
+
+/*
     ftdi_set_baudrate return codes:
      0: all fine
     -1: invalid baudrate
     -2: setting baudrate failed
 */
 int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate) {
-    unsigned short ftdi_baudrate;
+    unsigned short value, index;
+    int actual_baudrate;
 
     if (ftdi->bitbang_enabled) {
         baudrate = baudrate*4;
     }
 
-    switch (baudrate) {
-    case 300:
-        ftdi_baudrate = 0x2710;
-        break;
-    case 600:
-        ftdi_baudrate = 0x1388;
-        break;
-    case 1200:
-        ftdi_baudrate = 0x09C4;
-        break;
-    case 2400:
-        ftdi_baudrate = 0x04E2;
-        break;
-    case 4800:
-        ftdi_baudrate = 0x0271;
-        break;
-    case 9600:
-        ftdi_baudrate = 0x4138;
-        break;
-    case 19200:
-        ftdi_baudrate = 0x809C;
-        break;
-    case 38400:
-        ftdi_baudrate = 0xC04E;
-        break;
-    case 57600:
-        ftdi_baudrate = 0x0034;
-        break;
-    case 115200:
-        ftdi_baudrate = 0x001A;
-        break;
-    case 230400:
-        ftdi_baudrate = 0x000D;
-        break;
-    case 460800:
-        ftdi_baudrate = 0x4006;
-        break;
-    case 921600:
-        ftdi_baudrate = 0x8003;
-        break;
-    default:
-        ftdi->error_str = "Unknown baudrate. Note: bitbang baudrates are automatically multiplied by 4";
+    actual_baudrate = convert_baudrate(baudrate, ftdi->type == TYPE_AM ? 1 : 0, &value, &index);
+    if (actual_baudrate <= 0) {
+        ftdi->error_str = "Silly baudrate <= 0.";
         return -1;
     }
 
+    // Check within tolerance (about 5%)
+    if ((actual_baudrate * 2 < baudrate /* Catch overflows */ )
+            || ((actual_baudrate < baudrate)
+                ? (actual_baudrate * 21 < baudrate * 20)
+                : (baudrate * 21 < actual_baudrate * 20))) {
+        ftdi->error_str = "Unsupported baudrate. Note: bitbang baudrates are automatically multiplied by 4";
+        return -1;
+    }
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 3, ftdi_baudrate, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0) {
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 3, value, index, NULL, 0, ftdi->usb_write_timeout) != 0) {
         ftdi->error_str = "Setting new baudrate failed";
         return -2;
     }
@@ -321,7 +385,7 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
                 //printf("buf[0] = %X, buf[1] = %X\n", buf[0], buf[1]);
                 offset += ret;
 
-		/* Did we read exactly the right amount of bytes? */
+                /* Did we read exactly the right amount of bytes? */
                 if (offset == size)
                     return offset;
             } else {
@@ -333,8 +397,8 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
                 ftdi->readbuffer_remaining = ret-part_size;
                 offset += part_size;
 
-                /* printf("Returning part: %d - size: %d - offset: %d - ret: %d - remaining: %d\n", 
-		           part_size, size, offset, ret, ftdi->readbuffer_remaining); */
+                /* printf("Returning part: %d - size: %d - offset: %d - ret: %d - remaining: %d\n",
+                part_size, size, offset, ret, ftdi->readbuffer_remaining); */
 
                 return offset;
             }

@@ -19,6 +19,8 @@
 
 #include <usb.h>
 
+enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_FT2232C=2 };
+
 struct ftdi_context {
     // USB specific
     struct usb_dev_handle *usb_dev;
@@ -26,6 +28,7 @@ struct ftdi_context {
     int usb_write_timeout;
 
     // FTDI specific
+    enum ftdi_chip_type type;
     int baudrate;
     unsigned char bitbang_enabled;
     unsigned char *readbuffer;
