@@ -135,7 +135,7 @@ extern "C" {
 #endif
 
     int ftdi_init(struct ftdi_context *ftdi);
-    int ftdi_select_interfae(struct ftdi_context *ftdi, enum ftdi_interface interface);
+    int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface);
 
     void ftdi_deinit(struct ftdi_context *ftdi);
     void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usbdev);

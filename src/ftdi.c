@@ -59,15 +59,15 @@ int ftdi_init(struct ftdi_context *ftdi)
 /* ftdi_select_interface
    Call after ftdi_init
    Open selected channels on a chip, otherwise use first channel
-   0: all fine
-   1: unknown interface
+    0: all fine
+   -1: unknown interface
 */
-int ftdi_select_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
+int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
 {
     switch (interface) {
     case INTERFACE_ANY:
     case INTERFACE_A:
-        /* ftdi_usb_open_desc cares to set the right index, depending on the found chip*/
+        /* ftdi_usb_open_desc cares to set the right index, depending on the found chip */
         break;
     case INTERFACE_B:
         ftdi->interface = 1;
