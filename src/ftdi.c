@@ -473,7 +473,7 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
             ftdi->readbuffer_offset += 2;
             ret -= 2;
 
-            if (ret > 64) {
+            if (ret > 62) {
                 for (i = 1; i < num_of_chunks; i++)
                     memmove (ftdi->readbuffer+ftdi->readbuffer_offset+62*i,
                              ftdi->readbuffer+ftdi->readbuffer_offset+64*i,

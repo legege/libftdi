@@ -1,5 +1,6 @@
 New in 0.6
 ----------
+* Improved filtering of status bytes (Evgeny Sinelnikov)
 * Extended FT2232C support (Uwe Bonnes)
 * Small improvement to the baudrate calculation code (Emil)
 * Error handling cleanup (Rogier Wolff)
