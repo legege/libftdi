@@ -18,6 +18,10 @@
  
 #include "ftdi.h"
 
+/* ftdi_init return codes:
+   0: all fine
+  -1: couldn't allocate (64 byte) read buffer
+*/
 int ftdi_init(struct ftdi_context *ftdi) {
     ftdi->usb_dev = NULL;
     ftdi->usb_timeout = 5000;
@@ -25,9 +29,23 @@ int ftdi_init(struct ftdi_context *ftdi) {
     ftdi->baudrate = -1;
     ftdi->bitbang_enabled = 0;
 
+    ftdi->readbuffer = NULL;
+    ftdi->readbuffer_offset = 0;
+    ftdi->readbuffer_remaining = 0;
+    ftdi->writebuffer_chunksize = 4096;
+
     ftdi->error_str = NULL;
 
-    return 0;
+    // all fine. Now allocate the readbuffer
+    return ftdi_read_data_set_chunksize(ftdi, 4096);
+}
+
+
+void ftdi_deinit(struct ftdi_context *ftdi) {
+    if (ftdi->readbuffer != NULL) {
+	free(ftdi->readbuffer);
+	ftdi->readbuffer = NULL;
+    }
 }
 
 
@@ -206,7 +224,7 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
     int ret;
     int offset = 0;
     while (offset < size) {
-        int write_size = 64;
+        int write_size = ftdi->writebuffer_chunksize;
 
         if (offset+write_size > size)
             write_size = size-offset;
@@ -224,36 +242,118 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
 }
 
 
+int ftdi_write_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize) {
+    ftdi->writebuffer_chunksize = chunksize;
+    return 0;
+}
+
+
+int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize) {
+    *chunksize = ftdi->writebuffer_chunksize;
+    return 0;
+}
+
+
 int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
-    static unsigned char readbuf[64];
-    int ret = 1;
-    int offset = 0;
-
-    if (size != 0 && size % 64 != 0) {
-    	    ftdi->error_str = "Sorry, read buffer size must currently be a multiple (1x, 2x, 3x...) of 64";
-            return -2;
-    }
-
-    while (offset < size && ret > 0) {
-	ret = usb_bulk_read (ftdi->usb_dev, 0x81, readbuf, 64, ftdi->usb_timeout);
-	// Skip FTDI status bytes
-	if (ret >= 2)
-	    ret-=2;
+    int offset = 0, ret = 1;
+    
+    // everything we want is still in the readbuffer?
+    if (size <= ftdi->readbuffer_remaining) {
+	memcpy (buf, ftdi->readbuffer+ftdi->readbuffer_offset, size);
 	
-	if (ret > 0) {
-	    memcpy (buf+offset, readbuf+2, ret);
-	}
+	// Fix offsets
+	ftdi->readbuffer_remaining -= size;
+	ftdi->readbuffer_offset += size;
+	
+	// printf("Returning bytes from buffer: %d - remaining: %d\n", size, ftdi->readbuffer_remaining);
+	
+	return size;
+    }
+    
+    // something still in the readbuffer, but not enough to satisfy 'size'?
+    if (ftdi->readbuffer_remaining != 0) {
+	memcpy (buf, ftdi->readbuffer+ftdi->readbuffer_offset, ftdi->readbuffer_remaining);
+
+	// printf("Got bytes from buffer: %d\n", ftdi->readbuffer_remaining);
+
+	// Fix offsets
+	offset += ftdi->readbuffer_remaining;
+	ftdi->readbuffer_remaining = 0;
+	ftdi->readbuffer_offset = 0;
+    }
+    
+    // do the actual USB read
+    while (offset < size && ret > 0) {
+	ftdi->readbuffer_remaining = 0;
+	ftdi->readbuffer_offset = 0;
+	ret = usb_bulk_read (ftdi->usb_dev, 0x81, ftdi->readbuffer, ftdi->readbuffer_chunksize, ftdi->usb_timeout);
 
 	if (ret == -1) {
     	    ftdi->error_str = "bulk read failed";
             return -1;
 	}
 
-        offset += ret;
+	if (ret > 2) {
+	    // skip FTDI status bytes.
+	    // Maybe stored in the future to enable modem use
+	    ftdi->readbuffer_offset += 2;
+	    ret -= 2;
+	} else if (ret <= 2) {
+	    // no more data to read?
+	    return offset;
+	}
+
+	if (ret > 0) {
+	    // data still fits in buf?
+	    if (offset+ret <= size) {
+		memcpy (buf+offset, ftdi->readbuffer+ftdi->readbuffer_offset, ret);
+        	offset += ret;
+		
+		if (offset == size)
+		    return offset;
+	    } else {
+		// only copy part of the data or size <= readbuffer_chunksize
+		int part_size = size-offset;
+		memcpy (buf+offset, ftdi->readbuffer+ftdi->readbuffer_offset, part_size);
+
+		ftdi->readbuffer_offset += part_size;
+		ftdi->readbuffer_remaining = ret-part_size;
+		
+		// printf("Returning part: %d - size: %d - offset: %d - ret: %d - remaining: %d\n", part_size, size, offset, ret, ftdi->readbuffer_remaining);
+
+		return part_size;
+	    }
+	}
     }
 
-    return offset;
+    // never reached
+    return -2;
 }
+
+
+int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize) {
+    // Invalidate all remaining data
+    ftdi->readbuffer_offset = 0;
+    ftdi->readbuffer_remaining = 0;
+
+    unsigned char *new_buf;
+    if ((new_buf = (unsigned char *)realloc(ftdi->readbuffer, chunksize)) == NULL) {
+	ftdi->error_str = "out of memory for readbuffer";
+	return -1;
+    }
+    
+    ftdi->readbuffer = new_buf;
+    ftdi->readbuffer_chunksize = chunksize;
+
+    return 0;
+}
+
+
+int ftdi_readt_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize) {
+    *chunksize = ftdi->readbuffer_chunksize;
+    return 0;
+}
+
 
 
 int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask) {
