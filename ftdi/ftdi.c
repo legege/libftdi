@@ -44,8 +44,11 @@ int ftdi_init(struct ftdi_context *ftdi) {
 
     ftdi->error_str = NULL;
 
-    // all fine. Now allocate the readbuffer
-    return ftdi_read_data_set_chunksize(ftdi, 4096);
+    /* All fine. Now allocate the readbuffer
+       Note: A readbuffer size above 64 bytes results in buggy input.
+             This seems to be a hardware limitation as noted
+	     in the ftdi_sio driver */
+    return ftdi_read_data_set_chunksize(ftdi, 64);
 }
 
 
