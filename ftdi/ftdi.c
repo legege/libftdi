@@ -102,6 +102,19 @@ int ftdi_usb_reset(struct ftdi_context *ftdi) {
     return 0;
 }
 
+int ftdi_usb_purge_buffers(struct ftdi_context *ftdi) {
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 1, 0, NULL, 0, ftdi->usb_timeout) != 0) {
+        ftdi->error_str = "FTDI purge of RX buffer failed";
+        return -1;
+    }
+
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 2, 0, NULL, 0, ftdi->usb_timeout) != 0) {
+        ftdi->error_str = "FTDI purge of TX buffer failed";
+        return -1;
+    }
+
+    return 0;
+}
 
 /* ftdi_usb_close return codes
     0: all fine
