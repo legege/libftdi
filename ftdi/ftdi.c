@@ -216,6 +216,11 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
     int ret = 1;
     int offset = 0;
 
+    if (size != 0 && size % 64 != 0) {
+    	    ftdi->error_str = "Sorry, read buffer size must currently be a multiple (1x, 2x, 3x...) of 64";
+            return -2;
+    }
+
     while (offset < size && ret > 0) {
 	ret = usb_bulk_read (ftdi->usb_dev, 0x81, readbuf, 64, ftdi->usb_timeout);
 	// Skip FTDI status bytes
