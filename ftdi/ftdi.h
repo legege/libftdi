@@ -28,8 +28,8 @@ struct ftdi_context {
     int baudrate;
     unsigned char bitbang_enabled;
     unsigned char *readbuffer;
-    unsigned char readbuffer_offset;
-    unsigned char readbuffer_remaining;
+    unsigned int readbuffer_offset;
+    unsigned int readbuffer_remaining;
     unsigned int readbuffer_chunksize;
     unsigned int writebuffer_chunksize;
  

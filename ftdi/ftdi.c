@@ -276,10 +276,8 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
 
 	// printf("Got bytes from buffer: %d\n", ftdi->readbuffer_remaining);
 
-	// Fix offsets
+	// Fix offset
 	offset += ftdi->readbuffer_remaining;
-	ftdi->readbuffer_remaining = 0;
-	ftdi->readbuffer_offset = 0;
     }
     
     // do the actual USB read
@@ -318,10 +316,11 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
 
 		ftdi->readbuffer_offset += part_size;
 		ftdi->readbuffer_remaining = ret-part_size;
+		offset += part_size;
 		
 		// printf("Returning part: %d - size: %d - offset: %d - ret: %d - remaining: %d\n", part_size, size, offset, ret, ftdi->readbuffer_remaining);
 
-		return part_size;
+		return offset;
 	    }
 	}
     }
