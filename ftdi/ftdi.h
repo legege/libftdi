@@ -22,7 +22,8 @@
 struct ftdi_context {
     // USB specific
     struct usb_dev_handle *usb_dev;
-    int usb_timeout;
+    int usb_read_timeout;
+    int usb_write_timeout;
 
     // FTDI specific
     int baudrate;
@@ -32,6 +33,15 @@ struct ftdi_context {
     unsigned int readbuffer_remaining;
     unsigned int readbuffer_chunksize;
     unsigned int writebuffer_chunksize;
+
+    // FTDI FT2232C requirecments
+    int interface;   // 0 or 1
+    int index;       // 1 or 2
+    // Endpoints
+    int in_ep;
+    int out_ep;      // 1 or 2
+
+    int reading;     // 0 or 1 - for performance increase in SPI mode
 
     // misc
     char *error_str;
