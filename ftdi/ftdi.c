@@ -330,9 +330,12 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
             write_size = size-offset;
 
         ret = usb_bulk_write(ftdi->usb_dev, ftdi->in_ep, buf+offset, write_size, ftdi->usb_write_timeout);
-        if (ret == -1) {
-            ftdi->error_str = "bulk write failed";
-            return -1;
+        if (ret < 0) {
+            if (ret == -1)
+                ftdi->error_str = "bulk write failed";
+            else
+                ftdi->error_str = "usb failed";
+            return ret;
         }
         total_written += ret;
 
@@ -384,9 +387,12 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
         /* returns how much received */
         ret = usb_bulk_read (ftdi->usb_dev, ftdi->out_ep, ftdi->readbuffer, ftdi->readbuffer_chunksize, ftdi->usb_read_timeout);
 
-        if (ret == -1) {
-            ftdi->error_str = "bulk read failed";
-            return -1;
+        if (ret < 0) {
+            if (ret == -1)
+                ftdi->error_str = "bulk read failed";
+            else
+                ftdi->error_str = "usb failed";
+            return ret;
         }
 
         if (ret > 2) {
@@ -425,16 +431,17 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
         }
     }
     // never reached
-    return -2;
+    return -127;
 }
 
 
 int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize) {
+    unsigned char *new_buf;
+
     // Invalidate all remaining data
     ftdi->readbuffer_offset = 0;
     ftdi->readbuffer_remaining = 0;
 
-    unsigned char *new_buf;
     if ((new_buf = (unsigned char *)realloc(ftdi->readbuffer, chunksize)) == NULL) {
         ftdi->error_str = "out of memory for readbuffer";
         return -1;

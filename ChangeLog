@@ -1,3 +1,7 @@
+New in 0.5
+----------
+* Improved error handling (Evgeny Sinelnikov)
+
 New in 0.4
 ----------
 * Fixed filtering of status bytes (Readbuffer size is now 64 bytes)
