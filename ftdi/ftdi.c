@@ -313,7 +313,7 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency) {
 
 int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency) {
     unsigned short usb_val;
-    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x09, 0, 0, (char *)&usb_val, 1, ftdi->usb_timeout) != 1) {
+    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0A, 0, 0, (char *)&usb_val, 1, ftdi->usb_timeout) != 1) {
         ftdi->error_str = "Reading latency timer failed";
         return -1;
     }
