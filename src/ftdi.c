@@ -186,11 +186,12 @@ int ftdi_usb_reset(struct ftdi_context *ftdi)
         ftdi->error_str = "FTDI reset failed";
         return -1;
     }
-    
+/*    
     if (usb_reset(ftdi->usb_dev) != 0) {
         ftdi->error_str = "USB reset failed";
         return -2;
     }
+*/
     // Invalidate data in the readbuffer
     ftdi->readbuffer_offset = 0;
     ftdi->readbuffer_remaining = 0;
