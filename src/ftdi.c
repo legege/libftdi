@@ -20,10 +20,10 @@
 
 #include "ftdi.h"
 
-#define ftdi_error_return(code, str) {  \
-	ftdi->error_str = str;          \
-        return code;                    \
-   }                  
+#define ftdi_error_return(code, str) do {  \
+	ftdi->error_str = str;             \
+        return code;                       \
+   } while(0);                 
 
 
 /* ftdi_init return codes:
