@@ -32,16 +32,16 @@ struct ftdi_context {
     unsigned int readbuffer_remaining;
     unsigned int readbuffer_chunksize;
     unsigned int writebuffer_chunksize;
- 
+
     // misc
     char *error_str;
 };
 
 struct ftdi_eeprom {
-    int	vendor_id;
+    int vendor_id;
     int product_id;
 
-    int	self_powered;
+    int self_powered;
     int remote_wakeup;
     int BM_type_chip;
 
@@ -53,7 +53,7 @@ struct ftdi_eeprom {
     int change_usb_version;
     int usb_version;
     int max_power;
-    
+
     char *manufacturer;
     char *product;
     char *serial;

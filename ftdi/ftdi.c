@@ -15,7 +15,7 @@
  ***************************************************************************/
 
 #include <usb.h>
- 
+
 #include "ftdi.h"
 
 /* ftdi_init return codes:
@@ -43,8 +43,8 @@ int ftdi_init(struct ftdi_context *ftdi) {
 
 void ftdi_deinit(struct ftdi_context *ftdi) {
     if (ftdi->readbuffer != NULL) {
-	free(ftdi->readbuffer);
-	ftdi->readbuffer = NULL;
+        free(ftdi->readbuffer);
+        ftdi->readbuffer = NULL;
     }
 }
 
@@ -91,10 +91,10 @@ int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product) {
                     }
 
                     if (ftdi_usb_reset (ftdi) != 0)
-                       return -6;
+                        return -6;
 
                     if (ftdi_set_baudrate (ftdi, 9600) != 0)
-                       return -7;
+                        return -7;
 
                     return 0;
                 } else {
@@ -128,7 +128,7 @@ int ftdi_usb_purge_buffers(struct ftdi_context *ftdi) {
         ftdi->error_str = "FTDI purge of RX buffer failed";
         return -1;
     }
-    
+
     ftdi->readbuffer_offset = 0;
     ftdi->readbuffer_remaining = 0;
 
@@ -237,9 +237,9 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
 
         ret=usb_bulk_write(ftdi->usb_dev, 2, buf+offset, write_size, ftdi->usb_timeout);
         if (ret == -1) {
-    	    ftdi->error_str = "bulk write failed";
+            ftdi->error_str = "bulk write failed";
             return -1;
-	}
+        }
 
         offset += write_size;
     }
@@ -262,73 +262,73 @@ int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunk
 
 int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
     int offset = 0, ret = 1;
-    
+
     // everything we want is still in the readbuffer?
     if (size <= ftdi->readbuffer_remaining) {
-	memcpy (buf, ftdi->readbuffer+ftdi->readbuffer_offset, size);
-	
-	// Fix offsets
-	ftdi->readbuffer_remaining -= size;
-	ftdi->readbuffer_offset += size;
-	
-	// printf("Returning bytes from buffer: %d - remaining: %d\n", size, ftdi->readbuffer_remaining);
-	
-	return size;
+        memcpy (buf, ftdi->readbuffer+ftdi->readbuffer_offset, size);
+
+        // Fix offsets
+        ftdi->readbuffer_remaining -= size;
+        ftdi->readbuffer_offset += size;
+
+        // printf("Returning bytes from buffer: %d - remaining: %d\n", size, ftdi->readbuffer_remaining);
+
+        return size;
     }
-    
+
     // something still in the readbuffer, but not enough to satisfy 'size'?
     if (ftdi->readbuffer_remaining != 0) {
-	memcpy (buf, ftdi->readbuffer+ftdi->readbuffer_offset, ftdi->readbuffer_remaining);
+        memcpy (buf, ftdi->readbuffer+ftdi->readbuffer_offset, ftdi->readbuffer_remaining);
 
-	// printf("Got bytes from buffer: %d\n", ftdi->readbuffer_remaining);
+        // printf("Got bytes from buffer: %d\n", ftdi->readbuffer_remaining);
 
-	// Fix offset
-	offset += ftdi->readbuffer_remaining;
+        // Fix offset
+        offset += ftdi->readbuffer_remaining;
     }
-    
+
     // do the actual USB read
     while (offset < size && ret > 0) {
-	ftdi->readbuffer_remaining = 0;
-	ftdi->readbuffer_offset = 0;
-	ret = usb_bulk_read (ftdi->usb_dev, 0x81, ftdi->readbuffer, ftdi->readbuffer_chunksize, ftdi->usb_timeout);
+        ftdi->readbuffer_remaining = 0;
+        ftdi->readbuffer_offset = 0;
+        ret = usb_bulk_read (ftdi->usb_dev, 0x81, ftdi->readbuffer, ftdi->readbuffer_chunksize, ftdi->usb_timeout);
 
-	if (ret == -1) {
-    	    ftdi->error_str = "bulk read failed";
+        if (ret == -1) {
+            ftdi->error_str = "bulk read failed";
             return -1;
-	}
+        }
 
-	if (ret > 2) {
-	    // skip FTDI status bytes.
-	    // Maybe stored in the future to enable modem use
-	    ftdi->readbuffer_offset += 2;
-	    ret -= 2;
-	} else if (ret <= 2) {
-	    // no more data to read?
-	    return offset;
-	}
+        if (ret > 2) {
+            // skip FTDI status bytes.
+            // Maybe stored in the future to enable modem use
+            ftdi->readbuffer_offset += 2;
+            ret -= 2;
+        } else if (ret <= 2) {
+            // no more data to read?
+            return offset;
+        }
 
-	if (ret > 0) {
-	    // data still fits in buf?
-	    if (offset+ret <= size) {
-		memcpy (buf+offset, ftdi->readbuffer+ftdi->readbuffer_offset, ret);
-        	offset += ret;
-		
-		if (offset == size)
-		    return offset;
-	    } else {
-		// only copy part of the data or size <= readbuffer_chunksize
-		int part_size = size-offset;
-		memcpy (buf+offset, ftdi->readbuffer+ftdi->readbuffer_offset, part_size);
+        if (ret > 0) {
+            // data still fits in buf?
+            if (offset+ret <= size) {
+                memcpy (buf+offset, ftdi->readbuffer+ftdi->readbuffer_offset, ret);
+                offset += ret;
 
-		ftdi->readbuffer_offset += part_size;
-		ftdi->readbuffer_remaining = ret-part_size;
-		offset += part_size;
-		
-		// printf("Returning part: %d - size: %d - offset: %d - ret: %d - remaining: %d\n", part_size, size, offset, ret, ftdi->readbuffer_remaining);
+                if (offset == size)
+                    return offset;
+            } else {
+                // only copy part of the data or size <= readbuffer_chunksize
+                int part_size = size-offset;
+                memcpy (buf+offset, ftdi->readbuffer+ftdi->readbuffer_offset, part_size);
 
-		return offset;
-	    }
-	}
+                ftdi->readbuffer_offset += part_size;
+                ftdi->readbuffer_remaining = ret-part_size;
+                offset += part_size;
+
+                // printf("Returning part: %d - size: %d - offset: %d - ret: %d - remaining: %d\n", part_size, size, offset, ret, ftdi->readbuffer_remaining);
+
+                return offset;
+            }
+        }
     }
 
     // never reached
@@ -343,10 +343,10 @@ int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksi
 
     unsigned char *new_buf;
     if ((new_buf = (unsigned char *)realloc(ftdi->readbuffer, chunksize)) == NULL) {
-	ftdi->error_str = "out of memory for readbuffer";
-	return -1;
+        ftdi->error_str = "out of memory for readbuffer";
+        return -1;
     }
-    
+
     ftdi->readbuffer = new_buf;
     ftdi->readbuffer_chunksize = chunksize;
 
@@ -364,8 +364,8 @@ int ftdi_readt_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunk
 int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask) {
     unsigned short usb_val;
 
-    usb_val = bitmask;	// low byte: bitmask
-    usb_val += 1 << 8;	// high byte: enable flag
+    usb_val = bitmask; // low byte: bitmask
+    usb_val += 1 << 8; // high byte: enable flag
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, usb_val, 0, NULL, 0, ftdi->usb_timeout) != 0) {
         ftdi->error_str = "Unable to enter bitbang mode. Perhaps not a BM type chip?";
         return -1;
@@ -403,14 +403,14 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency) {
     unsigned short usb_val;
 
     if (latency < 1) {
-       ftdi->error_str = "Latency out of range. Only valid for 1-255";
-       return -1;
+        ftdi->error_str = "Latency out of range. Only valid for 1-255";
+        return -1;
     }
 
     usb_val = latency;
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0x09, usb_val, 0, NULL, 0, ftdi->usb_timeout) != 0) {
-       ftdi->error_str = "Unable to set latency timer";
-       return -2;
+        ftdi->error_str = "Unable to set latency timer";
+        return -2;
     }
     return 0;
 }
@@ -431,20 +431,20 @@ int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency) {
 void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom) {
     eeprom->vendor_id = 0403;
     eeprom->product_id = 6001;
-    
+
     eeprom->self_powered = 1;
     eeprom->remote_wakeup = 1;
     eeprom->BM_type_chip = 1;
-    
+
     eeprom->in_is_isochronous = 0;
     eeprom->out_is_isochronous = 0;
     eeprom->suspend_pull_downs = 0;
-    
+
     eeprom->use_serial = 0;
     eeprom->change_usb_version = 0;
     eeprom->usb_version = 200;
     eeprom->max_power = 0;
-    
+
     eeprom->manufacturer = NULL;
     eeprom->product = NULL;
     eeprom->serial = NULL;
@@ -463,21 +463,21 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output) {
     int size_check;
 
     if (eeprom->manufacturer != NULL)
-	manufacturer_size = strlen(eeprom->manufacturer);
+        manufacturer_size = strlen(eeprom->manufacturer);
     if (eeprom->product != NULL)
-	product_size = strlen(eeprom->product);
+        product_size = strlen(eeprom->product);
     if (eeprom->serial != NULL)
-	serial_size = strlen(eeprom->serial);
+        serial_size = strlen(eeprom->serial);
 
-    size_check = 128;	// eeprom is 128 bytes
-    size_check -= 28;	// 28 are always in use (fixed)
+    size_check = 128; // eeprom is 128 bytes
+    size_check -= 28; // 28 are always in use (fixed)
     size_check -= manufacturer_size*2;
     size_check -= product_size*2;
     size_check -= serial_size*2;
 
     // eeprom size exceeded?
     if (size_check < 0)
-	return (-1);
+        return (-1);
 
     // empty eeprom
     memset (output, 0, 128);
@@ -493,11 +493,11 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output) {
 
     // Addr 06: Device release number (0400h for BM features)
     output[0x06] = 0x00;
-    
+
     if (eeprom->BM_type_chip == 1)
-	output[0x07] = 0x04;
+        output[0x07] = 0x04;
     else
-	output[0x07] = 0x02;
+        output[0x07] = 0x02;
 
     // Addr 08: Config descriptor
     // Bit 1: remote wakeup if 1
@@ -505,14 +505,15 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output) {
     //
     j = 0;
     if (eeprom->self_powered == 1)
-	j = j | 1;
+        j = j | 1;
     if (eeprom->remote_wakeup == 1)
-	j = j | 2;
+        j = j | 2;
     output[0x08] = j;
 
     // Addr 09: Max power consumption: max power = value * 2 mA
-    output[0x09] = eeprom->max_power;;
-    
+    output[0x09] = eeprom->max_power;
+    ;
+
     // Addr 0A: Chip configuration
     // Bit 7: 0 - reserved
     // Bit 6: 0 - reserved
@@ -525,25 +526,25 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output) {
     //
     j = 0;
     if (eeprom->in_is_isochronous == 1)
-	j = j | 1;
+        j = j | 1;
     if (eeprom->out_is_isochronous == 1)
-	j = j | 2;
+        j = j | 2;
     if (eeprom->suspend_pull_downs == 1)
-	j = j | 4;
+        j = j | 4;
     if (eeprom->use_serial == 1)
-	j = j | 8;
+        j = j | 8;
     if (eeprom->change_usb_version == 1)
-	j = j | 16;
+        j = j | 16;
     output[0x0A] = j;
-    
+
     // Addr 0B: reserved
     output[0x0B] = 0x00;
-    
+
     // Addr 0C: USB version low byte when 0x0A bit 4 is set
     // Addr 0D: USB version high byte when 0x0A bit 4 is set
     if (eeprom->change_usb_version == 1) {
         output[0x0C] = eeprom->usb_version;
-	output[0x0D] = eeprom->usb_version >> 8;
+        output[0x0D] = eeprom->usb_version >> 8;
     }
 
 
@@ -563,47 +564,47 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output) {
 
     // Dynamic content
     output[0x14] = manufacturer_size*2 + 2;
-    output[0x15] = 0x03;	// type: string
-    
+    output[0x15] = 0x03; // type: string
+
     i = 0x16, j = 0;
-    
+
     // Output manufacturer
     for (j = 0; j < manufacturer_size; j++) {
-	output[i] = eeprom->manufacturer[j], i++;
-	output[i] = 0x00, i++;
+        output[i] = eeprom->manufacturer[j], i++;
+        output[i] = 0x00, i++;
     }
 
     // Output product name
-    output[0x10] = i + 0x80; 	// calculate offset
+    output[0x10] = i + 0x80;  // calculate offset
     output[i] = product_size*2 + 2, i++;
     output[i] = 0x03, i++;
     for (j = 0; j < product_size; j++) {
-	output[i] = eeprom->product[j], i++;
-	output[i] = 0x00, i++;
+        output[i] = eeprom->product[j], i++;
+        output[i] = 0x00, i++;
     }
-    
+
     // Output serial
-    output[0x12] = i + 0x80;	// calculate offset
+    output[0x12] = i + 0x80; // calculate offset
     output[i] = serial_size*2 + 2, i++;
     output[i] = 0x03, i++;
     for (j = 0; j < serial_size; j++) {
-	output[i] = eeprom->serial[j], i++;
-	output[i] = 0x00, i++;
+        output[i] = eeprom->serial[j], i++;
+        output[i] = 0x00, i++;
     }
 
     // calculate checksum
     checksum = 0xAAAA;
-    
-    for (i = 0; i < 63; i++) {
-	value = output[i*2];
-	value += output[(i*2)+1] << 8;
 
-	checksum = value^checksum;
-	checksum = (checksum << 1) | (checksum >> 15);	
+    for (i = 0; i < 63; i++) {
+        value = output[i*2];
+        value += output[(i*2)+1] << 8;
+
+        checksum = value^checksum;
+        checksum = (checksum << 1) | (checksum >> 15);
     }
 
     output[0x7E] = checksum;
-    output[0x7F] = checksum >> 8;    
+    output[0x7F] = checksum >> 8;
 
     return size_check;
 }
@@ -614,8 +615,8 @@ int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom) {
 
     for (i = 0; i < 64; i++) {
         if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, i, eeprom+(i*2), 2, ftdi->usb_timeout) != 2) {
-           ftdi->error_str = "Reading eeprom failed";
-           return -1;
+            ftdi->error_str = "Reading eeprom failed";
+            return -1;
         }
     }
 
@@ -628,12 +629,12 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom) {
     int i;
 
     for (i = 0; i < 64; i++) {
-       usb_val = eeprom[i*2];
-       usb_val += eeprom[(i*2)+1] << 8;
-       if (usb_control_msg(ftdi->usb_dev, 0x40, 0x91, usb_val, i, NULL, 0, ftdi->usb_timeout) != 0) {
-          ftdi->error_str = "Unable to write eeprom";
-          return -1;
-       }
+        usb_val = eeprom[i*2];
+        usb_val += eeprom[(i*2)+1] << 8;
+        if (usb_control_msg(ftdi->usb_dev, 0x40, 0x91, usb_val, i, NULL, 0, ftdi->usb_timeout) != 0) {
+            ftdi->error_str = "Unable to write eeprom";
+            return -1;
+        }
     }
 
     return 0;
