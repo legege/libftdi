@@ -3,9 +3,6 @@
 /* Define if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* C++ compiler supports template repository */
-#undef HAVE_TEMPLATE_REPOSITORY
-
 /* Name of package */
 #undef PACKAGE
 

@@ -10,7 +10,8 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-####### kdevelop will overwrite this part!!! (begin)##########
+# not a GNU package. You can remove this line, if
+# have all needed files, that a GNU package needs
 
 
 SHELL = @SHELL@
@@ -59,207 +60,42 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-build_alias = @build_alias@
-build_triplet = @build@
 host_alias = @host_alias@
 host_triplet = @host@
-target_alias = @target_alias@
-target_triplet = @target@
-ARTSCCONFIG = @ARTSCCONFIG@
 AS = @AS@
-AUTODIRS = @AUTODIRS@
 CC = @CC@
-CONF_FILES = @CONF_FILES@
-CPP = @CPP@
-CXX = @CXX@
-CXXCPP = @CXXCPP@
-DCOPIDL = @DCOPIDL@
-DCOPIDL2CPP = @DCOPIDL2CPP@
-DCOP_DEPENDENCIES = @DCOP_DEPENDENCIES@
 DLLTOOL = @DLLTOOL@
-DOXYGEN = @DOXYGEN@
-DOXYGEN_PROJECT_NAME = @DOXYGEN_PROJECT_NAME@
-DOXYGEN_PROJECT_NUMBER = @DOXYGEN_PROJECT_NUMBER@
-DPMSINC = @DPMSINC@
-DPMSLIB = @DPMSLIB@
 ECHO = @ECHO@
 EXEEXT = @EXEEXT@
-FRAMEWORK_COREAUDIO = @FRAMEWORK_COREAUDIO@
-GCJ = @GCJ@
-GCJFLAGS = @GCJFLAGS@
-GLINC = @GLINC@
-GLLIB = @GLLIB@
-GMSGFMT = @GMSGFMT@
 HAVELIBUSB = @HAVELIBUSB@
-IDL = @IDL@
-IDL_DEPENDENCIES = @IDL_DEPENDENCIES@
-JAR = @JAR@
-JAVAC = @JAVAC@
-JAVAH = @JAVAH@
-JVMLIBS = @JVMLIBS@
-KDECONFIG = @KDECONFIG@
-KDE_CXXFLAGS = @KDE_CXXFLAGS@
-KDE_EXTRA_RPATH = @KDE_EXTRA_RPATH@
-KDE_HAS_DOXYGEN = @KDE_HAS_DOXYGEN@
-KDE_HAVE_DOT = @KDE_HAVE_DOT@
-KDE_INCLUDES = @KDE_INCLUDES@
-KDE_LDFLAGS = @KDE_LDFLAGS@
-KDE_MT_LDFLAGS = @KDE_MT_LDFLAGS@
-KDE_MT_LIBS = @KDE_MT_LIBS@
-KDE_PLUGIN = @KDE_PLUGIN@
-KDE_RPATH = @KDE_RPATH@
-KDE_USE_CLOSURE_FALSE = @KDE_USE_CLOSURE_FALSE@
-KDE_USE_CLOSURE_TRUE = @KDE_USE_CLOSURE_TRUE@
-KDE_USE_FINAL_FALSE = @KDE_USE_FINAL_FALSE@
-KDE_USE_FINAL_TRUE = @KDE_USE_FINAL_TRUE@
-KDE_XSL_STYLESHEET = @KDE_XSL_STYLESHEET@
-LEX = @LEX@
-LEXLIB = @LEXLIB@
-LIBBZ2 = @LIBBZ2@
-LIBCOMPAT = @LIBCOMPAT@
-LIBCRYPT = @LIBCRYPT@
-LIBDL = @LIBDL@
-LIBGEN = @LIBGEN@
-LIBJPEG = @LIBJPEG@
-LIBMICO = @LIBMICO@
-LIBOBJS = @LIBOBJS@
-LIBPNG = @LIBPNG@
-LIBPTHREAD = @LIBPTHREAD@
-LIBPYTHON = @LIBPYTHON@
-LIBQIMGIO = @LIBQIMGIO@
-LIBRESOLV = @LIBRESOLV@
-LIBSHADOW = @LIBSHADOW@
-LIBSM = @LIBSM@
-LIBSOCKET = @LIBSOCKET@
-LIBSSL = @LIBSSL@
-LIBTIFF = @LIBTIFF@
 LIBTOOL = @LIBTOOL@
-LIBUCB = @LIBUCB@
-LIBUTIL = @LIBUTIL@
-LIBXINERAMA = @LIBXINERAMA@
-LIBZ = @LIBZ@
-LIB_KAB = @LIB_KAB@
-LIB_KABC = @LIB_KABC@
-LIB_KDECORE = @LIB_KDECORE@
-LIB_KDEPRINT = @LIB_KDEPRINT@
-LIB_KDEUI = @LIB_KDEUI@
-LIB_KFILE = @LIB_KFILE@
-LIB_KFM = @LIB_KFM@
-LIB_KHTML = @LIB_KHTML@
-LIB_KIMGIO = @LIB_KIMGIO@
-LIB_KIO = @LIB_KIO@
-LIB_KPARTS = @LIB_KPARTS@
-LIB_KSPELL = @LIB_KSPELL@
-LIB_KSYCOCA = @LIB_KSYCOCA@
-LIB_POLL = @LIB_POLL@
-LIB_QPE = @LIB_QPE@
-LIB_QT = @LIB_QT@
-LIB_QTOPIA = @LIB_QTOPIA@
-LIB_SMB = @LIB_SMB@
-LIB_X11 = @LIB_X11@
-LIB_XEXT = @LIB_XEXT@
 LN_S = @LN_S@
 MAKEINFO = @MAKEINFO@
-MCOPIDL = @MCOPIDL@
-MEINPROC = @MEINPROC@
-MICO_INCLUDES = @MICO_INCLUDES@
-MICO_LDFLAGS = @MICO_LDFLAGS@
-MOC = @MOC@
-MSGFMT = @MSGFMT@
-NOOPT_CFLAGS = @NOOPT_CFLAGS@
-NOOPT_CXXFLAGS = @NOOPT_CXXFLAGS@
-NOREPO = @NOREPO@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
-PAMLIBS = @PAMLIBS@
-PASSWDLIBS = @PASSWDLIBS@
-PYTHONINC = @PYTHONINC@
-PYTHONLIB = @PYTHONLIB@
-PYTHONMODDIR = @PYTHONMODDIR@
-QTDOCDIR = @QTDOCDIR@
-QTE_NORTTI = @QTE_NORTTI@
-QTOPIA_INCLUDES = @QTOPIA_INCLUDES@
-QT_INCLUDES = @QT_INCLUDES@
-QT_LDFLAGS = @QT_LDFLAGS@
 RANLIB = @RANLIB@
-RC = @RC@
-REPO = @REPO@
-SETUIDFLAGS = @SETUIDFLAGS@
-SSL_INCLUDES = @SSL_INCLUDES@
-SSL_LDFLAGS = @SSL_LDFLAGS@
 STRIP = @STRIP@
-TOPSUBDIRS = @TOPSUBDIRS@
-UIC = @UIC@
-UIC_TR = @UIC_TR@
-USER_INCLUDES = @USER_INCLUDES@
-USER_LDFLAGS = @USER_LDFLAGS@
-USE_EXCEPTIONS = @USE_EXCEPTIONS@
-USE_RTTI = @USE_RTTI@
-USE_THREADS = @USE_THREADS@
 VERSION = @VERSION@
-WOVERLOADED_VIRTUAL = @WOVERLOADED_VIRTUAL@
-XGETTEXT = @XGETTEXT@
-XPMINC = @XPMINC@
-XPMLIB = @XPMLIB@
-X_EXTRA_LIBS = @X_EXTRA_LIBS@
-X_INCLUDES = @X_INCLUDES@
-X_LDFLAGS = @X_LDFLAGS@
-X_PRE_LIBS = @X_PRE_LIBS@
-all_includes = @all_includes@
-all_libraries = @all_libraries@
-idldir = @idldir@
-jni_includes = @jni_includes@
-kde_appsdir = @kde_appsdir@
-kde_bindir = @kde_bindir@
-kde_confdir = @kde_confdir@
-kde_datadir = @kde_datadir@
-kde_htmldir = @kde_htmldir@
-kde_icondir = @kde_icondir@
-kde_includes = @kde_includes@
-kde_libraries = @kde_libraries@
-kde_libs_htmldir = @kde_libs_htmldir@
-kde_libs_prefix = @kde_libs_prefix@
-kde_locale = @kde_locale@
-kde_mimedir = @kde_mimedir@
-kde_moduledir = @kde_moduledir@
-kde_qtver = @kde_qtver@
-kde_servicesdir = @kde_servicesdir@
-kde_servicetypesdir = @kde_servicetypesdir@
-kde_sounddir = @kde_sounddir@
-kde_styledir = @kde_styledir@
-kde_templatesdir = @kde_templatesdir@
-kde_wallpaperdir = @kde_wallpaperdir@
-kde_widgetdir = @kde_widgetdir@
-libdir = @libdir@
-micodir = @micodir@
-qt_includes = @qt_includes@
-qt_libraries = @qt_libraries@
-x_includes = @x_includes@
-x_libraries = @x_libraries@
 
-SUBDIRS = ftdi 
+AUTOMAKE_OPTIONS = foreign 1.4
 
-EXTRA_DIST = libftdi.kdevprj admin AUTHORS COPYING ChangeLog INSTALL README libftdi.spec libftdi-config.in configure.in.in special.m4.in
+SUBDIRS = src
 
-####### kdevelop will overwrite this part!!! (end)############
-# not a GNU package. You can remove this line, if
-# have all needed files, that a GNU package needs
-AUTOMAKE_OPTIONS = foreign
+EXTRA_DIST = libftdi.spec COPYING.LIB
 
-bin_SCRIPTS = libftdi-config
-BUILT_SOURCES = libftdi-config
-
-MAINTAINERCLEANFILES = subdirs configure.in acinclude.m4 configure.files
+# Install the pkg-config file:
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libftdi.pc
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-mkinstalldirs = $(SHELL) $(top_srcdir)/admin/mkinstalldirs
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES =  libftdi-config
-SCRIPTS =  $(bin_SCRIPTS)
+CONFIG_CLEAN_FILES =  libftdi.pc
+DATA =  $(pkgconfig_DATA)
 
-DIST_COMMON =  README ./stamp-h.in AUTHORS COPYING ChangeLog INSTALL \
-Makefile.am Makefile.in acinclude.m4 aclocal.m4 config.h.in configure \
-configure.in libftdi-config.in
+DIST_COMMON =  ./stamp-h.in COPYING.LIB Makefile.am Makefile.in \
+aclocal.m4 config.guess config.h.in config.sub configure configure.in \
+install-sh libftdi.pc.in ltmain.sh missing mkinstalldirs
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
@@ -275,7 +111,7 @@ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
-$(ACLOCAL_M4):  configure.in  acinclude.m4
+$(ACLOCAL_M4):  configure.in 
 	cd $(srcdir) && $(ACLOCAL)
 
 config.status: $(srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
@@ -310,26 +146,26 @@ distclean-hdr:
 	-rm -f config.h
 
 maintainer-clean-hdr:
-libftdi-config: $(top_builddir)/config.status libftdi-config.in
+libftdi.pc: $(top_builddir)/config.status libftdi.pc.in
 	cd $(top_builddir) && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
-install-binSCRIPTS: $(bin_SCRIPTS)
+install-pkgconfigDATA: $(pkgconfig_DATA)
 	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
-	@list='$(bin_SCRIPTS)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    echo " $(INSTALL_SCRIPT) $$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`"; \
-	    $(INSTALL_SCRIPT) $$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`; \
-	  else if test -f $(srcdir)/$$p; then \
-	    echo " $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`"; \
-	    $(INSTALL_SCRIPT) $(srcdir)/$$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`; \
-	  else :; fi; fi; \
+	$(mkinstalldirs) $(DESTDIR)$(pkgconfigdir)
+	@list='$(pkgconfig_DATA)'; for p in $$list; do \
+	  if test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(pkgconfigdir)/$$p"; \
+	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(pkgconfigdir)/$$p; \
+	  else if test -f $$p; then \
+	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(pkgconfigdir)/$$p"; \
+	    $(INSTALL_DATA) $$p $(DESTDIR)$(pkgconfigdir)/$$p; \
+	  fi; fi; \
 	done
 
-uninstall-binSCRIPTS:
+uninstall-pkgconfigDATA:
 	@$(NORMAL_UNINSTALL)
-	list='$(bin_SCRIPTS)'; for p in $$list; do \
-	  rm -f $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`; \
+	list='$(pkgconfig_DATA)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(pkgconfigdir)/$$p; \
 	done
 
 # This directory's subdirectories are mostly independent; you can cd
@@ -484,7 +320,6 @@ distdir: $(DISTFILES)
 	      || exit 1; \
 	  fi; \
 	done
-	$(MAKE) $(AM_MAKEFLAGS) top_distdir="$(top_distdir)" distdir="$(distdir)" dist-hook
 info-am:
 info: info-recursive
 dvi-am:
@@ -496,24 +331,24 @@ installcheck: installcheck-recursive
 all-recursive-am: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
-install-exec-am: install-binSCRIPTS
+install-exec-am:
 install-exec: install-exec-recursive
 
-install-data-am:
+install-data-am: install-pkgconfigDATA
 install-data: install-data-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-recursive
-uninstall-am: uninstall-binSCRIPTS
+uninstall-am: uninstall-pkgconfigDATA
 uninstall: uninstall-recursive
-all-am: Makefile $(SCRIPTS) config.h
+all-am: Makefile $(DATA) config.h
 all-redirect: all-recursive-am
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
 installdirs: installdirs-recursive
 installdirs-am:
-	$(mkinstalldirs)  $(DESTDIR)$(bindir)
+	$(mkinstalldirs)  $(DESTDIR)$(pkgconfigdir)
 
 
 mostlyclean-generic:
@@ -525,7 +360,6 @@ distclean-generic:
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
 
 maintainer-clean-generic:
-	-test -z "$(BUILT_SOURCES)$(MAINTAINERCLEANFILES)" || rm -f $(BUILT_SOURCES) $(MAINTAINERCLEANFILES)
 mostlyclean-am:  mostlyclean-hdr mostlyclean-tags mostlyclean-generic
 
 mostlyclean: mostlyclean-recursive
@@ -549,7 +383,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f config.status
 
 .PHONY: mostlyclean-hdr distclean-hdr clean-hdr maintainer-clean-hdr \
-uninstall-binSCRIPTS install-binSCRIPTS install-data-recursive \
+uninstall-pkgconfigDATA install-pkgconfigDATA install-data-recursive \
 uninstall-data-recursive install-exec-recursive \
 uninstall-exec-recursive installdirs-recursive uninstalldirs-recursive \
 all-recursive check-recursive installcheck-recursive info-recursive \
@@ -562,24 +396,6 @@ install uninstall-am uninstall all-redirect all-am all installdirs-am \
 installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
-
-libftdi-config: libftdi-config.in
-
-$(top_srcdir)/configure.in: configure.in.in $(top_srcdir)/subdirs
-	cd $(top_srcdir) && $(MAKE) -f admin/Makefile.common configure.in ;
-
-$(top_srcdir)/subdirs:
-	cd $(top_srcdir) && $(MAKE) -f admin/Makefile.common subdirs
-
-$(top_srcdir)/acinclude.m4: $(top_srcdir)/admin/acinclude.m4.in $(top_srcdir)/special.m4.in $(top_srcdir)/admin/libtool.m4.in
-	@cd $(top_srcdir) && cat admin/acinclude.m4.in special.m4.in admin/libtool.m4.in > acinclude.m4
-
-package-messages:
-	$(MAKE) -f admin/Makefile.common package-messages
-
-dist-hook:
-	cd $(top_distdir) && perl admin/am_edit -padmin
-	cd $(top_distdir) && $(MAKE) -f admin/Makefile.common subdirs
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
