@@ -287,6 +287,187 @@ int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency) {
 }
 
 
+void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom) {
+    eeprom->vendor_id = 0403;
+    eeprom->product_id = 6001;
+    
+    eeprom->self_powered = 1;
+    eeprom->remote_wakeup = 1;
+    eeprom->BM_type_chip = 1;
+    
+    eeprom->in_is_isochronous = 0;
+    eeprom->out_is_isochronous = 0;
+    eeprom->suspend_pull_downs = 0;
+    
+    eeprom->use_serial = 0;
+    eeprom->change_usb_version = 0;
+    eeprom->usb_version = 200;
+    eeprom->max_power = 0;
+    
+    eeprom->manufacturer = NULL;
+    eeprom->product = NULL;
+    eeprom->serial = NULL;
+}
+
+
+/*
+    ftdi_eeprom_build return codes:
+     0: all fine
+    -1: eeprom size (128 bytes) exceeded by custom strings
+*/
+int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output) {
+    unsigned char i, j;
+    unsigned short checksum, value;
+    unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
+    int size_check;
+
+    if (eeprom->manufacturer != NULL)
+	manufacturer_size = strlen(eeprom->manufacturer);
+    if (eeprom->product != NULL)
+	product_size = strlen(eeprom->product);
+    if (eeprom->serial != NULL)
+	serial_size = strlen(eeprom->serial);
+
+    size_check = 128;	// eeprom is 128 bytes
+    size_check -= 28;	// 28 are always in use (fixed)
+    size_check -= manufacturer_size*2;
+    size_check -= product_size*2;
+    size_check -= serial_size*2;
+
+    // eeprom size exceeded?
+    if (size_check < 0)
+	return (-1);
+
+    // empty eeprom
+    memset (output, 0, 128);
+
+    // Addr 00: Stay 00 00
+    // Addr 02: Vendor ID
+    output[0x02] = eeprom->vendor_id;
+    output[0x03] = eeprom->vendor_id >> 8;
+
+    // Addr 04: Product ID
+    output[0x04] = eeprom->product_id;
+    output[0x05] = eeprom->product_id >> 8;
+
+    // Addr 06: Device release number (0400h for BM features)
+    output[0x06] = 0x00;
+    
+    if (eeprom->BM_type_chip == 1)
+	output[0x07] = 0x04;
+    else
+	output[0x07] = 0x02;
+
+    // Addr 08: Config descriptor
+    // Bit 1: remote wakeup if 1
+    // Bit 0: self powered if 1
+    //
+    j = 0;
+    if (eeprom->self_powered == 1)
+	j = j | 1;
+    if (eeprom->remote_wakeup == 1)
+	j = j | 2;
+    output[0x08] = j;
+
+    // Addr 09: Max power consumption: max power = value * 2 mA
+    output[0x09] = eeprom->max_power;;
+    
+    // Addr 0A: Chip configuration
+    // Bit 7: 0 - reserved
+    // Bit 6: 0 - reserved
+    // Bit 5: 0 - reserved
+    // Bit 4: 1 - Change USB version
+    // Bit 3: 1 - Use the serial number string
+    // Bit 2: 1 - Enable suspend pull downs for lower power
+    // Bit 1: 1 - Out EndPoint is Isochronous
+    // Bit 0: 1 - In EndPoint is Isochronous
+    //
+    j = 0;
+    if (eeprom->in_is_isochronous == 1)
+	j = j | 1;
+    if (eeprom->out_is_isochronous == 1)
+	j = j | 2;
+    if (eeprom->suspend_pull_downs == 1)
+	j = j | 4;
+    if (eeprom->use_serial == 1)
+	j = j | 8;
+    if (eeprom->change_usb_version == 1)
+	j = j | 16;
+    output[0x0A] = j;
+    
+    // Addr 0B: reserved
+    output[0x0B] = 0x00;
+    
+    // Addr 0C: USB version low byte when 0x0A bit 4 is set
+    // Addr 0D: USB version high byte when 0x0A bit 4 is set
+    if (eeprom->change_usb_version == 1) {
+        output[0x0C] = eeprom->usb_version;
+	output[0x0D] = eeprom->usb_version >> 8;
+    }
+
+
+    // Addr 0E: Offset of the manufacturer string + 0x80
+    output[0x0E] = 0x14 + 0x80;
+
+    // Addr 0F: Length of manufacturer string
+    output[0x0F] = manufacturer_size*2 + 2;
+
+    // Addr 10: Offset of the product string + 0x80, calculated later
+    // Addr 11: Length of product string
+    output[0x11] = product_size*2 + 2;
+
+    // Addr 12: Offset of the serial string + 0x80, calculated later
+    // Addr 13: Length of serial string
+    output[0x13] = serial_size*2 + 2;
+
+    // Dynamic content
+    output[0x14] = manufacturer_size;
+    output[0x15] = 0x03;	// type: string
+    
+    i = 0x16, j = 0;
+    
+    // Output manufacturer
+    for (j = 0; j < manufacturer_size; j++) {
+	output[i] = eeprom->manufacturer[j], i++;
+	output[i] = 0x00, i++;
+    }
+
+    // Output product name
+    output[0x10] = i + 0x80; 	// calculate offset
+    output[i] = product_size*2 + 2, i++;
+    output[i] = 0x03, i++;
+    for (j = 0; j < product_size; j++) {
+	output[i] = eeprom->product[j], i++;
+	output[i] = 0x00, i++;
+    }
+    
+    // Output serial
+    output[0x12] = i + 0x80;	// calculate offset
+    output[i] = serial_size*2 + 2, i++;
+    output[i] = 0x03, i++;
+    for (j = 0; j < serial_size; j++) {
+	output[i] = eeprom->serial[j], i++;
+	output[i] = 0x00, i++;
+    }
+
+    // calculate checksum
+    checksum = 0xAAAA;
+    
+    for (i = 0; i < 63; i++) {
+	value = output[i*2];
+	value += output[(i*2)+1] << 8;
+
+	checksum = value^checksum;
+	checksum = (checksum << 1) | (checksum >> 15);	
+    }
+
+    output[0x7E] = checksum;
+    output[0x7F] = checksum >> 8;    
+
+    return 0;
+}
+
+
 int ftdi_read_eeprom(struct ftdi_context *ftdi, char *eeprom) {
     int i;
 
