@@ -1,5 +1,6 @@
 New in 0.6
 ----------
+* Small improvement to the baudrate calculation code (Emil)
 * Error handling cleanup (Rogier Wolff)
 * Fix for kernel 2.6 USB subsystem. Detects kernel at runtime.
 

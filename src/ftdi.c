@@ -269,7 +269,7 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
         int baud_diff;
 
         // Round up to supported divisor value
-        if (try_divisor < 8) {
+        if (try_divisor <= 8) {
             // Round up to minimum supported divisor
             try_divisor = 8;
         } else if (ftdi->type != TYPE_AM && try_divisor < 12) {
