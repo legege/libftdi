@@ -189,7 +189,7 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate) {
 }
 
 
-int ftdi_write_data(struct ftdi_context *ftdi, char *buf, int size) {
+int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
     int ret;
     int offset = 0;
     while (offset < size) {
@@ -209,7 +209,7 @@ int ftdi_write_data(struct ftdi_context *ftdi, char *buf, int size) {
 }
 
 
-int ftdi_read_data(struct ftdi_context *ftdi, char *buf, int size) {
+int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
     /*
       unsigned char buf[64];
       int read_bytes;
@@ -468,7 +468,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output) {
 }
 
 
-int ftdi_read_eeprom(struct ftdi_context *ftdi, char *eeprom) {
+int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom) {
     int i;
 
     for (i = 0; i < 64; i++) {
@@ -482,7 +482,7 @@ int ftdi_read_eeprom(struct ftdi_context *ftdi, char *eeprom) {
 }
 
 
-int ftdi_write_eeprom(struct ftdi_context *ftdi, char *eeprom) {
+int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom) {
     unsigned short usb_val;
     int i;
 
