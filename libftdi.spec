@@ -1,6 +1,6 @@
 Summary:   Library to program and control the FTDI USB controller
 Name:      libftdi
-Version:   0.4
+Version:   0.5
 Release:   1
 Copyright: LGPL
 Group:     System Environment/Libraries
@@ -42,6 +42,7 @@ rm -fr $RPM_BUILD_ROOT
 
 %files devel
 %defattr(-,root,root)
+%{prefix}/bin/libftdi-config
 %{prefix}/lib/libftdi.*a
 %{prefix}/include/*.h
 %{prefix}/lib/pkgconfig/*.pc

@@ -1,7 +1,7 @@
 AC_INIT(configure.in)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(libftdi, 0.4)
+AM_INIT_AUTOMAKE(libftdi, 0.5)
 
 AC_LANG_C
 AC_PROG_CC
@@ -32,4 +32,5 @@ else
    AC_MSG_RESULT(yes)
 fi
 
+AC_OUTPUT([libftdi-config],[chmod a+x libftdi-config])
 AC_OUTPUT(Makefile src/Makefile libftdi.pc)
