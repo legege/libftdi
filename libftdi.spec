@@ -8,6 +8,7 @@ Vendor:    Intra2net AG
 Source:    %{name}-%{version}.tar.gz
 Buildroot: /tmp/%{name}-%{version}-root
 Requires:  libusb
+BuildRequires: libusb, libusb-devel
 Prefix:    /usr
 
 %package   devel
