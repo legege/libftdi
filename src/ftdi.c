@@ -56,7 +56,7 @@ int ftdi_init(struct ftdi_context *ftdi)
     /* All fine. Now allocate the readbuffer */
     return ftdi_read_data_set_chunksize(ftdi, 4096);
 }
-/* ftdi_select_interface
+/* ftdi_set_interface
    Call after ftdi_init
    Open selected channels on a chip, otherwise use first channel
     0: all fine
