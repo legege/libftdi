@@ -443,7 +443,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output) {
     output[0x13] = serial_size*2 + 2;
 
     // Dynamic content
-    output[0x14] = manufacturer_size;
+    output[0x14] = manufacturer_size*2 + 2;
     output[0x15] = 0x03;	// type: string
     
     i = 0x16, j = 0;
@@ -529,4 +529,3 @@ int ftdi_erase_eeprom(struct ftdi_context *ftdi) {
 
     return 0;
 }
-
