@@ -312,7 +312,7 @@ void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom) {
 
 /*
     ftdi_eeprom_build return codes:
-     0: all fine
+    positive value: used eeprom size
     -1: eeprom size (128 bytes) exceeded by custom strings
 */
 int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output) {
@@ -464,7 +464,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output) {
     output[0x7E] = checksum;
     output[0x7F] = checksum >> 8;    
 
-    return 0;
+    return size_check;
 }
 
 
