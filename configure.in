@@ -122,6 +122,7 @@ AC_SUBST(AUTODIRS)
 KDE_CREATE_SUBDIRSLIST
 AC_CONFIG_FILES([ Makefile ])
 AC_CONFIG_FILES([ ftdi/Makefile ])
+AC_OUTPUT([libftdi-config], [chmod a+x libftdi-config])
 AC_OUTPUT
 if test "$all_tests" = "bad"; then
   if test ! "$cache_file" = "/dev/null"; then

@@ -2,12 +2,17 @@
 
 SUBDIRS = ftdi 
 
-EXTRA_DIST = libftdi.kdevprj admin AUTHORS COPYING ChangeLog INSTALL README libftdi.spec 
+EXTRA_DIST = libftdi.kdevprj admin AUTHORS COPYING ChangeLog INSTALL README libftdi.spec libftdi-config.in configure.in.in special.m4.in
 
 ####### kdevelop will overwrite this part!!! (end)############
 # not a GNU package. You can remove this line, if
 # have all needed files, that a GNU package needs
 AUTOMAKE_OPTIONS = foreign
+
+bin_SCRIPTS = libftdi-config
+BUILT_SOURCES = libftdi-config
+
+libftdi-config: libftdi-config.in
 
 $(top_srcdir)/configure.in: configure.in.in $(top_srcdir)/subdirs
 	cd $(top_srcdir) && $(MAKE) -f admin/Makefile.common configure.in ;
