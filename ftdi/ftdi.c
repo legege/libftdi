@@ -13,16 +13,26 @@
  *   version 2.1 as published by the Free Software Foundation;             *
  *                                                                         *
  ***************************************************************************/
-
-#include <usb.h>
+#define _GNU_SOURCE
 
 #include "ftdi.h"
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+/* Internal USB devfs functions. Do not use outside libftdi */
+static struct usbdevfs_urb * ftdi_usbdev_alloc_urb(int iso_packets);
+static int ftdi_usbdev_submit_urb(int fd, struct usbdevfs_urb *urb);
+static int ftdi_usbdev_reap_urb_ndelay(int fd, struct usbdevfs_urb **urb_return);
+
 
 /* ftdi_init return codes:
    0: all fine
   -1: couldn't allocate read buffer
 */
-int ftdi_init(struct ftdi_context *ftdi) {
+int ftdi_init(struct ftdi_context *ftdi)
+{
     ftdi->usb_dev = NULL;
     ftdi->usb_read_timeout = 5000;
     ftdi->usb_write_timeout = 5000;
@@ -44,23 +54,35 @@ int ftdi_init(struct ftdi_context *ftdi) {
 
     ftdi->error_str = NULL;
 
+    ftdi->urb = ftdi_usbdev_alloc_urb(0);
+    if (!ftdi->urb) {
+        ftdi->error_str = "out of memory for read URB";
+        return -1;
+    }
+          
     // all fine. Now allocate the readbuffer
     return ftdi_read_data_set_chunksize(ftdi, 4096);
 }
 
 
-void ftdi_deinit(struct ftdi_context *ftdi) {
+void ftdi_deinit(struct ftdi_context *ftdi)
+{
     if (ftdi->readbuffer != NULL) {
         free(ftdi->readbuffer);
         ftdi->readbuffer = NULL;
     }
+    
+    if (ftdi->urb != NULL) {
+        free (ftdi->urb);
+        ftdi->urb = NULL;
+    }
 }
 
 
-void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usb) {
+void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usb)
+{
     ftdi->usb_dev = usb;
 }
-
 
 /* ftdi_usb_open return codes:
    0: all fine
@@ -353,7 +375,9 @@ int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunk
 
 
 int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
-    int offset = 0, ret = 1;
+    struct timeval tv, tv_ref, tv_now;
+    struct usbdevfs_urb *returned_urb;
+    int offset = 0, ret = 1, waiting;
 
     // everything we want is still in the readbuffer?
     if (size <= ftdi->readbuffer_remaining) {
@@ -374,18 +398,83 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
         // Fix offset
         offset += ftdi->readbuffer_remaining;
     }
+    
     // do the actual USB read
     while (offset < size && ret > 0) {
         ftdi->readbuffer_remaining = 0;
         ftdi->readbuffer_offset = 0;
-        /* returns how much received */
-        ret = usb_bulk_read (ftdi->usb_dev, ftdi->out_ep, ftdi->readbuffer, ftdi->readbuffer_chunksize, ftdi->usb_read_timeout);
-
-        if (ret == -1) {
-            ftdi->error_str = "bulk read failed";
+        
+        /*
+            // Old read functions, not status byte safe!
+            // returns how much received
+            ret = usb_bulk_read (ftdi->usb_dev, ftdi->out_ep, ftdi->readbuffer,
+                           ftdi->readbuffer_chunksize, ftdi->usb_read_timeout);
+        */
+        
+        /* Real userspace URB processing to cope with
+           a race condition where two or more status bytes
+           could already be in the kernel USB buffer */
+        memset(ftdi->urb, 0, sizeof(struct usbdevfs_urb));
+        
+        ftdi->urb->type = USBDEVFS_URB_TYPE_BULK;
+        ftdi->urb->endpoint = ftdi->out_ep | USB_DIR_IN;
+        ftdi->urb->buffer = ftdi->readbuffer;
+        ftdi->urb->buffer_length = ftdi->readbuffer_chunksize;
+    
+        /* Submit URB to USB layer */
+        if (ftdi_usbdev_submit_urb(ftdi->usb_dev->fd, ftdi->urb) == -1) {
+            ftdi->error_str = "ftdi_usbdev_submit_urb for bulk read failed";
             return -1;
         }
-
+        
+        /* Wait for the result to come in.
+           Timer stuff is borrowed from libusb's interrupt transfer */
+        gettimeofday(&tv_ref, NULL);
+        tv_ref.tv_sec = tv_ref.tv_sec + ftdi->usb_read_timeout / 1000;
+        tv_ref.tv_usec = tv_ref.tv_usec + (ftdi->usb_read_timeout % 1000) * 1000;
+        
+        if (tv_ref.tv_usec > 1e6) {
+            tv_ref.tv_usec -= 1e6;
+            tv_ref.tv_sec++;
+        }
+        
+        waiting = 1;
+        memset (&tv, 0, sizeof (struct timeval));
+        while (((ret = ftdi_usbdev_reap_urb_ndelay(ftdi->usb_dev->fd, &returned_urb)) == -1) && waiting) {
+            tv.tv_sec = 0;
+            tv.tv_usec = 1000; // 1 msec
+            select(0, NULL, NULL, NULL, &tv); //sub second wait
+        
+            /* compare with actual time, as the select timeout is not that precise */
+            gettimeofday(&tv_now, NULL);
+        
+            if ((tv_now.tv_sec > tv_ref.tv_sec) ||
+                ((tv_now.tv_sec == tv_ref.tv_sec) && (tv_now.tv_usec >= tv_ref.tv_usec)))
+            waiting = 0;
+        }        
+        
+        if (!waiting) {
+            ftdi->error_str = "timeout during ftdi_read_data";
+            return -1;
+        }
+        
+        if (ret < 0) {
+            ftdi->error_str = "ftdi_usbdev_reap_urb for bulk read failed";
+            return -1;
+        }
+        
+        if (returned_urb->status) {
+            ftdi->error_str = "URB return status not OK";
+            return -1;
+        }
+        
+        /* Paranoia check */
+        if (returned_urb->buffer != ftdi->readbuffer) {
+            ftdi->error_str = "buffer paranoia check failed";
+            return -1;
+        }
+        
+        ret = returned_urb->actual_length;
         if (ret > 2) {
             // skip FTDI status bytes.
             // Maybe stored in the future to enable modem use
@@ -409,7 +498,7 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
                 // only copy part of the data or size <= readbuffer_chunksize
                 int part_size = size-offset;
                 memcpy (buf+offset, ftdi->readbuffer+ftdi->readbuffer_offset, part_size);
-
+                
                 ftdi->readbuffer_offset += part_size;
                 ftdi->readbuffer_remaining = ret-part_size;
                 offset += part_size;
@@ -739,4 +828,25 @@ int ftdi_erase_eeprom(struct ftdi_context *ftdi) {
     }
 
     return 0;
+}
+
+
+/* Functions needed for userspace URB processing */
+static struct usbdevfs_urb * ftdi_usbdev_alloc_urb(int iso_packets)
+{
+    return calloc(sizeof(struct usbdevfs_urb)
+                    + iso_packets * sizeof(struct usbdevfs_iso_packet_desc),
+                    1);
+}
+
+
+static int ftdi_usbdev_submit_urb(int fd, struct usbdevfs_urb *urb)
+{
+    return ioctl(fd, USBDEVFS_SUBMITURB, urb);
+}
+
+
+static int ftdi_usbdev_reap_urb_ndelay(int fd, struct usbdevfs_urb **urb_return)
+{
+    return ioctl(fd, USBDEVFS_REAPURBNDELAY, urb_return);
 }
