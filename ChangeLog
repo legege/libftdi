@@ -1,3 +1,13 @@
+New in 0.3
+----------
+
+* Improved read function which takes arbitrary input buffer sizes
+  Attention: Call ftdi_deinit() on exit to free used memory
+* Vastly increased read/write performance (configurable chunksize, default is 4096)
+* Set/get latency timer function working (Thanks Steven Turner/FTDI)
+* Increased library version because the changes require recompilation
+
+
 New in 0.2
 ----------
 

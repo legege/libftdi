@@ -20,7 +20,7 @@
 
 /* ftdi_init return codes:
    0: all fine
-  -1: couldn't allocate (64 byte) read buffer
+  -1: couldn't allocate read buffer
 */
 int ftdi_init(struct ftdi_context *ftdi) {
     ftdi->usb_dev = NULL;
