@@ -302,6 +302,7 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency) {
        return -1;
     }
 
+    usb_val = latency;
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0x09, usb_val, 0, NULL, 0, ftdi->usb_timeout) != 0) {
        ftdi->error_str = "Unable to set latency timer";
        return -2;
