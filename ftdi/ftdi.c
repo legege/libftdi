@@ -291,7 +291,7 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate) {
         baudrate = baudrate*4;
     }
 
-    actual_baudrate = convert_baudrate(baudrate, ftdi, &value, &index);
+    actual_baudrate = ftdi_convert_baudrate(baudrate, ftdi, &value, &index);
     if (actual_baudrate <= 0) {
         ftdi->error_str = "Silly baudrate <= 0.";
         return -1;
@@ -444,7 +444,7 @@ int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksi
 }
 
 
-int ftdi_readt_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize) {
+int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize) {
     *chunksize = ftdi->readbuffer_chunksize;
     return 0;
 }
