@@ -199,8 +199,10 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
             write_size = size-offset;
 
         ret=usb_bulk_write(ftdi->usb_dev, 2, buf+offset, write_size, ftdi->usb_timeout);
-        if (ret == -1)
+        if (ret == -1) {
+    	    ftdi->error_str = "bulk write failed";
             return -1;
+	}
 
         offset += write_size;
     }
@@ -210,14 +212,29 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
 
 
 int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size) {
-    /*
-      unsigned char buf[64];
-      int read_bytes;
+    static unsigned char readbuf[64];
+    int ret = 1;
+    int offset = 0;
 
-      read_bytes = usb_bulk_read (udev, 0x81, (char *)&buf, 64, USB_TIMEOUT);
-    */
-    ftdi->error_str = "Not implemented yet";
-    return -1;
+    while (offset < size && ret > 0) {
+	ret = usb_bulk_read (ftdi->usb_dev, 0x81, readbuf, 64, ftdi->usb_timeout);
+	// Skip FTDI status bytes
+	if (ret >= 2)
+	    ret-=2;
+	
+	if (ret > 0) {
+	    memcpy (buf+offset, readbuf+2, ret);
+	}
+
+	if (ret == -1) {
+    	    ftdi->error_str = "bulk read failed";
+            return -1;
+	}
+
+        offset += ret;
+    }
+
+    return offset;
 }
 
 
@@ -507,3 +524,4 @@ int ftdi_erase_eeprom(struct ftdi_context *ftdi) {
 
     return 0;
 }
+
