@@ -20,6 +20,10 @@
 #include <usb.h>
 
 enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2 };
+enum ftdi_parity_type { NONE=0, ODD=1, EVEN=2, MARK=3, SPACE=4 };
+enum ftdi_stopbits_type { STOP_BIT_1=0, STOP_BIT_15=1, STOP_BIT_2=2 };
+enum ftdi_bits_type { BITS_7=7, BITS_8=8 };
+
 enum ftdi_mpsse_mode {
     BITMODE_RESET  = 0x00,
     BITMODE_BITBANG= 0x01,
@@ -147,6 +151,8 @@ extern "C" {
     int ftdi_usb_purge_buffers(struct ftdi_context *ftdi);
 
     int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate);
+    int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
+                               enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity);
 
     int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size);
     int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize);

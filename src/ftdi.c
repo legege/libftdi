@@ -20,7 +20,7 @@
 #include "ftdi.h"
 
 #define ftdi_error_return(code, str) do {  \
-	ftdi->error_str = str;             \
+        ftdi->error_str = str;             \
         return code;                       \
    } while(0);                 
 
@@ -376,6 +376,50 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
     return 0;
 }
 
+/*
+    set (RS232) line characteristics
+    by Alain Abbas - 
+*/
+int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
+                    enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity)
+{
+    unsigned short value = bits;
+
+    switch(parity) {
+    case NONE:
+        value |= (0x00 << 8);
+        break;
+    case ODD:
+        value |= (0x01 << 8);
+        break;
+    case EVEN:
+        value |= (0x02 << 8);
+        break;
+    case MARK:
+        value |= (0x03 << 8);
+        break;
+    case SPACE:
+        value |= (0x04 << 8);
+        break;
+    }
+    
+    switch(sbit) {
+    case STOP_BIT_1:
+        value |= (0x00 << 11);
+        break;
+    case STOP_BIT_15:
+        value |= (0x01 << 11);
+        break;
+    case STOP_BIT_2:
+        value |= (0x02 << 11);
+        break;
+    }
+    
+    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x04, value, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return (-1, "Setting new line property failed");
+    
+    return 0;
+}
 
 int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
