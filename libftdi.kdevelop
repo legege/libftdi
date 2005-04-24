@@ -1,25 +1,34 @@
 <?xml version = '1.0'?>
 <kdevelop>
   <general>
-    <author>Gerd v. Egidy</author>
+    <author>Thomas Jarosch</author>
     <email>opensource@intra2net.com</email>
-    <version>0.3</version>
+    <version>0.6</version>
     <projectmanagement>KDevAutoProject</projectmanagement>
     <primarylanguage>C</primarylanguage>
     <keywords>
       <keyword>C</keyword>
       <keyword>Code</keyword>
     </keywords>
+    <projectdirectory>.</projectdirectory>
+    <absoluteprojectpath>false</absoluteprojectpath>
+    <description></description>
+    <ignoreparts/>
+    <secondaryLanguages/>
   </general>
   <kdevautoproject>
     <general>
       <activetarget>src/libftdi</activetarget>
-      <useconfiguration>debug</useconfiguration>
+      <useconfiguration>default</useconfiguration>
     </general>
     <run>
       <mainprogram>src/libftdi</mainprogram>
       <terminal>true</terminal>
       <directoryradio>executable</directoryradio>
+      <customdirectory>/</customdirectory>
+      <programargs></programargs>
+      <autocompile>true</autocompile>
+      <envvars/>
     </run>
     <configurations>
       <optimized>
@@ -37,12 +46,20 @@
         <f77compiler>kdevg77options</f77compiler>
         <cflags>-O0 -g3</cflags>
       </debug>
+      <default>
+        <envvars/>
+      </default>
     </configurations>
     <make>
       <envvars>
         <envvar value="1" name="WANT_AUTOCONF_2_5" />
         <envvar value="1" name="WANT_AUTOMAKE_1_6" />
       </envvars>
+      <abortonerror>false</abortonerror>
+      <numberofjobs>1</numberofjobs>
+      <dontact>false</dontact>
+      <makebin></makebin>
+      <prio>0</prio>
     </make>
   </kdevautoproject>
   <kdevdoctreeview>
@@ -94,6 +111,7 @@
     </ignoredoxygen>
   </kdevdoctreeview>
   <kdevfilecreate>
+    <filetypes/>
     <useglobaltypes>
       <type ext="c" />
       <type ext="h" />
@@ -109,6 +127,7 @@
     <tree>
       <hidepatterns>*.o,*.lo,CVS</hidepatterns>
       <hidenonprojectfiles>false</hidenonprojectfiles>
+      <showvcsfields>false</showvcsfields>
     </tree>
   </kdevfileview>
   <kdevcppsupport>
@@ -126,4 +145,42 @@
       <headerCompletionDelay>250</headerCompletionDelay>
     </codecompletion>
   </kdevcppsupport>
+  <cppsupportpart>
+    <filetemplates>
+      <interfacesuffix>.h</interfacesuffix>
+      <implementationsuffix>.cpp</implementationsuffix>
+    </filetemplates>
+  </cppsupportpart>
+  <kdevdebugger>
+    <general>
+      <programargs></programargs>
+      <gdbpath></gdbpath>
+      <dbgshell></dbgshell>
+      <configGdbScript></configGdbScript>
+      <runShellScript></runShellScript>
+      <runGdbScript></runGdbScript>
+      <breakonloadinglibs>true</breakonloadinglibs>
+      <separatetty>false</separatetty>
+      <floatingtoolbar>false</floatingtoolbar>
+    </general>
+    <display>
+      <staticmembers>false</staticmembers>
+      <demanglenames>true</demanglenames>
+      <outputradix>10</outputradix>
+    </display>
+  </kdevdebugger>
+  <kdevdocumentation>
+    <projectdoc>
+      <docsystem></docsystem>
+      <docurl></docurl>
+      <usermanualurl></usermanualurl>
+    </projectdoc>
+  </kdevdocumentation>
+  <kdevcvsservice>
+    <recursivewhenupdate>true</recursivewhenupdate>
+    <prunedirswhenupdate>true</prunedirswhenupdate>
+    <createdirswhenupdate>true</createdirswhenupdate>
+    <recursivewhencommitremove>true</recursivewhencommitremove>
+    <revertoptions>-C</revertoptions>
+  </kdevcvsservice>
 </kdevelop>
