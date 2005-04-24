@@ -16,7 +16,6 @@
 
 #include <usb.h>
 #include <string.h>
-#include <sys/utsname.h>
 
 #include "ftdi.h"
 
@@ -199,23 +198,8 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
 
 int ftdi_usb_reset(struct ftdi_context *ftdi)
 {
-#if defined(__linux__)
-    struct utsname kernelver;
-    int k_major, k_minor, k_myver;
-#endif
-
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1,"FTDI reset failed");
-
-#if defined(__linux__)
-    /* Kernel 2.6 (maybe higher versions, too) need an additional usb_reset */
-    if (uname(&kernelver) == 0 && sscanf(kernelver.release, "%d.%d", &k_major, &k_minor) == 2) {
-        k_myver = k_major*10 + k_minor;
-
-        if (k_myver >= 26 && usb_reset(ftdi->usb_dev) != 0)
-            ftdi_error_return(-2, "USB reset failed");
-    }
-#endif
 
     // Invalidate data in the readbuffer
     ftdi->readbuffer_offset = 0;
