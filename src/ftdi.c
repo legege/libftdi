@@ -218,8 +218,8 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
 }
 
 /* ftdi_usb_open
-   
-   Opens the first device with a given vendor and product ids.
+   
+   Opens the first device with a given vendor and product ids.
    
    Return codes:
    See ftdi_usb_open_desc()
