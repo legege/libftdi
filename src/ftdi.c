@@ -27,7 +27,7 @@
 
 /* ftdi_init
 
-  Initalises a ftdi_context.
+  Initializes a ftdi_context.
 
   Return codes:
    0: All fine
