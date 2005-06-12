@@ -170,6 +170,13 @@ void ftdi_list_free(struct ftdi_device_list **devlist)
     devlist = NULL;
 }
 
+/* ftdi_usb_open
+   
+   Opens the first device with a given vendor and product ids.
+   
+   Return codes:
+   See ftdi_usb_open_desc()
+*/  
 int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product)
 {
     return ftdi_usb_open_desc(ftdi, vendor, product, NULL, NULL);
