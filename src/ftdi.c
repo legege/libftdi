@@ -170,6 +170,53 @@ void ftdi_list_free(struct ftdi_device_list **devlist)
     devlist = NULL;
 }
 
+/* ftdi_usb_open_dev 
+
+   Opens a ftdi device given by a usb_device.
+   
+   Return codes:
+     0: all fine
+    -4: unable to open device
+    -5: unable to claim device
+    -6: reset failed
+    -7: set baudrate failed
+*/
+int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
+{
+    if (!(ftdi->usb_dev = usb_open(dev)))
+        ftdi_error_return(-4, "usb_open() failed");
+    
+    if (usb_claim_interface(ftdi->usb_dev, ftdi->interface) != 0) {
+        usb_close (ftdi->usb_dev);
+        ftdi_error_return(-5, "unable to claim usb device. Make sure ftdi_sio is unloaded!");
+    }
+
+    if (ftdi_usb_reset (ftdi) != 0) {
+        usb_close (ftdi->usb_dev);
+        ftdi_error_return(-6, "ftdi_usb_reset failed");
+    }
+
+    if (ftdi_set_baudrate (ftdi, 9600) != 0) {
+        usb_close (ftdi->usb_dev);
+        ftdi_error_return(-7, "set baudrate failed");
+    }
+
+    // Try to guess chip type
+    // Bug in the BM type chips: bcdDevice is 0x200 for serial == 0
+    if (dev->descriptor.bcdDevice == 0x400 || (dev->descriptor.bcdDevice == 0x200
+            && dev->descriptor.iSerialNumber == 0))
+        ftdi->type = TYPE_BM;
+    else if (dev->descriptor.bcdDevice == 0x200)
+        ftdi->type = TYPE_AM;
+    else if (dev->descriptor.bcdDevice == 0x500) {
+        ftdi->type = TYPE_2232C;
+        if (!ftdi->index)
+            ftdi->index = INTERFACE_A;
+    }
+
+    ftdi_error_return(0, "all fine");
+}
+
 /* ftdi_usb_open
    
    Opens the first device with a given vendor and product ids.
