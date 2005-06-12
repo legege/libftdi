@@ -1,5 +1,6 @@
 New in 0.7
 ----------
+* Find all devices by vendor/product id (Tim Ansell and Intra2net)
 * Documentation updates (Tim Ansell)
 
 New in 0.6

@@ -112,6 +112,11 @@ struct ftdi_context {
     char *error_str;
 };
 
+struct ftdi_device_list {
+    struct ftdi_device_list *next;
+    struct usb_device *dev;
+};
+
 struct ftdi_eeprom {
     int vendor_id;
     int product_id;
@@ -143,9 +148,16 @@ extern "C" {
 
     void ftdi_deinit(struct ftdi_context *ftdi);
     void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usbdev);
+    
+    int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devlist,
+                          int vendor, int product);
+    void ftdi_list_free(struct ftdi_device_list **devlist);
+    
     int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product);
     int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                            const char* description, const char* serial);
+    int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev);
+    
     int ftdi_usb_close(struct ftdi_context *ftdi);
     int ftdi_usb_reset(struct ftdi_context *ftdi);
     int ftdi_usb_purge_buffers(struct ftdi_context *ftdi);

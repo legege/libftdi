@@ -108,9 +108,77 @@ void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usb)
     ftdi->usb_dev = usb;
 }
 
-/* ftdi_usb_open
 
-   Opens the first device with a given vendor and product ids.
+/* ftdi_usb_find_all
+ 
+   Finds all ftdi devices on the usb bus. Creates a new ftdi_device_list which
+   needs to be deallocated by ftdi_list_free after use.
+
+   Return codes:
+    >0: number of devices found
+    -1: usb_find_busses() failed
+    -2: usb_find_devices() failed
+    -3: out of memory
+*/
+int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devlist, int vendor, int product) 
+{
+    struct ftdi_device_list **curdev;
+    struct usb_bus *bus;
+    struct usb_device *dev;
+    int count = 0;
+    
+    usb_init();
+    if (usb_find_busses() < 0)
+        ftdi_error_return(-1, "usb_find_busses() failed");
+    if (usb_find_devices() < 0)
+        ftdi_error_return(-2, "usb_find_devices() failed");
+
+    curdev = devlist;
+    for (bus = usb_busses; bus; bus = bus->next) {
+        for (dev = bus->devices; dev; dev = dev->next) {
+            if (dev->descriptor.idVendor == vendor
+                    && dev->descriptor.idProduct == product)
+            {
+                *curdev = (struct ftdi_device_list*)malloc(sizeof(struct ftdi_device_list));
+                if (!*curdev)
+                    ftdi_error_return(-3, "out of memory");
+                
+                (*curdev)->next = NULL;
+                (*curdev)->dev = dev;
+
+                curdev = &(*curdev)->next;
+                count++;
+            }
+        }
+    }
+    
+    return count;
+}
+
+/* ftdi_list_free
+
+   Frees a created device list.
+*/
+void ftdi_list_free(struct ftdi_device_list **devlist) 
+{
+    struct ftdi_device_list **curdev;
+    for (; *devlist == NULL; devlist = curdev) {
+        curdev = &(*devlist)->next;
+        free(*devlist);
+    }
+
+    devlist = NULL;
+}
+
+int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product)
+{
+    return ftdi_usb_open_desc(ftdi, vendor, product, NULL, NULL);
+}
+
+/* ftdi_usb_open_desc
+
+   Opens the first device with a given, vendor id, product id,
+   description and serial.
    
    Return codes:
      0: all fine
@@ -123,13 +191,8 @@ void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usb)
     -7: set baudrate failed
     -8: get product description failed
     -9: get serial number failed
-   -10: unable to close device
+    -10: unable to close device
 */
-int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product)
-{
-    return ftdi_usb_open_desc(ftdi, vendor, product, NULL, NULL);
-}
-
 int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                        const char* description, const char* serial)
 {
@@ -141,9 +204,8 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
 
     if (usb_find_busses() < 0)
         ftdi_error_return(-1, "usb_find_busses() failed");
-
     if (usb_find_devices() < 0)
-        ftdi_error_return(-2,"usb_find_devices() failed");
+        ftdi_error_return(-2, "usb_find_devices() failed");
 
     for (bus = usb_busses; bus; bus = bus->next) {
         for (dev = bus->devices; dev; dev = dev->next) {
@@ -158,8 +220,8 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                         ftdi_error_return(-8, "unable to fetch product description");
                     }
                     if (strncmp(string, description, sizeof(string)) != 0) {
-                        if (usb_close (ftdi->usb_dev) < 0)
-                            ftdi_error_return(-10, "product description not matching");
+                        if (usb_close (ftdi->usb_dev) != 0)
+                            ftdi_error_return(-10, "unable to close device");
                         continue;
                     }
                 }
@@ -169,41 +231,16 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                         ftdi_error_return(-9, "unable to fetch serial number");
                     }
                     if (strncmp(string, serial, sizeof(string)) != 0) {
-                        ftdi->error_str = "serial number not matching\n";
                         if (usb_close (ftdi->usb_dev) != 0)
-                            ftdi_error_return(-10, "unable to fetch serial number");
+                            ftdi_error_return(-10, "unable to close device");
                         continue;
                     }
                 }
 
-                if (usb_claim_interface(ftdi->usb_dev, ftdi->interface) != 0) {
-                    usb_close (ftdi->usb_dev);
-                    ftdi_error_return(-5, "unable to claim usb device. Make sure ftdi_sio is unloaded!");
-                }
-
-                if (ftdi_usb_reset (ftdi) != 0) {
-                    usb_close (ftdi->usb_dev);
-                    ftdi_error_return(-6, "ftdi_usb_reset failed");
-                }
-
-                if (ftdi_set_baudrate (ftdi, 9600) != 0) {
-                    usb_close (ftdi->usb_dev);
-                    ftdi_error_return(-7, "set baudrate failed");
-                }
-
-                // Try to guess chip type
-                // Bug in the BM type chips: bcdDevice is 0x200 for serial == 0
-                if (dev->descriptor.bcdDevice == 0x400 || (dev->descriptor.bcdDevice == 0x200
-                        && dev->descriptor.iSerialNumber == 0))
-                    ftdi->type = TYPE_BM;
-                else if (dev->descriptor.bcdDevice == 0x200)
-                    ftdi->type = TYPE_AM;
-                else if (dev->descriptor.bcdDevice == 0x500) {
-                    ftdi->type = TYPE_2232C;
-                    if (!ftdi->index)
-                        ftdi->index = INTERFACE_A;
-                }
-                ftdi_error_return(0, "all fine");
+                if (usb_close (ftdi->usb_dev) != 0)
+                    ftdi_error_return(-10, "unable to close device");
+                
+                return ftdi_usb_open_dev(ftdi, dev);
             }
         }
     }
@@ -220,7 +257,7 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
      0: all fine
     -1: FTDI reset failed
 */
-nt ftdi_usb_reset(struct ftdi_context *ftdi)
+int ftdi_usb_reset(struct ftdi_context *ftdi)
 {
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1,"FTDI reset failed");
