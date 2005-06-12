@@ -1,3 +1,7 @@
+New in 0.7
+----------
+* Documentation updates (Tim Ansell)
+
 New in 0.6
 ----------
 * Set library version on .so file again
@@ -28,7 +32,6 @@ New in 0.4
 
 New in 0.3
 ----------
-
 * Improved read function which takes arbitrary input buffer sizes
   Attention: Call ftdi_deinit() on exit to free used memory
 * Vastly increased read/write performance (configurable chunksize, default is 4096)
@@ -38,7 +41,6 @@ New in 0.3
 
 New in 0.2
 ----------
-
 * EEPROM build fix by Daniel Kirkham (Melbourne, Australia)
 * Implemented basic ftdi_read_data() function
 * EEPROM write fixes
@@ -46,5 +48,4 @@ New in 0.2
 
 New in 0.1
 ------------
-
 * First public release

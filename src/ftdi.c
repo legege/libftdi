@@ -25,9 +25,13 @@
    } while(0);                 
 
 
-/* ftdi_init return codes:
-   0: all fine
-  -1: couldn't allocate read buffer
+/* ftdi_init
+
+  Initalises a ftdi_context.
+
+  Return codes:
+   0: All fine
+  -1: Couldn't allocate read buffer
 */
 int ftdi_init(struct ftdi_context *ftdi)
 {
@@ -55,8 +59,11 @@ int ftdi_init(struct ftdi_context *ftdi)
     /* All fine. Now allocate the readbuffer */
     return ftdi_read_data_set_chunksize(ftdi, 4096);
 }
+
 /* ftdi_set_interface
+   
    Call after ftdi_init
+   
    Open selected channels on a chip, otherwise use first channel
     0: all fine
    -1: unknown interface
@@ -80,6 +87,10 @@ int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
     return 0;
 }
 
+/* ftdi_deinit
+
+   Deinitializes a ftdi_context.
+*/
 void ftdi_deinit(struct ftdi_context *ftdi)
 {
     if (ftdi->readbuffer != NULL) {
@@ -88,25 +99,31 @@ void ftdi_deinit(struct ftdi_context *ftdi)
     }
 }
 
-
+/* ftdi_set_usbdev
+ 
+   Use an already open device.
+*/
 void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usb)
 {
     ftdi->usb_dev = usb;
 }
 
+/* ftdi_usb_open
 
-/* ftdi_usb_open return codes:
-   0: all fine
-  -1: usb_find_busses() failed
-  -2: usb_find_devices() failed
-  -3: usb device not found
-  -4: unable to open device
-  -5: unable to claim device
-  -6: reset failed
-  -7: set baudrate failed
-  -8: get product description failed
-  -9: get serial number failed
-  -10: unable to close device
+   Opens the first device with a given vendor and product ids.
+   
+   Return codes:
+     0: all fine
+    -1: usb_find_busses() failed
+    -2: usb_find_devices() failed
+    -3: usb device not found
+    -4: unable to open device
+    -5: unable to claim device
+    -6: reset failed
+    -7: set baudrate failed
+    -8: get product description failed
+    -9: get serial number failed
+   -10: unable to close device
 */
 int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product)
 {
@@ -195,8 +212,15 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
     ftdi_error_return(-3, "device not found");
 }
 
+/* ftdi_usb_reset
 
-int ftdi_usb_reset(struct ftdi_context *ftdi)
+   Resets the ftdi device.
+   
+   Return codes:
+     0: all fine
+    -1: FTDI reset failed
+*/
+nt ftdi_usb_reset(struct ftdi_context *ftdi)
 {
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1,"FTDI reset failed");
@@ -208,6 +232,15 @@ int ftdi_usb_reset(struct ftdi_context *ftdi)
     return 0;
 }
 
+/* ftdi_usb_purge_buffers
+
+   Cleans the buffers of the ftdi device.
+   
+   Return codes:
+     0: all fine
+    -1: write buffer purge failed
+    -2: read buffer purge failed
+*/
 int ftdi_usb_purge_buffers(struct ftdi_context *ftdi)
 {
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 1, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
@@ -223,10 +256,14 @@ int ftdi_usb_purge_buffers(struct ftdi_context *ftdi)
     return 0;
 }
 
-/* ftdi_usb_close return codes
-    0: all fine
-   -1: usb_release failed
-   -2: usb_close failed
+/* ftdi_usb_close
+   
+   Closes the ftdi device.
+   
+   Return codes:
+     0: all fine
+    -1: usb_release failed
+    -2: usb_close failed
 */
 int ftdi_usb_close(struct ftdi_context *ftdi)
 {
@@ -325,9 +362,9 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
     encoded_divisor = (best_divisor >> 3) | (frac_code[best_divisor & 7] << 14);
     // Deal with special cases for encoded value
     if (encoded_divisor == 1) {
-        encoded_divisor = 0;	// 3000000 baud
+        encoded_divisor = 0;    // 3000000 baud
     } else if (encoded_divisor == 0x4001) {
-        encoded_divisor = 1;	// 2000000 baud (BM only)
+        encoded_divisor = 1;    // 2000000 baud (BM only)
     }
     // Split into "value" and "index" values
     *value = (unsigned short)(encoded_divisor & 0xFFFF);
@@ -344,7 +381,11 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
 }
 
 /*
-    ftdi_set_baudrate return codes:
+    ftdi_set_baudrate
+    
+    Sets the chip baudrate
+    
+    Return codes:
      0: all fine
     -1: invalid baudrate
     -2: setting baudrate failed
@@ -377,8 +418,13 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
 }
 
 /*
-    set (RS232) line characteristics
-    by Alain Abbas - 
+    ftdi_set_line_property
+
+    set (RS232) line characteristics by Alain Abbas
+    
+    Return codes:
+     0: all fine
+    -1: Setting line property failed
 */
 int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
                     enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity)
@@ -679,7 +725,12 @@ void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom)
 
 
 /*
-    ftdi_eeprom_build return codes:
+    ftdi_eeprom_build
+    
+    Build binary output from ftdi_eeprom structure.
+    Output is suitable for ftdi_write_eeprom.
+    
+    Return codes:
     positive value: used eeprom size
     -1: eeprom size (128 bytes) exceeded by custom strings
 */
