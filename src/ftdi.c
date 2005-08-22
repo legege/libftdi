@@ -462,7 +462,7 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
     if(ftdi->type == TYPE_2232C) {
         *index = (unsigned short)(encoded_divisor >> 8);
         *index &= 0xFF00;
-        *index |= ftdi->interface;
+        *index |= ftdi->index;
     }
     else
         *index = (unsigned short)(encoded_divisor >> 16);
