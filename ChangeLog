@@ -1,5 +1,6 @@
 New in 0.7
 ----------
+* Baudrate calculation fix for FT2232C (Steven Turner/FTDI)
 * Find all devices by vendor/product id (Tim Ansell and Intra2net)
 * Documentation updates (Tim Ansell)
 
@@ -29,7 +30,7 @@ New in 0.4
 * Important: ftdi_write_data now returns the bytes written
 * Fixed defaults values in ftdi_eeprom_initdefaults (Jean-Daniel Merkli)
 * Reset internal readbuffer offsets for reset()/purge_buffers()
-* Small typo fixes (Mark Hämmerling)
+* Small typo fixes (Mark Haemmerling)
 
 New in 0.3
 ----------
