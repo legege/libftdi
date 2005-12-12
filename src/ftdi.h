@@ -82,6 +82,36 @@ enum ftdi_interface {
 /* Address High */
 /* Address Low  */
 
+/* Definitions for flow control */
+/*
+ * Flow control code adapted from Linux kernel sources
+ * by Lorenz Moesenlechner (lorenz@hcilab.org) and 
+ * Matthias Kranz  (matthias@hcilab.org)
+ * */
+#define SIO_MODEM_CTRL     1 /* Set the modem control register */
+#define SIO_SET_FLOW_CTRL  2 /* Set flow control register */
+
+#define SIO_SET_FLOW_CTRL_REQUEST_TYPE 0x40
+#define SIO_SET_FLOW_CTRL_REQUEST SIO_SET_FLOW_CTRL
+
+#define SIO_DISABLE_FLOW_CTRL 0x0 
+#define SIO_RTS_CTS_HS (0x1 << 8)
+#define SIO_DTR_DSR_HS (0x2 << 8)
+#define SIO_XON_XOFF_HS (0x4 << 8)
+
+#define SIO_SET_MODEM_CTRL_REQUEST_TYPE 0x40
+#define SIO_SET_MODEM_CTRL_REQUEST SIO_MODEM_CTRL
+
+#define SIO_SET_DTR_MASK 0x1
+#define SIO_SET_DTR_HIGH ( 1 | ( SIO_SET_DTR_MASK  << 8))
+#define SIO_SET_DTR_LOW  ( 0 | ( SIO_SET_DTR_MASK  << 8))
+#define SIO_SET_RTS_MASK 0x2
+#define SIO_SET_RTS_HIGH ( 2 | ( SIO_SET_RTS_MASK << 8 ))
+#define SIO_SET_RTS_LOW ( 0 | ( SIO_SET_RTS_MASK << 8 ))
+
+#define SIO_RTS_CTS_HS (0x1 << 8)
+
+
 struct ftdi_context {
     // USB specific
     struct usb_dev_handle *usb_dev;
@@ -148,11 +178,11 @@ extern "C" {
 
     void ftdi_deinit(struct ftdi_context *ftdi);
     void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usbdev);
-    
+
     int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devlist,
                           int vendor, int product);
     void ftdi_list_free(struct ftdi_device_list **devlist);
-    
+
     int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product);
     int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                            const char* description, const char* serial);
@@ -193,6 +223,34 @@ extern "C" {
     int ftdi_erase_eeprom(struct ftdi_context *ftdi);
 
     char *ftdi_get_error_string(struct ftdi_context *ftdi);
+
+    /*
+     * Flow control code adapted from Linux kernel sources
+     * by Lorenz Moesenlechner (lorenz@hcilab.org) and 
+     * Matthias Kranz  (matthias@hcilab.org)
+     * */
+
+    /**
+     * Set flowcontrol for ftdi chip
+     * \param ftdi device context of ftdi
+     * \param flowctrl flow control to use. should be 
+     *        SIO_DISABLE_FLOW_CTRL, SIO_RTS_CTS_HS, SIO_DTR_DSR_HS or SIO_XON_XOFF_HS   
+     */
+    int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
+
+    /**
+     * Set dtr line
+     * \param ftdi device context of ftdi
+     * \param state state to set line to (1 or 0)
+     */
+    int ftdi_setdtr(struct ftdi_context *ftdi, int state);
+
+    /**
+     * Set rts line
+     * \param ftdi device context of ftdi
+     * \param state state to set line to (1 or 0)
+     */
+    int ftdi_setrts(struct ftdi_context *ftdi, int state);
 
 #ifdef __cplusplus
 }

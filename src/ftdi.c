@@ -1022,3 +1022,48 @@ char *ftdi_get_error_string (struct ftdi_context *ftdi)
 {
     return ftdi->error_str;
 }
+
+
+int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl)
+{
+    if (usb_control_msg(ftdi->usb_dev, SIO_SET_FLOW_CTRL_REQUEST_TYPE,
+        SIO_SET_FLOW_CTRL_REQUEST, 0, (flowctrl | ftdi->interface),
+        NULL, 0, ftdi->usb_write_timeout) != 0)
+            ftdi_error_return(-1, "set flow control failed");
+
+    return 0;
+}
+
+int ftdi_setdtr(struct ftdi_context *ftdi, int state)
+{
+    unsigned short usb_val;
+
+    if (state) 
+        usb_val = SIO_SET_DTR_HIGH;
+    else
+        usb_val = SIO_SET_DTR_LOW;
+
+    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
+        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
+        NULL, 0, ftdi->usb_write_timeout) != 0)
+            ftdi_error_return(-1, "set dtr failed");
+
+    return 0;
+}
+
+int ftdi_setrts(struct ftdi_context *ftdi, int state)
+{
+    unsigned short usb_val;
+
+    if (state) 
+        usb_val = SIO_SET_RTS_HIGH;
+    else
+        usb_val = SIO_SET_RTS_LOW;
+
+    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE, 
+        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
+        NULL, 0, ftdi->usb_write_timeout) != 0)
+            ftdi_error_return(-1, "set of rts failed");
+
+    return 0;
+}
