@@ -1,5 +1,6 @@
 New in 0.8
 ----------
+* Automatically detach ftdi_sio kernel driver (Uwe Bonnes and Intra2net)
 * Configurable flow control (Lorenz Moesenlechner and Matthias Kranz)
 
 New in 0.7

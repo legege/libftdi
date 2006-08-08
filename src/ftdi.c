@@ -16,13 +16,14 @@
 
 #include <usb.h>
 #include <string.h>
+#include <errno.h>
 
 #include "ftdi.h"
 
 #define ftdi_error_return(code, str) do {  \
         ftdi->error_str = str;             \
         return code;                       \
-   } while(0);                 
+   } while(0);
 
 
 /* ftdi_init
@@ -120,13 +121,13 @@ void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usb)
     -2: usb_find_devices() failed
     -3: out of memory
 */
-int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devlist, int vendor, int product) 
+int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devlist, int vendor, int product)
 {
     struct ftdi_device_list **curdev;
     struct usb_bus *bus;
     struct usb_device *dev;
     int count = 0;
-    
+
     usb_init();
     if (usb_find_busses() < 0)
         ftdi_error_return(-1, "usb_find_busses() failed");
@@ -142,7 +143,7 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
                 *curdev = (struct ftdi_device_list*)malloc(sizeof(struct ftdi_device_list));
                 if (!*curdev)
                     ftdi_error_return(-3, "out of memory");
-                
+
                 (*curdev)->next = NULL;
                 (*curdev)->dev = dev;
 
@@ -151,7 +152,7 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
             }
         }
     }
-    
+
     return count;
 }
 
@@ -159,7 +160,7 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
 
    Frees a created device list.
 */
-void ftdi_list_free(struct ftdi_device_list **devlist) 
+void ftdi_list_free(struct ftdi_device_list **devlist)
 {
     struct ftdi_device_list **curdev;
     for (; *devlist == NULL; devlist = curdev) {
@@ -170,7 +171,7 @@ void ftdi_list_free(struct ftdi_device_list **devlist)
     devlist = NULL;
 }
 
-/* ftdi_usb_open_dev 
+/* ftdi_usb_open_dev
 
    Opens a ftdi device given by a usb_device.
    
@@ -183,12 +184,24 @@ void ftdi_list_free(struct ftdi_device_list **devlist)
 */
 int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
 {
+    int detach_errno = 0;
     if (!(ftdi->usb_dev = usb_open(dev)))
         ftdi_error_return(-4, "usb_open() failed");
-    
+
+#ifdef LIBUSB_HAS_GET_DRIVER_NP
+    // Try to detach ftdi_sio kernel module
+    // Returns ENODATA if driver is not loaded
+    if (usb_detach_kernel_driver_np(ftdi->usb_dev, ftdi->interface) != 0 && errno != ENODATA)
+        detach_errno = errno;
+#endif
+
     if (usb_claim_interface(ftdi->usb_dev, ftdi->interface) != 0) {
         usb_close (ftdi->usb_dev);
-        ftdi_error_return(-5, "unable to claim usb device. Make sure ftdi_sio is unloaded!");
+        if (detach_errno == EPERM) {
+            ftdi_error_return(-8, "inappropriate permissions on device!");
+        } else {
+            ftdi_error_return(-5, "unable to claim usb device. Make sure ftdi_sio is unloaded!");
+        }
     }
 
     if (ftdi_usb_reset (ftdi) != 0) {
@@ -293,7 +306,7 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
 
                 if (usb_close (ftdi->usb_dev) != 0)
                     ftdi_error_return(-10, "unable to close device");
-                
+
                 return ftdi_usb_open_dev(ftdi, dev);
             }
         }
@@ -518,7 +531,7 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
     -1: Setting line property failed
 */
 int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
-                    enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity)
+                           enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity)
 {
     unsigned short value = bits;
 
@@ -539,7 +552,7 @@ int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
         value |= (0x04 << 8);
         break;
     }
-    
+
     switch(sbit) {
     case STOP_BIT_1:
         value |= (0x00 << 11);
@@ -551,10 +564,10 @@ int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
         value |= (0x02 << 11);
         break;
     }
-    
+
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0x04, value, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return (-1, "Setting new line property failed");
-    
+
     return 0;
 }
 
@@ -1027,9 +1040,9 @@ char *ftdi_get_error_string (struct ftdi_context *ftdi)
 int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl)
 {
     if (usb_control_msg(ftdi->usb_dev, SIO_SET_FLOW_CTRL_REQUEST_TYPE,
-        SIO_SET_FLOW_CTRL_REQUEST, 0, (flowctrl | ftdi->interface),
-        NULL, 0, ftdi->usb_write_timeout) != 0)
-            ftdi_error_return(-1, "set flow control failed");
+                        SIO_SET_FLOW_CTRL_REQUEST, 0, (flowctrl | ftdi->interface),
+                        NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "set flow control failed");
 
     return 0;
 }
@@ -1038,15 +1051,15 @@ int ftdi_setdtr(struct ftdi_context *ftdi, int state)
 {
     unsigned short usb_val;
 
-    if (state) 
+    if (state)
         usb_val = SIO_SET_DTR_HIGH;
     else
         usb_val = SIO_SET_DTR_LOW;
 
     if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
-        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
-        NULL, 0, ftdi->usb_write_timeout) != 0)
-            ftdi_error_return(-1, "set dtr failed");
+                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
+                        NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "set dtr failed");
 
     return 0;
 }
@@ -1055,15 +1068,15 @@ int ftdi_setrts(struct ftdi_context *ftdi, int state)
 {
     unsigned short usb_val;
 
-    if (state) 
+    if (state)
         usb_val = SIO_SET_RTS_HIGH;
     else
         usb_val = SIO_SET_RTS_LOW;
 
-    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE, 
-        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
-        NULL, 0, ftdi->usb_write_timeout) != 0)
-            ftdi_error_return(-1, "set of rts failed");
+    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
+                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
+                        NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "set of rts failed");
 
     return 0;
 }
