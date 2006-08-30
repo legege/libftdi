@@ -769,11 +769,9 @@ int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned 
 
 int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins)
 {
-    unsigned short usb_val;
-    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0C, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1)
+    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0C, 0, ftdi->index, (char *)pins, 1, ftdi->usb_read_timeout) != 1)
         ftdi_error_return(-1, "read pins failed");
 
-    *pins = (unsigned char)usb_val;
     return 0;
 }
 
