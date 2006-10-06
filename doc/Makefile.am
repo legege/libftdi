@@ -1,5 +1,3 @@
-EXTRA_DIST =
-
 # I grabbed this same hack from the VACM docs/Makfile.am
 CLEANFILES = rm -rf html man
 

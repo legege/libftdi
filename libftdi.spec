@@ -8,7 +8,7 @@ Vendor:    Intra2net AG
 Source:    %{name}-%{version}.tar.gz
 Buildroot: /tmp/%{name}-%{version}-root
 Requires:  libusb
-BuildRequires: libusb, libusb-devel, pkgconfig
+BuildRequires: libusb, libusb-devel, pkgconfig, doxygen
 Prefix:    /usr
 
 %package   devel
@@ -42,6 +42,7 @@ rm -fr $RPM_BUILD_ROOT
 
 %files devel
 %defattr(-,root,root)
+%doc doc/html doc/man
 %{prefix}/bin/libftdi-config
 %{prefix}/lib/libftdi.*a
 %{prefix}/include/*.h

@@ -112,7 +112,7 @@ enum ftdi_interface {
 #define SIO_RTS_CTS_HS (0x1 << 8)
 
 /**
-    Main context structure for all libftdi functions.
+    \brief Main context structure for all libftdi functions.
 
     Do not access directly if possible.
 */
@@ -161,7 +161,7 @@ struct ftdi_context {
 };
 
 /**
-    Single linked list of usb devices created by ftdi_usb_find_all()
+    \brief list of usb devices created by ftdi_usb_find_all()
 */
 struct ftdi_device_list {
     /// pointer to next entry
@@ -171,7 +171,7 @@ struct ftdi_device_list {
 };
 
 /**
-    FTDI eeprom structure
+    \brief FTDI eeprom structure
 */
 struct ftdi_eeprom {
     /// vendor id

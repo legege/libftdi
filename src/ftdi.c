@@ -14,6 +14,18 @@
  *                                                                         *
  ***************************************************************************/
 
+/**
+    \mainpage libftdi API documentation
+
+    Library to talk to FTDI chips. See http://www.ftdichip.com
+
+    The latest versions of libftdi is available at
+    http://www.intra2net.com/de/produkte/opensource/ftdi/
+
+*/
+/** \addtogroup libftdi */
+/* @{ */
+
 #include <usb.h>
 #include <string.h>
 #include <errno.h>
@@ -402,6 +414,7 @@ int ftdi_usb_close(struct ftdi_context *ftdi)
 /*
     ftdi_convert_baudrate returns nearest supported baud rate to that requested.
     Function is only used internally
+    \internal
 */
 static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
                                  unsigned short *value, unsigned short *index)
@@ -1273,3 +1286,5 @@ int ftdi_setrts(struct ftdi_context *ftdi, int state)
 
     return 0;
 }
+
+/* @} end of doxygen libftdi group */
