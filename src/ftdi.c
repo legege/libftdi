@@ -248,7 +248,7 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
     \param vendor Vendor ID
     \param product Product ID
 
-    \retval \see ftdi_usb_open_desc()
+    \retval same as ftdi_usb_open_desc()
 */
 int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product)
 {
@@ -501,9 +501,10 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
 }
 
 /**
-    Sets the chip baudrate
+    Sets the chip baud rate
 
     \param ftdi pointer to ftdi_context
+    \param baudrate baud rate to set
 
     \retval  0: all fine
     \retval -1: invalid baudrate
@@ -1197,6 +1198,10 @@ char *ftdi_get_error_string (struct ftdi_context *ftdi)
     return ftdi->error_str;
 }
 
+/*
+    Flow control code by Lorenz Moesenlechner (lorenz@hcilab.org)
+    and Matthias Kranz  (matthias@hcilab.org)
+*/
 /**
     Set flowcontrol for ftdi chip
 

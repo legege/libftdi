@@ -19,11 +19,16 @@
 
 #include <usb.h>
 
+/// FTDI chip type
 enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2 };
+/// Parity mode for ftdi_set_line_property()
 enum ftdi_parity_type { NONE=0, ODD=1, EVEN=2, MARK=3, SPACE=4 };
+/// Number of stop bits for ftdi_set_line_property()
 enum ftdi_stopbits_type { STOP_BIT_1=0, STOP_BIT_15=1, STOP_BIT_2=2 };
+/// Number of bits ftdi_set_line_property()
 enum ftdi_bits_type { BITS_7=7, BITS_8=8 };
 
+/// MPSSE bitbang modes
 enum ftdi_mpsse_mode {
     BITMODE_RESET  = 0x00,
     BITMODE_BITBANG= 0x01,
@@ -33,7 +38,7 @@ enum ftdi_mpsse_mode {
     BITMODE_OPTO   = 0x10
 };
 
-/* Port interface code for FT2232C */
+/// Port interface for FT2232C
 enum ftdi_interface {
     INTERFACE_ANY = 0,
     INTERFACE_A   = 1,
@@ -83,11 +88,6 @@ enum ftdi_interface {
 /* Address Low  */
 
 /* Definitions for flow control */
-/*
- * Flow control code adapted from Linux kernel sources
- * by Lorenz Moesenlechner (lorenz@hcilab.org) and 
- * Matthias Kranz  (matthias@hcilab.org)
- * */
 #define SIO_MODEM_CTRL     1 /* Set the modem control register */
 #define SIO_SET_FLOW_CTRL  2 /* Set flow control register */
 
@@ -111,61 +111,102 @@ enum ftdi_interface {
 
 #define SIO_RTS_CTS_HS (0x1 << 8)
 
+/**
+    Main context structure for all libftdi functions.
 
+    Do not access directly if possible.
+*/
 struct ftdi_context {
     // USB specific
+    /// libusb's usb_dev_handle
     struct usb_dev_handle *usb_dev;
+    /// usb read timeout
     int usb_read_timeout;
+    /// usb write timeout
     int usb_write_timeout;
 
     // FTDI specific
+    /// FTDI chip type
     enum ftdi_chip_type type;
+    /// baudrate
     int baudrate;
+    /// bitbang mode state
     unsigned char bitbang_enabled;
+    /// pointer to read buffer for ftdi_read_data
     unsigned char *readbuffer;
+    /// read buffer offset
     unsigned int readbuffer_offset;
+    /// number of remaining data in internal read buffer
     unsigned int readbuffer_remaining;
+    /// read buffer chunk size
     unsigned int readbuffer_chunksize;
+    /// write buffer chunk size
     unsigned int writebuffer_chunksize;
 
     // FTDI FT2232C requirecments
+    /// FT2232C interface number: 0 or 1
     int interface;   // 0 or 1
+    /// FT2232C index number: 1 or 2
     int index;       // 1 or 2
     // Endpoints
+    /// FT2232C end points: 1 or 2
     int in_ep;
     int out_ep;      // 1 or 2
 
-    /* 1: (default) Normal bitbang mode, 2: FT2232C SPI bitbang mode */
+    /// Bitbang mode. 1: (default) Normal bitbang mode, 2: FT2232C SPI bitbang mode
     unsigned char bitbang_mode;
 
-    // misc
+    /// String representation of last error
     char *error_str;
 };
 
+/**
+    Single linked list of usb devices created by ftdi_usb_find_all()
+*/
 struct ftdi_device_list {
+    /// pointer to next entry
     struct ftdi_device_list *next;
+    /// pointer to libusb's usb_device
     struct usb_device *dev;
 };
 
+/**
+    FTDI eeprom structure
+*/
 struct ftdi_eeprom {
+    /// vendor id
     int vendor_id;
+    /// product id
     int product_id;
 
+    /// self powered
     int self_powered;
+    /// remote wakepu
     int remote_wakeup;
+    /// chip type
     int BM_type_chip;
 
+    /// input in isochronous transfer mode
     int in_is_isochronous;
+    /// output in isochronous transfer mode
     int out_is_isochronous;
+    /// suspend pull downs
     int suspend_pull_downs;
 
+    /// use serial
     int use_serial;
+    /// fake usb version
     int change_usb_version;
+    /// usb version
     int usb_version;
+    /// maximum power
     int max_power;
 
+    /// manufacturer name
     char *manufacturer;
+    /// product name
     char *product;
+    /// serial number
     char *serial;
 };
 
@@ -224,11 +265,7 @@ extern "C" {
 
     char *ftdi_get_error_string(struct ftdi_context *ftdi);
 
-    /*
-     * Flow control code adapted from Linux kernel sources
-     * by Lorenz Moesenlechner (lorenz@hcilab.org) and 
-     * Matthias Kranz  (matthias@hcilab.org)
-     * */
+    // flow control
     int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
     int ftdi_setdtr(struct ftdi_context *ftdi, int state);
     int ftdi_setrts(struct ftdi_context *ftdi, int state);
