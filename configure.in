@@ -32,5 +32,9 @@ else
    AC_MSG_RESULT(yes)
 fi
 
+dnl check for doxygen
+AC_PATH_PROG(DOXYGEN, doxygen, $PATH)
+AM_CONDITIONAL(HAVE_DOXYGEN, test -n $DOXYGEN);
+
 AC_OUTPUT([libftdi-config],[chmod a+x libftdi-config])
-AC_OUTPUT(Makefile src/Makefile libftdi.pc)
+AC_OUTPUT(Makefile src/Makefile doc/Doxyfile doc/Makefile libftdi.pc)

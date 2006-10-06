@@ -26,13 +26,15 @@
    } while(0);
 
 
-/* ftdi_init
+/**
+    Initializes a ftdi_context.
 
-  Initializes a ftdi_context.
+    \param ftdi pointer to ftdi_context
 
-  Return codes:
-   0: All fine
-  -1: Couldn't allocate read buffer
+    \retval  0: all fine
+    \retval -1: couldn't allocate read buffer
+
+    \remark This should be called before all functions
 */
 int ftdi_init(struct ftdi_context *ftdi)
 {
@@ -61,13 +63,14 @@ int ftdi_init(struct ftdi_context *ftdi)
     return ftdi_read_data_set_chunksize(ftdi, 4096);
 }
 
-/* ftdi_set_interface
-   
-   Call after ftdi_init
-   
-   Open selected channels on a chip, otherwise use first channel
-    0: all fine
-   -1: unknown interface
+/**
+    Open selected channels on a chip, otherwise use first channel.
+
+    \param ftdi pointer to ftdi_context
+    \param interface Interface to use for FT2232C chips.
+
+    \retval  0: all fine
+    \retval -1: unknown interface
 */
 int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
 {
@@ -88,9 +91,10 @@ int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
     return 0;
 }
 
-/* ftdi_deinit
+/**
+    Deinitializes a ftdi_context.
 
-   Deinitializes a ftdi_context.
+    \param ftdi pointer to ftdi_context
 */
 void ftdi_deinit(struct ftdi_context *ftdi)
 {
@@ -100,9 +104,11 @@ void ftdi_deinit(struct ftdi_context *ftdi)
     }
 }
 
-/* ftdi_set_usbdev
- 
-   Use an already open device.
+/**
+    Use an already open libusb device.
+
+    \param ftdi pointer to ftdi_context
+    \param usb libusb usb_dev_handle to use
 */
 void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usb)
 {
@@ -110,16 +116,19 @@ void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usb)
 }
 
 
-/* ftdi_usb_find_all
- 
-   Finds all ftdi devices on the usb bus. Creates a new ftdi_device_list which
-   needs to be deallocated by ftdi_list_free after use.
+/**
+    Finds all ftdi devices on the usb bus. Creates a new ftdi_device_list which
+    needs to be deallocated by ftdi_list_free() after use.
 
-   Return codes:
-    >0: number of devices found
-    -1: usb_find_busses() failed
-    -2: usb_find_devices() failed
-    -3: out of memory
+    \param ftdi pointer to ftdi_context
+    \param devlist Pointer where to store list of found devices
+    \param vendor Vendor ID to search for
+    \param product Product ID to search for
+
+    \retval >0: number of devices found
+    \retval -1: usb_find_busses() failed
+    \retval -2: usb_find_devices() failed
+    \retval -3: out of memory
 */
 int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devlist, int vendor, int product)
 {
@@ -156,9 +165,10 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
     return count;
 }
 
-/* ftdi_list_free
+/**
+    Frees a usb device list.
 
-   Frees a created device list.
+    \param devlist USB device list created by ftdi_usb_find_all()
 */
 void ftdi_list_free(struct ftdi_device_list **devlist)
 {
@@ -171,16 +181,17 @@ void ftdi_list_free(struct ftdi_device_list **devlist)
     devlist = NULL;
 }
 
-/* ftdi_usb_open_dev
+/**
+    Opens a ftdi device given by a usb_device.
 
-   Opens a ftdi device given by a usb_device.
-   
-   Return codes:
-     0: all fine
-    -4: unable to open device
-    -5: unable to claim device
-    -6: reset failed
-    -7: set baudrate failed
+    \param ftdi pointer to ftdi_context
+    \param dev libusb usb_dev to use
+
+    \retval  0: all fine
+    \retval -4: unable to open device
+    \retval -5: unable to claim device
+    \retval -6: reset failed
+    \retval -7: set baudrate failed
 */
 int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
 {
@@ -230,35 +241,41 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
     ftdi_error_return(0, "all fine");
 }
 
-/* ftdi_usb_open
-   
-   Opens the first device with a given vendor and product ids.
-   
-   Return codes:
-   See ftdi_usb_open_desc()
-*/  
+/**
+    Opens the first device with a given vendor and product ids.
+
+    \param ftdi pointer to ftdi_context
+    \param vendor Vendor ID
+    \param product Product ID
+
+    \retval \see ftdi_usb_open_desc()
+*/
 int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product)
 {
     return ftdi_usb_open_desc(ftdi, vendor, product, NULL, NULL);
 }
 
-/* ftdi_usb_open_desc
+/**
+    Opens the first device with a given, vendor id, product id,
+    description and serial.
 
-   Opens the first device with a given, vendor id, product id,
-   description and serial.
-   
-   Return codes:
-     0: all fine
-    -1: usb_find_busses() failed
-    -2: usb_find_devices() failed
-    -3: usb device not found
-    -4: unable to open device
-    -5: unable to claim device
-    -6: reset failed
-    -7: set baudrate failed
-    -8: get product description failed
-    -9: get serial number failed
-    -10: unable to close device
+    \param ftdi pointer to ftdi_context
+    \param vendor Vendor ID
+    \param product Product ID
+    \param description Description to search for. Use NULL if not needed.
+    \param serial Serial to search for. Use NULL if not needed.
+
+    \retval  0: all fine
+    \retval -1: usb_find_busses() failed
+    \retval -2: usb_find_devices() failed
+    \retval -3: usb device not found
+    \retval -4: unable to open device
+    \retval -5: unable to claim device
+    \retval -6: reset failed
+    \retval -7: set baudrate failed
+    \retval -8: get product description failed
+    \retval -9: get serial number failed
+    \retval -10: unable to close device
 */
 int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                        const char* description, const char* serial)
@@ -316,13 +333,13 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
     ftdi_error_return(-3, "device not found");
 }
 
-/* ftdi_usb_reset
+/**
+    Resets the ftdi device.
 
-   Resets the ftdi device.
-   
-   Return codes:
-     0: all fine
-    -1: FTDI reset failed
+    \param ftdi pointer to ftdi_context
+
+    \retval  0: all fine
+    \retval -1: FTDI reset failed
 */
 int ftdi_usb_reset(struct ftdi_context *ftdi)
 {
@@ -336,14 +353,14 @@ int ftdi_usb_reset(struct ftdi_context *ftdi)
     return 0;
 }
 
-/* ftdi_usb_purge_buffers
+/**
+    Clears the buffers on the chip.
 
-   Cleans the buffers of the ftdi device.
-   
-   Return codes:
-     0: all fine
-    -1: write buffer purge failed
-    -2: read buffer purge failed
+    \param ftdi pointer to ftdi_context
+
+    \retval  0: all fine
+    \retval -1: write buffer purge failed
+    \retval -2: read buffer purge failed
 */
 int ftdi_usb_purge_buffers(struct ftdi_context *ftdi)
 {
@@ -360,14 +377,14 @@ int ftdi_usb_purge_buffers(struct ftdi_context *ftdi)
     return 0;
 }
 
-/* ftdi_usb_close
-   
-   Closes the ftdi device.
-   
-   Return codes:
-     0: all fine
-    -1: usb_release failed
-    -2: usb_close failed
+/**
+    Closes the ftdi device. Call ftdi_deinit() if you're cleaning up.
+
+    \param ftdi pointer to ftdi_context
+
+    \retval  0: all fine
+    \retval -1: usb_release failed
+    \retval -2: usb_close failed
 */
 int ftdi_usb_close(struct ftdi_context *ftdi)
 {
@@ -381,7 +398,6 @@ int ftdi_usb_close(struct ftdi_context *ftdi)
 
     return rtn;
 }
-
 
 /*
     ftdi_convert_baudrate returns nearest supported baud rate to that requested.
@@ -484,15 +500,14 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
     return best_baud;
 }
 
-/*
-    ftdi_set_baudrate
-    
+/**
     Sets the chip baudrate
-    
-    Return codes:
-     0: all fine
-    -1: invalid baudrate
-    -2: setting baudrate failed
+
+    \param ftdi pointer to ftdi_context
+
+    \retval  0: all fine
+    \retval -1: invalid baudrate
+    \retval -2: setting baudrate failed
 */
 int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
 {
@@ -521,14 +536,16 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
     return 0;
 }
 
-/*
-    ftdi_set_line_property
+/**
+    Set (RS232) line characteristics by Alain Abbas
 
-    set (RS232) line characteristics by Alain Abbas
-    
-    Return codes:
-     0: all fine
-    -1: Setting line property failed
+    \param ftdi pointer to ftdi_context
+    \param bits Number of bits
+    \param sbit Number of stop bits
+    \param parity Parity mode
+
+    \retval  0: all fine
+    \retval -1: Setting line property failed
 */
 int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
                            enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity)
@@ -571,6 +588,16 @@ int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
     return 0;
 }
 
+/**
+    Writes data in chunks (see ftdi_write_data_set_chunksize()) to the chip
+
+    \param ftdi pointer to ftdi_context
+    \param buf Buffer with the data
+    \param size Size of the buffer
+
+    \retval <0: error code from usb_bulk_write()
+    \retval >0: number of bytes written
+*/
 int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
     int ret;
@@ -594,21 +621,50 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
     return total_written;
 }
 
+/**
+    Configure write buffer chunk size.
+    Default is 4096.
 
+    \param ftdi pointer to ftdi_context
+    \param chunksize Chunk size
+
+    \retval 0: all fine
+*/
 int ftdi_write_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize)
 {
     ftdi->writebuffer_chunksize = chunksize;
     return 0;
 }
 
+/**
+    Get write buffer chunk size.
 
+    \param ftdi pointer to ftdi_context
+    \param chunksize Pointer to store chunk size in
+
+    \retval 0: all fine
+*/
 int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize)
 {
     *chunksize = ftdi->writebuffer_chunksize;
     return 0;
 }
 
+/**
+    Reads data in chunks (see ftdi_read_data_set_chunksize()) from the chip.
 
+    Automatically strips the two modem status bytes transfered during every read.
+
+    \param ftdi pointer to ftdi_context
+    \param buf Buffer to store data in
+    \param size Size of the buffer
+
+    \retval <0: error code from usb_bulk_read()
+    \retval >0: number of bytes read
+
+    \remark This function is not useful in bitbang mode.
+            Use ftdi_read_pins() to get the current state of the pins.
+*/
 int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
     int offset = 0, ret = 1, i, num_of_chunks, chunk_remains;
@@ -700,7 +756,17 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
     return -127;
 }
 
+/**
+    Configure read buffer chunk size.
+    Default is 4096.
 
+    Automatically reallocates the buffer.
+
+    \param ftdi pointer to ftdi_context
+    \param chunksize Chunk size
+
+    \retval 0: all fine
+*/
 int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize)
 {
     unsigned char *new_buf;
@@ -718,7 +784,14 @@ int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksi
     return 0;
 }
 
+/**
+    Get read buffer chunk size.
 
+    \param ftdi pointer to ftdi_context
+    \param chunksize Pointer to store chunk size in
+
+    \retval 0: all fine
+*/
 int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize)
 {
     *chunksize = ftdi->readbuffer_chunksize;
@@ -726,7 +799,18 @@ int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunks
 }
 
 
+/**
+    Enable bitbang mode.
 
+    For advanced bitbang modes of the FT2232C chip use ftdi_set_bitmode().
+
+    \param ftdi pointer to ftdi_context
+    \param bitmask Bitmask to configure lines.
+           HIGH/ON value configures a line as output.
+
+    \retval  0: all fine
+    \retval -1: can't enable bitbang mode
+*/
 int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask)
 {
     unsigned short usb_val;
@@ -742,7 +826,14 @@ int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask)
     return 0;
 }
 
+/**
+    Disable bitbang mode.
 
+    \param ftdi pointer to ftdi_context
+
+    \retval  0: all fine
+    \retval -1: can't disable bitbang mode
+*/
 int ftdi_disable_bitbang(struct ftdi_context *ftdi)
 {
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
@@ -752,7 +843,17 @@ int ftdi_disable_bitbang(struct ftdi_context *ftdi)
     return 0;
 }
 
+/**
+    Enable advanced bitbang mode for FT2232C chips.
 
+    \param ftdi pointer to ftdi_context
+    \param bitmask Bitmask to configure lines.
+           HIGH/ON value configures a line as output.
+    \param mode Bitbang mode: 1 for normal mode, 2 for SPI mode
+
+    \retval  0: all fine
+    \retval -1: can't enable bitbang mode
+*/
 int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned char mode)
 {
     unsigned short usb_val;
@@ -767,6 +868,15 @@ int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned 
     return 0;
 }
 
+/**
+    Directly read pin state. Useful for bitbang mode.
+
+    \param ftdi pointer to ftdi_context
+    \param pins Pointer to store pins into
+
+    \retval  0: all fine
+    \retval -1: read pins failed
+*/
 int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins)
 {
     if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0C, 0, ftdi->index, (char *)pins, 1, ftdi->usb_read_timeout) != 1)
@@ -775,7 +885,20 @@ int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins)
     return 0;
 }
 
+/**
+    Set latency timer
 
+    The FTDI chip keeps data in the internal buffer for a specific
+    amount of time if the buffer is not full yet to decrease
+    load on the usb bus.
+
+    \param ftdi pointer to ftdi_context
+    \param latency Value between 1 and 255
+
+    \retval  0: all fine
+    \retval -1: latency out of range
+    \retval -2: unable to set latency timer
+*/
 int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency)
 {
     unsigned short usb_val;
@@ -790,7 +913,15 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency)
     return 0;
 }
 
+/**
+    Get latency timer
 
+    \param ftdi pointer to ftdi_context
+    \param latency Pointer to store latency value in
+
+    \retval  0: all fine
+    \retval -1: unable to get latency timer
+*/
 int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency)
 {
     unsigned short usb_val;
@@ -801,7 +932,11 @@ int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency)
     return 0;
 }
 
+/**
+    Init eeprom with default values.
 
+    \param eeprom Pointer to ftdi_eeprom
+*/
 void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom)
 {
     eeprom->vendor_id = 0x0403;
@@ -825,16 +960,15 @@ void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom)
     eeprom->serial = NULL;
 }
 
+/**
+   Build binary output from ftdi_eeprom structure.
+   Output is suitable for ftdi_write_eeprom().
 
-/*
-    ftdi_eeprom_build
-    
-    Build binary output from ftdi_eeprom structure.
-    Output is suitable for ftdi_write_eeprom.
-    
-    Return codes:
-    positive value: used eeprom size
-    -1: eeprom size (128 bytes) exceeded by custom strings
+   \param eeprom Pointer to ftdi_eeprom
+   \param output Buffer of 128 bytes to store eeprom image to
+
+   \retval >0: used eeprom size
+   \retval -1: eeprom size (128 bytes) exceeded by custom strings
 */
 int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
 {
@@ -990,7 +1124,15 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     return size_check;
 }
 
+/**
+    Read eeprom
 
+    \param ftdi pointer to ftdi_context
+    \param eeprom Pointer to store eeprom into
+
+    \retval  0: all fine
+    \retval -1: read failed
+*/
 int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
 {
     int i;
@@ -1003,7 +1145,15 @@ int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     return 0;
 }
 
+/**
+    Write eeprom
 
+    \param ftdi pointer to ftdi_context
+    \param eeprom Pointer to read eeprom from
+
+    \retval  0: all fine
+    \retval -1: read failed
+*/
 int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
 {
     unsigned short usb_val;
@@ -1019,7 +1169,14 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     return 0;
 }
 
+/**
+    Erase eeprom
 
+    \param ftdi pointer to ftdi_context
+
+    \retval  0: all fine
+    \retval -1: erase failed
+*/
 int ftdi_erase_eeprom(struct ftdi_context *ftdi)
 {
     if (usb_control_msg(ftdi->usb_dev, 0x40, 0x92, 0, 0, NULL, 0, ftdi->usb_write_timeout) != 0)
@@ -1028,13 +1185,28 @@ int ftdi_erase_eeprom(struct ftdi_context *ftdi)
     return 0;
 }
 
+/**
+    Get string representation for last error code
 
+    \param ftdi pointer to ftdi_context
+
+    \retval Pointer to error string
+*/
 char *ftdi_get_error_string (struct ftdi_context *ftdi)
 {
     return ftdi->error_str;
 }
 
+/**
+    Set flowcontrol for ftdi chip
 
+    \param ftdi pointer to ftdi_context
+    \param flowctrl flow control to use. should be 
+           SIO_DISABLE_FLOW_CTRL, SIO_RTS_CTS_HS, SIO_DTR_DSR_HS or SIO_XON_XOFF_HS   
+
+    \retval  0: all fine
+    \retval -1: set flow control failed
+*/
 int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl)
 {
     if (usb_control_msg(ftdi->usb_dev, SIO_SET_FLOW_CTRL_REQUEST_TYPE,
@@ -1045,6 +1217,15 @@ int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl)
     return 0;
 }
 
+/**
+    Set dtr line
+
+    \param ftdi pointer to ftdi_context
+    \param state state to set line to (1 or 0)
+
+    \retval  0: all fine
+    \retval -1: set dtr failed
+*/
 int ftdi_setdtr(struct ftdi_context *ftdi, int state)
 {
     unsigned short usb_val;
@@ -1062,6 +1243,15 @@ int ftdi_setdtr(struct ftdi_context *ftdi, int state)
     return 0;
 }
 
+/**
+    Set rts line
+
+    \param ftdi pointer to ftdi_context
+    \param state state to set line to (1 or 0)
+
+    \retval  0: all fine
+    \retval -1 set rts failed
+*/
 int ftdi_setrts(struct ftdi_context *ftdi, int state)
 {
     unsigned short usb_val;

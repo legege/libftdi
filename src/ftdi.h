@@ -187,7 +187,7 @@ extern "C" {
     int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                            const char* description, const char* serial);
     int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev);
-    
+
     int ftdi_usb_close(struct ftdi_context *ftdi);
     int ftdi_usb_reset(struct ftdi_context *ftdi);
     int ftdi_usb_purge_buffers(struct ftdi_context *ftdi);
@@ -229,27 +229,8 @@ extern "C" {
      * by Lorenz Moesenlechner (lorenz@hcilab.org) and 
      * Matthias Kranz  (matthias@hcilab.org)
      * */
-
-    /**
-     * Set flowcontrol for ftdi chip
-     * \param ftdi device context of ftdi
-     * \param flowctrl flow control to use. should be 
-     *        SIO_DISABLE_FLOW_CTRL, SIO_RTS_CTS_HS, SIO_DTR_DSR_HS or SIO_XON_XOFF_HS   
-     */
     int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
-
-    /**
-     * Set dtr line
-     * \param ftdi device context of ftdi
-     * \param state state to set line to (1 or 0)
-     */
     int ftdi_setdtr(struct ftdi_context *ftdi, int state);
-
-    /**
-     * Set rts line
-     * \param ftdi device context of ftdi
-     * \param state state to set line to (1 or 0)
-     */
     int ftdi_setrts(struct ftdi_context *ftdi, int state);
 
 #ifdef __cplusplus
