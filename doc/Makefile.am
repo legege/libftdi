@@ -8,5 +8,5 @@ endif
 
 all: $(MANUALS)
 
-html/index.html: ../src/*.c ../src/*.h
+html/index.html: ../src/*.c ../src/*.h ../examples/*.c
 	$(DOXYGEN)

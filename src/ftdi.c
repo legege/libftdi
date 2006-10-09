@@ -17,11 +17,13 @@
 /**
     \mainpage libftdi API documentation
 
-    Library to talk to FTDI chips. See http://www.ftdichip.com
-
-    The latest versions of libftdi is available at
+    Library to talk to FTDI chips. You find the latest versions of libftdi at
     http://www.intra2net.com/de/produkte/opensource/ftdi/
 
+    The library is easy to use. Have a look at this short example:
+    \include simple.c
+
+    More examples can be found in the "examples" directory.
 */
 /** \addtogroup libftdi */
 /* @{ */

@@ -1,7 +1,7 @@
 AC_INIT(configure.in)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(libftdi, 0.7)
+AM_INIT_AUTOMAKE(libftdi, 0.8)
 
 AC_LANG_C
 AC_PROG_CC
@@ -37,4 +37,4 @@ AC_PATH_PROG(DOXYGEN, doxygen, $PATH)
 AM_CONDITIONAL(HAVE_DOXYGEN, test -n $DOXYGEN);
 
 AC_OUTPUT([libftdi-config],[chmod a+x libftdi-config])
-AC_OUTPUT(Makefile src/Makefile doc/Doxyfile doc/Makefile libftdi.pc)
+AC_OUTPUT(Makefile src/Makefile examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc)
