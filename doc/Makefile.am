@@ -1,4 +1,3 @@
-# I grabbed this same hack from the VACM docs/Makfile.am
 CLEANFILES = rm -rf html man
 
 if HAVE_DOXYGEN
