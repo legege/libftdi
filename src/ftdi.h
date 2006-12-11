@@ -223,6 +223,10 @@ extern "C" {
     int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devlist,
                           int vendor, int product);
     void ftdi_list_free(struct ftdi_device_list **devlist);
+    int ftdi_usb_get_strings(struct ftdi_context *ftdi, struct usb_device *dev,
+                             char * manufacturer, int mnf_len,
+                             char * description, int desc_len,
+                             char * serial, int serial_len);
 
     int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product);
     int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,

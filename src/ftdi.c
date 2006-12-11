@@ -196,6 +196,65 @@ void ftdi_list_free(struct ftdi_device_list **devlist)
 }
 
 /**
+    Return device ID strings from the usb device.
+
+    The parameters manufacturer, description and serial may be NULL
+    or pointer to buffers to store the fetched strings.
+
+    \param ftdi pointer to ftdi_context
+    \param dev libusb usb_dev to use
+    \param manufacturer Store manufacturer string here if not NULL
+    \param mnf_len Buffer size of manufacturer string
+    \param description Store product description string here if not NULL
+    \param desc_len Buffer size of product description string
+    \param serial Store serial string here if not NULL
+    \param serial_len Buffer size of serial string
+
+    \retval   0: all fine
+    \retval  -1: wrong arguments
+    \retval  -4: unable to open device
+    \retval  -7: get product manufacturer failed
+    \retval  -8: get product description failed
+    \retval  -9: get serial number failed
+    \retval -10: unable to close device
+*/
+int ftdi_usb_get_strings(struct ftdi_context * ftdi, struct usb_device * dev,
+        char * manufacturer, int mnf_len, char * description, int desc_len, char * serial, int serial_len)
+{
+    if ((ftdi==NULL) || (dev==NULL))
+        return -1;
+
+    if (!(ftdi->usb_dev = usb_open(dev)))
+        ftdi_error_return(-4, usb_strerror());
+
+    if (manufacturer != NULL) {
+        if (usb_get_string_simple(ftdi->usb_dev, dev->descriptor.iManufacturer, manufacturer, mnf_len) <= 0) {
+            usb_close (ftdi->usb_dev);
+            ftdi_error_return(-7, usb_strerror());
+        }
+    }
+
+    if (description != NULL) {
+        if (usb_get_string_simple(ftdi->usb_dev, dev->descriptor.iProduct, description, desc_len) <= 0) {
+            usb_close (ftdi->usb_dev);
+            ftdi_error_return(-8, usb_strerror());
+        }
+    }
+
+    if (serial != NULL) {
+        if (usb_get_string_simple(ftdi->usb_dev, dev->descriptor.iSerialNumber, serial, serial_len) <= 0) {
+            usb_close (ftdi->usb_dev);
+            ftdi_error_return(-9, usb_strerror());
+        }
+    }
+
+    if (usb_close (ftdi->usb_dev) != 0)
+        ftdi_error_return(-10, usb_strerror());
+
+    return 0;
+}
+
+/**
     Opens a ftdi device given by a usb_device.
 
     \param ftdi pointer to ftdi_context

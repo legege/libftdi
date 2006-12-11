@@ -1,6 +1,7 @@
 New in 0.8
 ----------
 * Complete doxygen documentation and examples
+* ftdi_usb_get_strings function to get device ID strings (Matthijs ten Berge)
 * Fix ftdi_read_pins on PowerPC systems (Thomas Fischl)
 * Automatically detach ftdi_sio kernel driver (Uwe Bonnes and Intra2net)
 * Configurable flow control (Lorenz Moesenlechner and Matthias Kranz)
