@@ -1,3 +1,8 @@
+New in 0.9
+----------
+* Fixed build without doxygen
+* Correct .so file library version
+
 New in 0.8
 ----------
 * Complete doxygen documentation and examples
