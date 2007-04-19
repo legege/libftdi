@@ -8,6 +8,7 @@ int main(int argc, char **argv)
 {
     struct ftdi_context ftdic;
     int f,i;
+    char buf[1];
 
     ftdi_init(&ftdic);
 
@@ -22,8 +23,6 @@ int main(int argc, char **argv)
 
     printf("enabling bitbang mode\n");
     ftdi_enable_bitbang(&ftdic, 0xFF);
-
-    char buf[1];
 
     sleep(3);
 

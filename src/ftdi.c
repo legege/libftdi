@@ -201,6 +201,9 @@ void ftdi_list_free(struct ftdi_device_list **devlist)
     The parameters manufacturer, description and serial may be NULL
     or pointer to buffers to store the fetched strings.
 
+    \note Use this function only in combination with ftdi_usb_find_all()
+          as it closes the internal "usb_dev" after use.
+
     \param ftdi pointer to ftdi_context
     \param dev libusb usb_dev to use
     \param manufacturer Store manufacturer string here if not NULL

@@ -7,6 +7,9 @@ bin_PROGRAMS = simple \
 	bitbang2      \
 	bitbang_ft2232
 
+# Don't install the example files
+AM_LDFLAGS = -no-install
+
 simple_SOURCES = simple.c
 bitbang_SOURCES = bitbang.c
 bitbang2_SOURCES = bitbang2.c
