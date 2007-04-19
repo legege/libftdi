@@ -158,6 +158,7 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
         ftdi_error_return(-2, "usb_find_devices() failed");
 
     curdev = devlist;
+    *curdev = NULL;
     for (bus = usb_busses; bus; bus = bus->next) {
         for (dev = bus->devices; dev; dev = dev->next) {
             if (dev->descriptor.idVendor == vendor
@@ -186,13 +187,15 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
 */
 void ftdi_list_free(struct ftdi_device_list **devlist)
 {
-    struct ftdi_device_list **curdev;
-    for (; *devlist == NULL; devlist = curdev) {
-        curdev = &(*devlist)->next;
-        free(*devlist);
+    struct ftdi_device_list *curdev, *next;
+
+    for (curdev = *devlist; curdev != NULL;) {
+        next = curdev->next;
+        free(curdev);
+        curdev = next;
     }
 
-    devlist = NULL;
+    *devlist = NULL;
 }
 
 /**
