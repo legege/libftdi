@@ -10,4 +10,4 @@ include_HEADERS =  ftdi.h
 # Note:  If you specify a:b:c as the version in the next line,
 #  the library that is made has version (a-c).c.b.  In this
 #  example, the version is 2.1.2. (3:2:1)
-libftdi_la_LDFLAGS = -version-info 9:0:9 $(all_libraries) 
+libftdi_la_LDFLAGS = -version-info 10:0:10 $(all_libraries) 

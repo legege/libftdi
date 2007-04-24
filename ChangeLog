@@ -1,3 +1,9 @@
+New in 0.10
+-----------
+* Examples for libftdi_usb_find_all and CBUS mode
+* Fixed ftdi_list_free
+* Small cosmetic changes
+
 New in 0.9
 ----------
 * Fixed build without doxygen
