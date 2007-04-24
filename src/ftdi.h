@@ -35,7 +35,9 @@ enum ftdi_mpsse_mode {
     BITMODE_MPSSE  = 0x02,
     BITMODE_SYNCBB = 0x04,
     BITMODE_MCU    = 0x08,
-    BITMODE_OPTO   = 0x10
+    // CPU-style fifo mode gets set via EEPROM
+    BITMODE_OPTO   = 0x10,
+    BITMODE_CBUS   = 0x20
 };
 
 /// Port interface for FT2232C
