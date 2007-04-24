@@ -23,19 +23,24 @@
     All pins to output with 0 bit high: 0xF1 (11110001)
     Bits 0 and 1 to input, 2 and 3 to output and masked high: 0xCC (11001100)
 
+    The input is standard "0x" hex notation.
+    A carriage return terminates the program.
+
     This program is distributed under the GPL, version 2
 */
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <ftdi.h>
 
 int main(int argc, char **argv)
 {
     struct ftdi_context ftdic;
     int f,i;
-    char buf[1];
+    unsigned char buf[1];
     unsigned char bitmask;
+    unsigned char input[10];
 
     ftdi_init(&ftdic);
 
@@ -46,30 +51,26 @@ int main(int argc, char **argv)
     }
     printf("ftdi open succeeded: %d\n",f);
 
-    // enable CBUS
-    bitmask = 0x71;
-    printf("enabling CBUS mode\n");
-    f = ftdi_set_bitmode(&ftdic, bitmask, 0x20); // cbus[0] as input (high), cbus[1-3] as output
-    if (f < 0) {
-        fprintf(stderr, "set_bitmode failed for 0x%x, error %d (%s)\n", bitmask, f, ftdi_get_error_string(&ftdic));
-        exit(-1);
-    }
+    while (1) {
+        // Set bitmask from input
+        fgets(input, sizeof(input) - 1, stdin);
+        if (input[0] == '\n') break;
+        bitmask = strtol(input, NULL, 0);
+        printf("Using bitmask 0x%02x\n", bitmask);
+        f = ftdi_set_bitmode(&ftdic, bitmask, BITMODE_CBUS);
+        if (f < 0) {
+            fprintf(stderr, "set_bitmode failed for 0x%x, error %d (%s)\n", bitmask, f, ftdi_get_error_string(&ftdic));
+            exit(-1);
+        }
 
-    // write to CBUS
-    buf[0] = 0xFF;
-    f = ftdi_write_data(&ftdic, buf, 1);
-    if(f < 0) {
-        fprintf(stderr,"write failed for 0x%x, error %d (%s)\n", buf[0], f, ftdi_get_error_string(&ftdic));
-        exit(-1);
+        // read CBUS
+        f = ftdi_read_pins(&ftdic, &buf[0]);
+        if (f < 0) {
+            fprintf(stderr, "read_pins failed, error %d (%s)\n", f, ftdi_get_error_string(&ftdic));
+            exit(-1);
+        }
+        printf("Read returned 0x%01x\n", buf[0] & 0x0f);
     }
-
-    // read CBUS
-    f = ftdi_read_pins(&ftdic, &buf[0]);
-    if (f < 0) {
-        fprintf(stderr, "read_pins failed, error %d (%s)\n", f, ftdi_get_error_string(&ftdic));
-        exit(-1);
-    }
-
     printf("disabling bitbang mode\n");
     ftdi_disable_bitbang(&ftdic);
 
