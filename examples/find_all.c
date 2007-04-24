@@ -1,5 +1,8 @@
-/*
-    Example for ftdi_usb_find_all()
+/* find_all.c
+
+   Example for ftdi_usb_find_all()
+
+   This program is distributed under the GPL, version 2
 */
 
 #include <stdio.h>

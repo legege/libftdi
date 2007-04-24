@@ -1,3 +1,10 @@
+/* simple.c
+
+   Simple libftdi usage example
+
+   This program is distributed under the GPL, version 2
+*/
+
 #include <stdio.h>
 #include <ftdi.h>
 
