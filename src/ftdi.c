@@ -741,6 +741,7 @@ int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunk
     \param size Size of the buffer
 
     \retval <0: error code from usb_bulk_read()
+    \retval  0: no data was available
     \retval >0: number of bytes read
 
     \remark This function is not useful in bitbang mode.
