@@ -1,3 +1,8 @@
+New in 0.11
+-----------
+* Detection of R-type chips
+* FTDIChip-ID read support (Peter Holik)
+
 New in 0.10
 -----------
 * Examples for libftdi_usb_find_all and CBUS mode

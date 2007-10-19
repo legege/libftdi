@@ -315,7 +315,8 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
         ftdi->type = TYPE_2232C;
         if (!ftdi->index)
             ftdi->index = INTERFACE_A;
-    }
+    } else if (dev->descriptor.bcdDevice == 0x600)
+        ftdi->type = TYPE_R;
 
     ftdi_error_return(0, "all fine");
 }
@@ -1223,6 +1224,56 @@ int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
         if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
             ftdi_error_return(-1, "reading eeprom failed");
     }
+
+    return 0;
+}
+
+/*
+    ftdi_read_chipid_shift does the bitshift operation needed for the FTDIChip-ID
+    Function is only used internally
+    \internal
+*/
+static unsigned char ftdi_read_chipid_shift(unsigned char value)
+{
+    return ((value & 1) << 1) |
+            ((value & 2) << 5) |
+            ((value & 4) >> 2) |
+            ((value & 8) << 4) |
+            ((value & 16) >> 1) |
+            ((value & 32) >> 1) |
+            ((value & 64) >> 4) |
+            ((value & 128) >> 2);
+}
+
+/**
+    Read the FTDIChip-ID from R-type devices
+
+    \param ftdi pointer to ftdi_context
+    \param chipid Pointer to store FTDIChip-ID
+
+    \retval  0: all fine
+    \retval -1: read failed
+*/
+int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
+{
+    unsigned int a = 0, b = 0, result = -1;
+
+    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, 0x43, (char *)&a, 2, ftdi->usb_read_timeout) == 2)
+    {
+        a = a << 8 | a >> 8;
+        if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, 0x44, (char *)&b, 2, ftdi->usb_read_timeout) == 2)
+        {
+            b = b << 8 | b >> 8;
+            a = (a << 16) | b;
+            a = ftdi_read_chipid_shift(a) | ftdi_read_chipid_shift(a>>8)<<8;
+            a |= ftdi_read_chipid_shift(a>>16)<<16 | ftdi_read_chipid_shift(a>>24)<<24;
+            *chipid = a ^ 0xa5f0f7d1;
+            result = 0;
+        }
+    }
+
+    if (result != 0)
+        ftdi_error_return(result, "read of FTDIChip-ID failed");
 
     return 0;
 }

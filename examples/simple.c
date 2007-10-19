@@ -19,6 +19,13 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    // Read out FTDIChip-ID of R type chips
+    if (ftdic.type == TYPE_R) {
+        unsigned int chipid;
+        printf("ftdi_read_chipid: %d\n", ftdi_read_chipid(&ftdic, &chipid));
+        printf("FTDI chipid: %X\n", chipid);
+    }
+
     ftdi_usb_close(&ftdic);
     ftdi_deinit(&ftdic);
 
