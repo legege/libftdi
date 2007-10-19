@@ -1265,8 +1265,8 @@ int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
         {
             b = b << 8 | b >> 8;
             a = (a << 16) | b;
-            a = ftdi_read_chipid_shift(a) | ftdi_read_chipid_shift(a>>8)<<8;
-            a |= ftdi_read_chipid_shift(a>>16)<<16 | ftdi_read_chipid_shift(a>>24)<<24;
+            a = ftdi_read_chipid_shift(a) | ftdi_read_chipid_shift(a>>8)<<8
+                | ftdi_read_chipid_shift(a>>16)<<16 | ftdi_read_chipid_shift(a>>24)<<24;
             *chipid = a ^ 0xa5f0f7d1;
             result = 0;
         }
