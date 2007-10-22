@@ -1256,7 +1256,7 @@ static unsigned char ftdi_read_chipid_shift(unsigned char value)
 */
 int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
 {
-    unsigned int a = 0, b = 0, result = -1;
+    unsigned int a = 0, b = 0;
 
     if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, 0x43, (char *)&a, 2, ftdi->usb_read_timeout) == 2)
     {
@@ -1268,14 +1268,11 @@ int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
             a = ftdi_read_chipid_shift(a) | ftdi_read_chipid_shift(a>>8)<<8
                 | ftdi_read_chipid_shift(a>>16)<<16 | ftdi_read_chipid_shift(a>>24)<<24;
             *chipid = a ^ 0xa5f0f7d1;
-            result = 0;
+            return 0;
         }
     }
 
-    if (result != 0)
-        ftdi_error_return(result, "read of FTDIChip-ID failed");
-
-    return 0;
+    ftdi_error_return(-1, "read of FTDIChip-ID failed");
 }
 
 /**
