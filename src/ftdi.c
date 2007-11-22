@@ -31,6 +31,7 @@
 #include <usb.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/ioctl.h>
 
 #include "ftdi.h"
 
@@ -702,6 +703,122 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
 
     return total_written;
 }
+
+/* these structs are stolen from libusb linux implementation
+   they are needed to directly access usbfs and offer async
+   writing */
+
+struct usb_iso_packet_desc {
+	unsigned int length;
+	unsigned int actual_length;
+	unsigned int status;
+};
+
+struct usb_urb {
+	unsigned char type;
+	unsigned char endpoint;
+	int status;
+	unsigned int flags;
+	void *buffer;
+	int buffer_length;
+	int actual_length;
+	int start_frame;
+	int number_of_packets;
+	int error_count;
+	unsigned int signr;  /* signal to be sent on error, -1 if none should be sent */
+	void *usercontext;
+	struct usb_iso_packet_desc iso_frame_desc[0];
+};
+
+/* this is strongly dependent on libusb using the same struct layout. If libusb
+   changes in some later version this may break horribly (this is for libusb 0.1.12) */
+struct usb_dev_handle {
+  int fd;
+  // some other stuff coming here we don't need
+};
+
+// some defines for direct usb access, taken from libusb
+#define MAX_READ_WRITE	(16 * 1024)
+#define IOCTL_USB_SUBMITURB	_IOR('U', 10, struct usb_urb)
+#define USB_URB_TYPE_BULK	3
+
+/**
+    Stupid libusb does not offer async writes nor does it allow
+    access to its fd - so we need some hacks here.
+*/
+static int usb_bulk_write_async(usb_dev_handle *dev, int ep, char *bytes, int size)
+{
+  struct usb_urb urb;
+  int bytesdone = 0, requested;
+  struct usb_urb *context;
+  int ret, waiting;
+
+  do {
+    fd_set writefds;
+
+    requested = size - bytesdone;
+    if (requested > MAX_READ_WRITE)
+      requested = MAX_READ_WRITE;
+
+    urb.type = USB_URB_TYPE_BULK;
+    urb.endpoint = ep;
+    urb.flags = 0;
+    urb.buffer = bytes + bytesdone;
+    urb.buffer_length = requested;
+    urb.signr = 0;
+    urb.actual_length = 0;
+    urb.number_of_packets = 0;	/* don't do isochronous yet */
+    urb.usercontext = (void*)1000;     /* use something else than libusb... */
+
+    ret = ioctl(dev->fd, IOCTL_USB_SUBMITURB, &urb);
+    if (ret < 0)
+      return ret;       /* the caller can read errno to get more info */
+
+    bytesdone += requested;
+  } while (bytesdone < size);
+  return bytesdone;
+}
+
+/**
+    Writes data in chunks (see ftdi_write_data_set_chunksize()) to the chip.
+    Does not wait for completion of the transfer nor does it make sure that
+    the transfer was successful.
+
+    This function could be extended to use signals and callbacks to inform the
+    caller of completion or error - but this is not done yet, volunteers welcome.
+
+    Works around libusb and directly accesses functions only available on Linux.
+
+    \param ftdi pointer to ftdi_context
+    \param buf Buffer with the data
+    \param size Size of the buffer
+
+    \retval <0: error code from usb_bulk_write()
+    \retval >0: number of bytes written
+*/
+int ftdi_write_data_async(struct ftdi_context *ftdi, unsigned char *buf, int size)
+{
+    int ret;
+    int offset = 0;
+    int total_written = 0;
+
+    while (offset < size) {
+        int write_size = ftdi->writebuffer_chunksize;
+
+        if (offset+write_size > size)
+            write_size = size-offset;
+
+        ret = usb_bulk_write_async(ftdi->usb_dev, ftdi->in_ep, buf+offset, write_size);
+        if (ret < 0)
+            ftdi_error_return(ret, "usb bulk write async failed");
+
+        total_written += ret;
+        offset += write_size;
+    }
+
+    return total_written;
+}
+
 
 /**
     Configure write buffer chunk size.

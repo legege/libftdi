@@ -248,6 +248,7 @@ extern "C" {
     int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize);
 
     int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size);
+    int ftdi_write_data_async(struct ftdi_context *ftdi, unsigned char *buf, int size);
     int ftdi_write_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize);
     int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize);
 
