@@ -31,9 +31,16 @@
 #include <usb.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/ioctl.h>
 
 #include "ftdi.h"
+
+/* stuff needed for async write */
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <linux/usbdevice_fs.h>
 
 #define ftdi_error_return(code, str) do {  \
         ftdi->error_str = str;             \
@@ -53,6 +60,8 @@
 */
 int ftdi_init(struct ftdi_context *ftdi)
 {
+    int i;
+
     ftdi->usb_dev = NULL;
     ftdi->usb_read_timeout = 5000;
     ftdi->usb_write_timeout = 5000;
@@ -73,6 +82,14 @@ int ftdi_init(struct ftdi_context *ftdi)
     ftdi->bitbang_mode = 1; /* 1: Normal bitbang mode, 2: SPI bitbang mode */
 
     ftdi->error_str = NULL;
+
+    ftdi->async_usb_buffer_size=10;
+    if ((ftdi->async_usb_buffer=malloc(sizeof(struct usbdevfs_urb)*ftdi->async_usb_buffer_size)) == NULL)
+        ftdi_error_return(-1, "out of memory for async usb buffer");
+
+    /* initialize async usb buffer with unused-marker */
+    for (i=0; i < ftdi->async_usb_buffer_size; i++)
+        ((struct usbdevfs_urb*)ftdi->async_usb_buffer)[i].usercontext = FTDI_URB_USERCONTEXT_COOKIE;
 
     /* All fine. Now allocate the readbuffer */
     return ftdi_read_data_set_chunksize(ftdi, 4096);
@@ -113,6 +130,11 @@ int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
 */
 void ftdi_deinit(struct ftdi_context *ftdi)
 {
+    if (ftdi->async_usb_buffer != NULL) {
+        free(ftdi->async_usb_buffer);
+        ftdi->async_usb_buffer = NULL;
+    }
+
     if (ftdi->readbuffer != NULL) {
         free(ftdi->readbuffer);
         ftdi->readbuffer = NULL;
@@ -471,6 +493,9 @@ int ftdi_usb_close(struct ftdi_context *ftdi)
 {
     int rtn = 0;
 
+    /* try to release some kernel resources */
+    ftdi_async_complete(ftdi,1);
+
     if (usb_release_interface(ftdi->usb_dev, ftdi->interface) != 0)
         rtn = -1;
 
@@ -704,32 +729,6 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
     return total_written;
 }
 
-/* these structs are stolen from libusb linux implementation
-   they are needed to directly access usbfs and offer async
-   writing */
-
-struct usb_iso_packet_desc {
-	unsigned int length;
-	unsigned int actual_length;
-	unsigned int status;
-};
-
-struct usb_urb {
-	unsigned char type;
-	unsigned char endpoint;
-	int status;
-	unsigned int flags;
-	void *buffer;
-	int buffer_length;
-	int actual_length;
-	int start_frame;
-	int number_of_packets;
-	int error_count;
-	unsigned int signr;  /* signal to be sent on error, -1 if none should be sent */
-	void *usercontext;
-	struct usb_iso_packet_desc iso_frame_desc[0];
-};
-
 /* this is strongly dependent on libusb using the same struct layout. If libusb
    changes in some later version this may break horribly (this is for libusb 0.1.12) */
 struct usb_dev_handle {
@@ -737,40 +736,128 @@ struct usb_dev_handle {
   // some other stuff coming here we don't need
 };
 
-// some defines for direct usb access, taken from libusb
-#define MAX_READ_WRITE	(16 * 1024)
-#define IOCTL_USB_SUBMITURB	_IOR('U', 10, struct usb_urb)
-#define USB_URB_TYPE_BULK	3
+static int usb_get_async_urbs_pending(struct ftdi_context *ftdi)
+{
+    struct usbdevfs_urb *urb;
+    int pending=0;
+    int i;
+
+    for (i=0; i < ftdi->async_usb_buffer_size; i++) {
+        urb=&((struct usbdevfs_urb *)(ftdi->async_usb_buffer))[i];
+        if (urb->usercontext != FTDI_URB_USERCONTEXT_COOKIE)
+            pending++;
+    }
+
+    return pending;
+}
+
+static void usb_async_cleanup(struct ftdi_context *ftdi, int wait_for_more, int timeout_msec)
+{
+  struct timeval tv;
+  struct usbdevfs_urb *urb=NULL;
+  int ret;
+  fd_set writefds;
+  int keep_going=0;
+
+  FD_ZERO(&writefds);
+  FD_SET(ftdi->usb_dev->fd, &writefds);
+
+  /* init timeout only once, select writes time left after call */
+  tv.tv_sec = timeout_msec / 1000;
+  tv.tv_usec = (timeout_msec % 1000) * 1000;
+
+  do {
+    while (usb_get_async_urbs_pending(ftdi)
+           && (ret = ioctl(ftdi->usb_dev->fd, USBDEVFS_REAPURBNDELAY, &urb)) == -1
+           && errno == EAGAIN)
+    {
+      if (keep_going && !wait_for_more) {
+        /* don't wait if repeating only for keep_going */
+        keep_going=0;
+        break;
+      }
+
+      /* wait for timeout msec or something written ready */
+      select(ftdi->usb_dev->fd+1, NULL, &writefds, NULL, &tv);
+    }
+
+    if (ret == 0 && urb != NULL) {
+      /* got a free urb, mark it */
+      urb->usercontext = FTDI_URB_USERCONTEXT_COOKIE;
+
+      /* try to get more urbs that are ready now, but don't wait anymore */
+      urb=NULL;
+      keep_going=1;
+    } else {
+      /* no more urbs waiting */
+      keep_going=0;
+    }
+  } while (keep_going);
+}
+
+/**
+    Wait until at least one async write is complete
+
+    \param ftdi pointer to ftdi_context
+    \param wait_for_more if != 0 wait for more than one write to complete (until write timeout)
+*/
+void ftdi_async_complete(struct ftdi_context *ftdi, int wait_for_more)
+{
+  usb_async_cleanup(ftdi,wait_for_more,ftdi->usb_write_timeout);
+}
 
 /**
     Stupid libusb does not offer async writes nor does it allow
     access to its fd - so we need some hacks here.
 */
-static int usb_bulk_write_async(usb_dev_handle *dev, int ep, char *bytes, int size)
+static int usb_bulk_write_async(struct ftdi_context *ftdi, int ep, char *bytes, int size)
 {
-  struct usb_urb urb;
+  struct usbdevfs_urb *urb;
   int bytesdone = 0, requested;
-  struct usb_urb *context;
-  int ret, waiting;
+  int ret, i;
+  int cleanup_count;
 
   do {
-    fd_set writefds;
+    /* find a free urb buffer we can use */
+    urb=NULL;
+    for (cleanup_count=0; urb==NULL && cleanup_count <= 1; cleanup_count++)
+    {
+        if (i==ftdi->async_usb_buffer_size) {
+          /* wait until some buffers are free */
+          usb_async_cleanup(ftdi,0,ftdi->usb_write_timeout);
+        }
+
+        for (i=0; i < ftdi->async_usb_buffer_size; i++) {
+          urb=&((struct usbdevfs_urb *)(ftdi->async_usb_buffer))[i];
+          if (urb->usercontext == FTDI_URB_USERCONTEXT_COOKIE)
+            break;  /* found a free urb position */
+          urb=NULL;
+        }
+    }
+
+    /* no free urb position found */
+    if (urb==NULL)
+        return -1;
 
     requested = size - bytesdone;
-    if (requested > MAX_READ_WRITE)
-      requested = MAX_READ_WRITE;
+    if (requested > 4096)
+      requested = 4096;
 
-    urb.type = USB_URB_TYPE_BULK;
-    urb.endpoint = ep;
-    urb.flags = 0;
-    urb.buffer = bytes + bytesdone;
-    urb.buffer_length = requested;
-    urb.signr = 0;
-    urb.actual_length = 0;
-    urb.number_of_packets = 0;	/* don't do isochronous yet */
-    urb.usercontext = (void*)1000;     /* use something else than libusb... */
+    memset(urb,0,sizeof(urb));
 
-    ret = ioctl(dev->fd, IOCTL_USB_SUBMITURB, &urb);
+    urb->type = USBDEVFS_URB_TYPE_BULK;
+    urb->endpoint = ep;
+    urb->flags = 0;
+    urb->buffer = bytes + bytesdone;
+    urb->buffer_length = requested;
+    urb->signr = 0;
+    urb->actual_length = 0;
+    urb->number_of_packets = 0;
+    urb->usercontext = 0;
+
+    do {
+        ret = ioctl(ftdi->usb_dev->fd, USBDEVFS_SUBMITURB, urb);
+    } while (ret < 0 && errno == EINTR);
     if (ret < 0)
       return ret;       /* the caller can read errno to get more info */
 
@@ -808,7 +895,7 @@ int ftdi_write_data_async(struct ftdi_context *ftdi, unsigned char *buf, int siz
         if (offset+write_size > size)
             write_size = size-offset;
 
-        ret = usb_bulk_write_async(ftdi->usb_dev, ftdi->in_ep, buf+offset, write_size);
+        ret = usb_bulk_write_async(ftdi, ftdi->in_ep, buf+offset, write_size);
         if (ret < 0)
             ftdi_error_return(ret, "usb bulk write async failed");
 

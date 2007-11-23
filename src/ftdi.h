@@ -113,6 +113,10 @@ enum ftdi_interface {
 
 #define SIO_RTS_CTS_HS (0x1 << 8)
 
+/* marker for unused usb urb structures
+   (taken from libusb) */
+#define FTDI_URB_USERCONTEXT_COOKIE ((void *)0x1)
+
 /**
     \brief Main context structure for all libftdi functions.
 
@@ -160,6 +164,11 @@ struct ftdi_context {
 
     /// String representation of last error
     char *error_str;
+
+    /// Buffer needed for async communication
+    char *async_usb_buffer;
+    /// Number of URB-structures we can buffer
+    unsigned int async_usb_buffer_size;
 };
 
 /**
@@ -248,9 +257,11 @@ extern "C" {
     int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize);
 
     int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size);
-    int ftdi_write_data_async(struct ftdi_context *ftdi, unsigned char *buf, int size);
     int ftdi_write_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize);
     int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize);
+
+    int ftdi_write_data_async(struct ftdi_context *ftdi, unsigned char *buf, int size);
+    void ftdi_async_complete(struct ftdi_context *ftdi, int wait_for_more);
 
     int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask);
     int ftdi_disable_bitbang(struct ftdi_context *ftdi);
