@@ -2,7 +2,7 @@
                           ftdi.c  -  description
                              -------------------
     begin                : Fri Apr 4 2003
-    copyright            : (C) 2003 by Intra2net AG
+    copyright            : (C) 2003-2008 by Intra2net AG
     email                : opensource@intra2net.com
  ***************************************************************************/
 
@@ -90,6 +90,8 @@ int ftdi_init(struct ftdi_context *ftdi)
     /* initialize async usb buffer with unused-marker */
     for (i=0; i < ftdi->async_usb_buffer_size; i++)
         ((struct usbdevfs_urb*)ftdi->async_usb_buffer)[i].usercontext = FTDI_URB_USERCONTEXT_COOKIE;
+
+    ftdi->eeprom_size = FTDI_DEFAULT_EEPROM_SIZE;
 
     /* All fine. Now allocate the readbuffer */
     return ftdi_read_data_set_chunksize(ftdi, 4096);
@@ -736,7 +738,11 @@ struct usb_dev_handle {
   // some other stuff coming here we don't need
 };
 
-static int usb_get_async_urbs_pending(struct ftdi_context *ftdi)
+/*
+    Check for pending async urbs
+    \internal
+*/
+static int _usb_get_async_urbs_pending(struct ftdi_context *ftdi)
 {
     struct usbdevfs_urb *urb;
     int pending=0;
@@ -751,7 +757,11 @@ static int usb_get_async_urbs_pending(struct ftdi_context *ftdi)
     return pending;
 }
 
-static void usb_async_cleanup(struct ftdi_context *ftdi, int wait_for_more, int timeout_msec)
+/*
+    FIXME: Gerd, what does this function do exactly?
+    \internal
+*/
+static void _usb_async_cleanup(struct ftdi_context *ftdi, int wait_for_more, int timeout_msec)
 {
   struct timeval tv;
   struct usbdevfs_urb *urb=NULL;
@@ -767,7 +777,7 @@ static void usb_async_cleanup(struct ftdi_context *ftdi, int wait_for_more, int 
   tv.tv_usec = (timeout_msec % 1000) * 1000;
 
   do {
-    while (usb_get_async_urbs_pending(ftdi)
+    while (_usb_get_async_urbs_pending(ftdi)
            && (ret = ioctl(ftdi->usb_dev->fd, USBDEVFS_REAPURBNDELAY, &urb)) == -1
            && errno == EAGAIN)
     {
@@ -803,14 +813,15 @@ static void usb_async_cleanup(struct ftdi_context *ftdi, int wait_for_more, int 
 */
 void ftdi_async_complete(struct ftdi_context *ftdi, int wait_for_more)
 {
-  usb_async_cleanup(ftdi,wait_for_more,ftdi->usb_write_timeout);
+  _usb_async_cleanup(ftdi,wait_for_more,ftdi->usb_write_timeout);
 }
 
 /**
     Stupid libusb does not offer async writes nor does it allow
     access to its fd - so we need some hacks here.
+    \internal
 */
-static int usb_bulk_write_async(struct ftdi_context *ftdi, int ep, char *bytes, int size)
+static int _usb_bulk_write_async(struct ftdi_context *ftdi, int ep, char *bytes, int size)
 {
   struct usbdevfs_urb *urb;
   int bytesdone = 0, requested;
@@ -824,7 +835,7 @@ static int usb_bulk_write_async(struct ftdi_context *ftdi, int ep, char *bytes, 
     {
         if (i==ftdi->async_usb_buffer_size) {
           /* wait until some buffers are free */
-          usb_async_cleanup(ftdi,0,ftdi->usb_write_timeout);
+          _usb_async_cleanup(ftdi,0,ftdi->usb_write_timeout);
         }
 
         for (i=0; i < ftdi->async_usb_buffer_size; i++) {
@@ -895,7 +906,7 @@ int ftdi_write_data_async(struct ftdi_context *ftdi, unsigned char *buf, int siz
         if (offset+write_size > size)
             write_size = size-offset;
 
-        ret = usb_bulk_write_async(ftdi, ftdi->in_ep, buf+offset, write_size);
+        ret = _usb_bulk_write_async(ftdi, ftdi->in_ep, buf+offset, write_size);
         if (ret < 0)
             ftdi_error_return(ret, "usb bulk write async failed");
 
@@ -1220,6 +1231,20 @@ int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency)
 }
 
 /**
+   Set the eeprom size
+
+   \param ftdi pointer to ftdi_context
+   \param eeprom Pointer to ftdi_eeprom
+   \param size
+
+*/
+void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, int size)
+{
+  ftdi->eeprom_size=size;
+  eeprom->size=size;
+}
+
+/**
     Init eeprom with default values.
 
     \param eeprom Pointer to ftdi_eeprom
@@ -1245,6 +1270,8 @@ void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom)
     eeprom->manufacturer = NULL;
     eeprom->product = NULL;
     eeprom->serial = NULL;
+
+    eeprom->size = FTDI_DEFAULT_EEPROM_SIZE;
 }
 
 /**
@@ -1271,8 +1298,14 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     if (eeprom->serial != NULL)
         serial_size = strlen(eeprom->serial);
 
-    size_check = 128; // eeprom is 128 bytes
+    size_check = eeprom->size;
     size_check -= 28; // 28 are always in use (fixed)
+
+    // Top half of a 256byte eeprom is used just for strings and checksum 
+    // it seems that the FTDI chip will not read these strings from the lower half
+    // Each string starts with two bytes; offset and type (0x03 for string)
+    // the checksum needs two bytes, so without the string data that 8 bytes from the top half
+    if(eeprom->size>=256)size_check = 120;
     size_check -= manufacturer_size*2;
     size_check -= product_size*2;
     size_check -= serial_size*2;
@@ -1282,7 +1315,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
         return (-1);
 
     // empty eeprom
-    memset (output, 0, 128);
+    memset (output, 0, eeprom->size);
 
     // Addr 00: Stay 00 00
     // Addr 02: Vendor ID
@@ -1350,9 +1383,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     }
 
 
-    // Addr 0E: Offset of the manufacturer string + 0x80
-    output[0x0E] = 0x14 + 0x80;
-
+    // Addr 0E: Offset of the manufacturer string + 0x80, calculated later
     // Addr 0F: Length of manufacturer string
     output[0x0F] = manufacturer_size*2 + 2;
 
@@ -1365,19 +1396,21 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     output[0x13] = serial_size*2 + 2;
 
     // Dynamic content
-    output[0x14] = manufacturer_size*2 + 2;
-    output[0x15] = 0x03; // type: string
+    i=0x14;
+    if(eeprom->size>=256) i = 0x80;
+   
 
-    i = 0x16, j = 0;
-
-    // Output manufacturer
+    // Output manufacturer 
+    output[0x0E] = i | 0x80;  // calculate offset
+    output[i++] = manufacturer_size*2 + 2;
+    output[i++] = 0x03; // type: string
     for (j = 0; j < manufacturer_size; j++) {
         output[i] = eeprom->manufacturer[j], i++;
         output[i] = 0x00, i++;
     }
 
     // Output product name
-    output[0x10] = i + 0x80;  // calculate offset
+    output[0x10] = i | 0x80;  // calculate offset
     output[i] = product_size*2 + 2, i++;
     output[i] = 0x03, i++;
     for (j = 0; j < product_size; j++) {
@@ -1386,7 +1419,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     }
 
     // Output serial
-    output[0x12] = i + 0x80; // calculate offset
+    output[0x12] = i | 0x80; // calculate offset
     output[i] = serial_size*2 + 2, i++;
     output[i] = 0x03, i++;
     for (j = 0; j < serial_size; j++) {
@@ -1397,7 +1430,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     // calculate checksum
     checksum = 0xAAAA;
 
-    for (i = 0; i < 63; i++) {
+    for (i = 0; i < eeprom->size/2-1; i++) {
         value = output[i*2];
         value += output[(i*2)+1] << 8;
 
@@ -1405,8 +1438,8 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
         checksum = (checksum << 1) | (checksum >> 15);
     }
 
-    output[0x7E] = checksum;
-    output[0x7F] = checksum >> 8;
+    output[eeprom->size-2] = checksum;
+    output[eeprom->size-1] = checksum >> 8;
 
     return size_check;
 }
@@ -1424,7 +1457,7 @@ int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
 {
     int i;
 
-    for (i = 0; i < 64; i++) {
+    for (i = 0; i < ftdi->eeprom_size/2; i++) {
         if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
             ftdi_error_return(-1, "reading eeprom failed");
     }
@@ -1480,6 +1513,33 @@ int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
 }
 
 /**
+   Guesses size of eeprom by reading eeprom and comparing halves - will not work with blank eeprom
+   Call this function then do a write then call again to see if size changes, if so write again.
+
+   \param ftdi pointer to ftdi_context
+   \param eeprom Pointer to store eeprom into
+   \param maxsize the size of the buffer to read into
+
+   \retval size of eeprom
+*/
+int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, int maxsize)
+{
+    int i=0,j,minsize=32;
+    int size=minsize;
+
+    do{
+      for (j = 0; i < maxsize/2 && j<size; j++) {
+        if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
+	  ftdi_error_return(-1, "reading eeprom failed");
+	i++;
+      }
+      size*=2;
+    }while(size<=maxsize && memcmp(eeprom,&eeprom[size/2],size/2)!=0);
+
+    return size/2;
+}
+
+/**
     Write eeprom
 
     \param ftdi pointer to ftdi_context
@@ -1493,7 +1553,7 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     unsigned short usb_val;
     int i;
 
-    for (i = 0; i < 64; i++) {
+    for (i = 0; i < ftdi->eeprom_size/2; i++) {
         usb_val = eeprom[i*2];
         usb_val += eeprom[(i*2)+1] << 8;
         if (usb_control_msg(ftdi->usb_dev, 0x40, 0x91, usb_val, i, NULL, 0, ftdi->usb_write_timeout) != 0)

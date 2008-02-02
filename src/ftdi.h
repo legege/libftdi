@@ -19,6 +19,8 @@
 
 #include <usb.h>
 
+#define FTDI_DEFAULT_EEPROM_SIZE 128
+
 /// FTDI chip type
 enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2, TYPE_R=3 };
 /// Parity mode for ftdi_set_line_property()
@@ -162,6 +164,9 @@ struct ftdi_context {
     /// Bitbang mode. 1: (default) Normal bitbang mode, 2: FT2232C SPI bitbang mode
     unsigned char bitbang_mode;
 
+    /// EEPROM size. Default is 128 bytes for 232BM and 245BM chips
+    int eeprom_size;
+
     /// String representation of last error
     char *error_str;
 
@@ -219,6 +224,10 @@ struct ftdi_eeprom {
     char *product;
     /// serial number
     char *serial;
+
+  /// eeprom size in bytes. This doesn't get stored in the eeprom
+  /// but is the only way to pass it to ftdi_eeprom_build.
+  int size;
 };
 
 #ifdef __cplusplus
@@ -271,6 +280,9 @@ extern "C" {
     int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency);
     int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency);
 
+    // set eeprom size
+    void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, int size);
+
     // init and build eeprom from ftdi_eeprom structure
     void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom);
     int  ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output);
@@ -279,6 +291,7 @@ extern "C" {
     // the checksum of the eeprom is valided
     int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
     int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid);
+    int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, int maxsize);
     int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
     int ftdi_erase_eeprom(struct ftdi_context *ftdi);
 

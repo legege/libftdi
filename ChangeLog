@@ -1,5 +1,7 @@
 New in 0.11
 -----------
+* Support for different EEPROM sizes (Andrew John Rogers, andrew@rogerstech.co.uk)
+* Async write support. Linux only and no error handling.
 * Detection of R-type chips
 * FTDIChip-ID read support (Peter Holik)
 
