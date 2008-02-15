@@ -738,7 +738,7 @@ struct usb_dev_handle {
   // some other stuff coming here we don't need
 };
 
-/*
+/**
     Check for pending async urbs
     \internal
 */
@@ -757,8 +757,14 @@ static int _usb_get_async_urbs_pending(struct ftdi_context *ftdi)
     return pending;
 }
 
-/*
-    FIXME: Gerd, what does this function do exactly?
+/**
+    Wait until one or more async URBs are completed by the kernel and mark their
+    positions in the async-buffer as unused
+
+    \param ftdi pointer to ftdi_context
+    \param wait_for_more if != 0 wait for more than one write to complete
+    \param timeout_msec max milliseconds to wait
+
     \internal
 */
 static void _usb_async_cleanup(struct ftdi_context *ftdi, int wait_for_more, int timeout_msec)
@@ -806,7 +812,8 @@ static void _usb_async_cleanup(struct ftdi_context *ftdi, int wait_for_more, int
 }
 
 /**
-    Wait until at least one async write is complete
+    Wait until one or more async URBs are completed by the kernel and mark their
+    positions in the async-buffer as unused.
 
     \param ftdi pointer to ftdi_context
     \param wait_for_more if != 0 wait for more than one write to complete (until write timeout)
