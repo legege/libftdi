@@ -37,8 +37,8 @@ rm -f $RPM_BUILD_ROOT/usr/bin/simple
 rm -f $RPM_BUILD_ROOT/usr/bin/bitbang
 rm -f $RPM_BUILD_ROOT/usr/bin/bitbang2
 rm -f $RPM_BUILD_ROOT/usr/bin/bitbang_ft2232
+rm -f $RPM_BUILD_ROOT/usr/bin/bitbang_cbus
 rm -f $RPM_BUILD_ROOT/usr/bin/find_all
-
 
 %clean
 rm -fr $RPM_BUILD_ROOT
