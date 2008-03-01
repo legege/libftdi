@@ -235,14 +235,17 @@ extern "C" {
 #endif
 
     int ftdi_init(struct ftdi_context *ftdi);
+    struct ftdi_context *ftdi_new();
     int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface);
 
     void ftdi_deinit(struct ftdi_context *ftdi);
+    void ftdi_free(struct ftdi_context *ftdi);
     void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usbdev);
 
     int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devlist,
                           int vendor, int product);
     void ftdi_list_free(struct ftdi_device_list **devlist);
+    void ftdi_list_free2(struct ftdi_device_list *devlist);
     int ftdi_usb_get_strings(struct ftdi_context *ftdi, struct usb_device *dev,
                              char * manufacturer, int mnf_len,
                              char * description, int desc_len,

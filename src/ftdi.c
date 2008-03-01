@@ -105,6 +105,27 @@ int ftdi_init(struct ftdi_context *ftdi)
 }
 
 /**
+    Allocate and initialize a new ftdi_context
+
+    \return a pointer to a new ftdi_context, or NULL on failure
+*/
+struct ftdi_context *ftdi_new()
+{
+    struct ftdi_context * ftdi = (struct ftdi_context *)malloc(sizeof(struct ftdi_context));
+
+    if (ftdi == NULL) {
+        return NULL;
+    }
+
+    if (ftdi_init(ftdi) != 0) {
+        free(ftdi);
+	return NULL;
+    }
+
+    return ftdi;
+}
+
+/**
     Open selected channels on a chip, otherwise use first channel.
 
     \param ftdi pointer to ftdi_context
@@ -148,6 +169,17 @@ void ftdi_deinit(struct ftdi_context *ftdi)
         free(ftdi->readbuffer);
         ftdi->readbuffer = NULL;
     }
+}
+
+/**
+    Deinitialize and free an ftdi_context.
+
+    \param ftdi pointer to ftdi_context
+*/
+void ftdi_free(struct ftdi_context *ftdi)
+{
+    ftdi_deinit(ftdi);
+    free(ftdi);
 }
 
 /**
@@ -228,6 +260,16 @@ void ftdi_list_free(struct ftdi_device_list **devlist)
     }
 
     *devlist = NULL;
+}
+
+/**
+    Frees a usb device list.
+
+    \param devlist USB device list created by ftdi_usb_find_all()
+*/
+void ftdi_list_free2(struct ftdi_device_list *devlist)
+{
+    ftdi_list_free(&devlist);
 }
 
 /**
@@ -903,6 +945,7 @@ static int _usb_bulk_write_async(struct ftdi_context *ftdi, int ep, char *bytes,
     caller of completion or error - but this is not done yet, volunteers welcome.
 
     Works around libusb and directly accesses functions only available on Linux.
+    Only available if compiled with --with-async-mode.
 
     \param ftdi pointer to ftdi_context
     \param buf Buffer with the data
