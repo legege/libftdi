@@ -3,7 +3,7 @@ New in 0.11
 * Vala bindings helper functions (ftdi_new, ftdi_free, ftdi_list_free2) (Even Nermerson)
 * Support for different EEPROM sizes (Andrew John Rogers, andrew@rogerstech.co.uk)
 * Async write support. Linux only and no error handling.
-  You have to enable it via --with-async-code.
+  You have to enable it via --with-async-mode.
 * Detection of R-type chips
 * FTDIChip-ID read support (Peter Holik)
 
