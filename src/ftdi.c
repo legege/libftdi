@@ -35,12 +35,14 @@
 #include "ftdi.h"
 
 /* stuff needed for async write */
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <sys/select.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <linux/usbdevice_fs.h>
+#ifdef LIBFTDI_LINUX_ASYNC_MODE
+    #include <sys/ioctl.h>
+    #include <sys/time.h>
+    #include <sys/select.h>
+    #include <sys/types.h>
+    #include <unistd.h>
+    #include <linux/usbdevice_fs.h>
+#endif
 
 #define ftdi_error_return(code, str) do {  \
         ftdi->error_str = str;             \
@@ -83,6 +85,7 @@ int ftdi_init(struct ftdi_context *ftdi)
 
     ftdi->error_str = NULL;
 
+#ifdef LIBFTDI_LINUX_ASYNC_MODE
     ftdi->async_usb_buffer_size=10;
     if ((ftdi->async_usb_buffer=malloc(sizeof(struct usbdevfs_urb)*ftdi->async_usb_buffer_size)) == NULL)
         ftdi_error_return(-1, "out of memory for async usb buffer");
@@ -90,6 +93,10 @@ int ftdi_init(struct ftdi_context *ftdi)
     /* initialize async usb buffer with unused-marker */
     for (i=0; i < ftdi->async_usb_buffer_size; i++)
         ((struct usbdevfs_urb*)ftdi->async_usb_buffer)[i].usercontext = FTDI_URB_USERCONTEXT_COOKIE;
+#else
+    ftdi->async_usb_buffer_size=0;
+    ftdi->async_usb_buffer = NULL;
+#endif
 
     ftdi->eeprom_size = FTDI_DEFAULT_EEPROM_SIZE;
 
@@ -495,8 +502,10 @@ int ftdi_usb_close(struct ftdi_context *ftdi)
 {
     int rtn = 0;
 
+#ifdef LIBFTDI_LINUX_ASYNC_MODE
     /* try to release some kernel resources */
     ftdi_async_complete(ftdi,1);
+#endif
 
     if (usb_release_interface(ftdi->usb_dev, ftdi->interface) != 0)
         rtn = -1;
@@ -731,6 +740,7 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
     return total_written;
 }
 
+#ifdef LIBFTDI_LINUX_ASYNC_MODE
 /* this is strongly dependent on libusb using the same struct layout. If libusb
    changes in some later version this may break horribly (this is for libusb 0.1.12) */
 struct usb_dev_handle {
@@ -923,7 +933,7 @@ int ftdi_write_data_async(struct ftdi_context *ftdi, unsigned char *buf, int siz
 
     return total_written;
 }
-
+#endif // LIBFTDI_LINUX_ASYNC_MODE
 
 /**
     Configure write buffer chunk size.
@@ -1405,7 +1415,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     // Dynamic content
     i=0x14;
     if(eeprom->size>=256) i = 0x80;
-   
+
 
     // Output manufacturer 
     output[0x0E] = i | 0x80;  // calculate offset

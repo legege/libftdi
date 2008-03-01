@@ -32,6 +32,18 @@ else
    AC_MSG_RESULT(yes)
 fi
 
+AC_ARG_WITH(async-mode,
+[  --with-async-mode       enable experimental async mode. Linux only.],
+[
+  AC_MSG_CHECKING(for experimental linux async mode)
+  if test "$withval" != "no"; then
+    CFLAGS="$CFLAGS -DLIBFTDI_LINUX_ASYNC_MODE"
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no)
+  fi
+])
+
 dnl check for doxygen
 AC_PATH_PROG(DOXYGEN, doxygen)
 AM_CONDITIONAL(HAVE_DOXYGEN, test -n $DOXYGEN)
