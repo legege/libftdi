@@ -258,6 +258,8 @@ extern "C" {
 
     int ftdi_usb_close(struct ftdi_context *ftdi);
     int ftdi_usb_reset(struct ftdi_context *ftdi);
+    int ftdi_usb_purge_rx_buffer(struct ftdi_context *ftdi);
+    int ftdi_usb_purge_tx_buffer(struct ftdi_context *ftdi);
     int ftdi_usb_purge_buffers(struct ftdi_context *ftdi);
 
     int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate);
@@ -282,6 +284,11 @@ extern "C" {
 
     int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency);
     int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency);
+
+    int ftdi_poll_modem_status(struct ftdi_context *ftdi, unsigned short *status);
+
+    int ftdi_set_event_char(struct ftdi_context *ftdi, unsigned char eventch, unsigned char enable);
+    int ftdi_set_error_char(struct ftdi_context *ftdi, unsigned char errorch, unsigned char enable);
 
     // set eeprom size
     void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, int size);

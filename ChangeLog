@@ -1,3 +1,10 @@
+New in 0.12
+-----------
+* Ability to purge RX/TX buffers separately (Arnim Läuger)
+* Setting of event and error character (Arnim Läuger)
+* Poll modem status function (Arnim Läuger and Intra2net)
+* Updated documentation
+
 New in 0.11
 -----------
 * Vala bindings helper functions (ftdi_new, ftdi_free, ftdi_list_free2) (Even Nermerson)
