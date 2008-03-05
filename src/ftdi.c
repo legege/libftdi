@@ -557,11 +557,11 @@ int ftdi_usb_purge_buffers(struct ftdi_context *ftdi)
     int result;
 
     result = ftdi_usb_purge_rx_buffer(ftdi);
-    if (!result)
+    if (result < 0)
         return -1;
 
     result = ftdi_usb_purge_tx_buffer(ftdi);
-    if (!result)
+    if (result < 0)
         return -2;
 
     return 0;
