@@ -1532,10 +1532,10 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
         output[0x07] = 0x02;
 
     // Addr 08: Config descriptor
-    // Bit 7: always 1
-    // Bit 6: 1 if this device is self powered, 0 if bus powered
-    // Bit 5: 1 if this device uses remote wakeup
-    // Bit 4: 1 if this device is battery powered
+    // Bit 7: always 1
+    // Bit 6: 1 if this device is self powered, 0 if bus powered
+    // Bit 5: 1 if this device uses remote wakeup
+    // Bit 4: 1 if this device is battery powered
     j = 0x80;
     if (eeprom->self_powered == 1)
         j |= 0x40;
