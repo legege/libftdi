@@ -1,5 +1,6 @@
 New in 0.12
 -----------
+* Fix USB config descriptor in the eeprom (Juergen Beisert)
 * Ability to purge RX/TX buffers separately (Arnim Läuger)
 * Setting of event and error character (Arnim Läuger)
 * Poll modem status function (Arnim Läuger and Intra2net)

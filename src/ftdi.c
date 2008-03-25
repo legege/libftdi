@@ -1532,19 +1532,19 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
         output[0x07] = 0x02;
 
     // Addr 08: Config descriptor
-    // Bit 1: remote wakeup if 1
-    // Bit 0: self powered if 1
-    //
-    j = 0;
+    // Bit 7: always 1
+    // Bit 6: 1 if this device is self powered, 0 if bus powered
+    // Bit 5: 1 if this device uses remote wakeup
+    // Bit 4: 1 if this device is battery powered
+    j = 0x80;
     if (eeprom->self_powered == 1)
-        j = j | 1;
+        j |= 0x40;
     if (eeprom->remote_wakeup == 1)
-        j = j | 2;
+        j |= 0x20;
     output[0x08] = j;
 
     // Addr 09: Max power consumption: max power = value * 2 mA
     output[0x09] = eeprom->max_power;
-    ;
 
     // Addr 0A: Chip configuration
     // Bit 7: 0 - reserved
