@@ -4,7 +4,7 @@ AUTOMAKE_OPTIONS = foreign 1.4
 
 SUBDIRS = src examples doc
 
-EXTRA_DIST = libftdi.spec COPYING.LIB README ChangeLog libftdi-config.in
+EXTRA_DIST = libftdi.spec COPYING.LIB README AUTHORS ChangeLog libftdi-config.in
 
 bin_SCRIPTS = libftdi-config
 

@@ -1,4 +1,7 @@
 libftdi - A library (using libusb) to talk to FTDI's FT2232C,
 FT232BM and FT245BM type chips including the popular bitbang mode.
 
-See the Changelog for news
+The AUTHORS file contains a list of all the people
+that made libftdi possible what it is today.
+
+See the Changelog for news.
