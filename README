@@ -1,7 +1,26 @@
+-------------------------------------------------------------------
+libftdi version 0.12
+-------------------------------------------------------------------
+
 libftdi - A library (using libusb) to talk to FTDI's FT2232C,
 FT232BM and FT245BM type chips including the popular bitbang mode.
 
 The AUTHORS file contains a list of all the people
 that made libftdi possible what it is today.
 
-See the Changelog for news.
+Changes
+-------
+* Fix build of documentation for "out of tree" builds
+* Fix USB config descriptor in the eeprom (Juergen Beisert)
+* Ability to purge RX/TX buffers separately (Arnim Läuger)
+* Setting of event and error character (Arnim Läuger)
+* Poll modem status function (Arnim Läuger and Intra2net)
+* Updated documentation and created AUTHORS file
+
+
+You'll find the newest version of libftdi at:
+http://www.intra2net.com/de/produkte/opensource/ftdi/
+
+-------------------------------------------------------------------
+www.intra2net.com                            2003-2008 Intra2net AG
+-------------------------------------------------------------------
