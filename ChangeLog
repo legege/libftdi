@@ -5,7 +5,7 @@ New in 0.12
 * Ability to purge RX/TX buffers separately (Arnim Läuger)
 * Setting of event and error character (Arnim Läuger)
 * Poll modem status function (Arnim Läuger and Intra2net)
-* Updated documentation
+* Updated documentation and created AUTHORS file
 
 New in 0.11
 -----------
