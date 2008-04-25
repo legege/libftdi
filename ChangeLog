@@ -1,5 +1,6 @@
 New in 0.13
 -----------
+* Always set usb configuration (Mike Frysinger)
 * Improved libusb-win32 support (Mike Frysinger)
 
 New in 0.12

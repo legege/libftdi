@@ -341,6 +341,7 @@ int ftdi_usb_get_strings(struct ftdi_context * ftdi, struct usb_device * dev,
     \param dev libusb usb_dev to use
 
     \retval  0: all fine
+    \retval -3: unable to config device
     \retval -4: unable to open device
     \retval -5: unable to claim device
     \retval -6: reset failed
@@ -358,6 +359,15 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
     if (usb_detach_kernel_driver_np(ftdi->usb_dev, ftdi->interface) != 0 && errno != ENODATA)
         detach_errno = errno;
 #endif
+
+    if (usb_set_configuration(ftdi->usb_dev, dev->config[0].bConfigurationValue)) {
+        usb_close (ftdi->usb_dev);
+        if (detach_errno == EPERM) {
+            ftdi_error_return(-8, "inappropriate permissions on device!");
+        } else {
+            ftdi_error_return(-3, "unable to set usb configuration. Make sure ftdi_sio is unloaded!");
+        }
+    }
 
     if (usb_claim_interface(ftdi->usb_dev, ftdi->interface) != 0) {
         usb_close (ftdi->usb_dev);
