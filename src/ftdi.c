@@ -223,7 +223,7 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
 
     curdev = devlist;
     *curdev = NULL;
-    for (bus = usb_busses; bus; bus = bus->next) {
+    for (bus = usb_get_busses(); bus; bus = bus->next) {
         for (dev = bus->devices; dev; dev = dev->next) {
             if (dev->descriptor.idVendor == vendor
                     && dev->descriptor.idProduct == product)
@@ -445,7 +445,7 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
     if (usb_find_devices() < 0)
         ftdi_error_return(-2, "usb_find_devices() failed");
 
-    for (bus = usb_busses; bus; bus = bus->next) {
+    for (bus = usb_get_busses(); bus; bus = bus->next) {
         for (dev = bus->devices; dev; dev = dev->next) {
             if (dev->descriptor.idVendor == vendor
                     && dev->descriptor.idProduct == product) {
