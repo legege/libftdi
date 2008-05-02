@@ -11,7 +11,7 @@ dnl check for libusb-config
 AC_PATH_PROG(HAVELIBUSB, libusb-config, $PATH)
 
 if test ! -z "$HAVELIBUSB"; then
-dnl   LIBUSB_CFLAGS=`$HAVELIBUSB --cflags`
+   LIBUSB_CFLAGS=`$HAVELIBUSB --cflags`
    LIBUSB_LIBS=`$HAVELIBUSB --libs`
 
    CFLAGS="$CFLAGS $LIBUSB_CFLAGS"
