@@ -1,6 +1,6 @@
 New in 0.13
 -----------
-* Fixed "libusb-config --cflags" call
+* Fixed "libusb-config --cflags" call (Mike Frysinger and Intra2net)
 * Always set usb configuration (Mike Frysinger)
 * Improved libusb-win32 support (Mike Frysinger)
 
