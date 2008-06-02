@@ -26,7 +26,7 @@ Header files and static libraries for libftdi
 %setup -q
 
 %build
-./configure --prefix=%{prefix}
+./configure --prefix=%{prefix} --with-async-mode
 make
 
 %install

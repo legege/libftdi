@@ -360,7 +360,13 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
         detach_errno = errno;
 #endif
 
-    if (usb_set_configuration(ftdi->usb_dev, dev->config[0].bConfigurationValue)) {
+    // set configuration (needed especially for windows)
+    // tolerate EBUSY: one device with one configuration, but two interfaces
+    //    and libftdi sessions to both interfaces (e.g. FT2232)
+    if (dev->descriptor.bNumConfigurations > 0 && 
+        usb_set_configuration(ftdi->usb_dev, dev->config[0].bConfigurationValue) &&
+        errno != EBUSY)
+    {
         usb_close (ftdi->usb_dev);
         if (detach_errno == EPERM) {
             ftdi_error_return(-8, "inappropriate permissions on device!");
