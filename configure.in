@@ -32,21 +32,24 @@ else
    AC_MSG_RESULT(yes)
 fi
 
+ENABLE_ASYNC_MODE=0
 AC_ARG_WITH(async-mode,
 [  --with-async-mode       enable experimental async mode. Linux only.],
 [
   AC_MSG_CHECKING(for experimental linux async mode)
   if test "$withval" != "no"; then
+    ENABLE_ASYNC_MODE=1
     CFLAGS="$CFLAGS -DLIBFTDI_LINUX_ASYNC_MODE"
     AC_MSG_RESULT(yes)
   else
     AC_MSG_RESULT(no)
   fi
 ])
+AC_SUBST(ENABLE_ASYNC_MODE)
 
 dnl check for doxygen
 AC_PATH_PROG(DOXYGEN, doxygen)
 AM_CONDITIONAL(HAVE_DOXYGEN, test -n $DOXYGEN)
 
 AC_OUTPUT([libftdi-config],[chmod a+x libftdi-config])
-AC_OUTPUT(Makefile src/Makefile examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc)
+AC_OUTPUT(Makefile src/Makefile examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc libftdi.spec)

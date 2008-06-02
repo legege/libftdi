@@ -1,6 +1,7 @@
+%define    enable_async_mode @ENABLE_ASYNC_MODE@
 Summary:   Library to program and control the FTDI USB controller
 Name:      libftdi
-Version:   0.13
+Version:   @VERSION@
 Release:   1
 Copyright: LGPL
 Group:     System Environment/Libraries
@@ -26,7 +27,13 @@ Header files and static libraries for libftdi
 %setup -q
 
 %build
-./configure --prefix=%{prefix} --with-async-mode
+
+PARAMS=""
+./configure --prefix=%{prefix} \
+%if %{enable_async_mode}
+    --with-async-mode \
+%endif
+
 make
 
 %install

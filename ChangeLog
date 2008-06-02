@@ -1,7 +1,8 @@
 New in 0.13
 -----------
+* Build .spec file via configuere.in (Intra2net)
 * Fixed "libusb-config --cflags" call (Mike Frysinger and Intra2net)
-* Always set usb configuration (Mike Frysinger)
+* Always set usb configuration (Mike Frysinger and Intra2net)
 * Improved libusb-win32 support (Mike Frysinger)
 
 New in 0.12

@@ -354,8 +354,13 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
         ftdi_error_return(-4, "usb_open() failed");
 
 #ifdef LIBUSB_HAS_GET_DRIVER_NP
-    // Try to detach ftdi_sio kernel module
-    // Returns ENODATA if driver is not loaded
+    // Try to detach ftdi_sio kernel module.
+    // Returns ENODATA if driver is not loaded.
+    //
+    // The return code is kept in a separate variable and only parsed
+    // if usb_set_configuration() or usb_claim_interface() fails as the
+    // detach operation might be denied and everything still works fine.
+    // Likely scenario is a static ftdi_sio kernel module.
     if (usb_detach_kernel_driver_np(ftdi->usb_dev, ftdi->interface) != 0 && errno != ENODATA)
         detach_errno = errno;
 #endif
