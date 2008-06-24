@@ -1398,6 +1398,83 @@ int ftdi_poll_modem_status(struct ftdi_context *ftdi, unsigned short *status)
     return 0;
 }
 
+
+/*
+    Flow control code by Lorenz Moesenlechner (lorenz@hcilab.org)
+    and Matthias Kranz  (matthias@hcilab.org)
+*/
+/**
+    Set flowcontrol for ftdi chip
+
+    \param ftdi pointer to ftdi_context
+    \param flowctrl flow control to use. should be 
+           SIO_DISABLE_FLOW_CTRL, SIO_RTS_CTS_HS, SIO_DTR_DSR_HS or SIO_XON_XOFF_HS   
+
+    \retval  0: all fine
+    \retval -1: set flow control failed
+*/
+int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl)
+{
+    if (usb_control_msg(ftdi->usb_dev, SIO_SET_FLOW_CTRL_REQUEST_TYPE,
+                        SIO_SET_FLOW_CTRL_REQUEST, 0, (flowctrl | ftdi->interface),
+                        NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "set flow control failed");
+
+    return 0;
+}
+
+/**
+    Set dtr line
+
+    \param ftdi pointer to ftdi_context
+    \param state state to set line to (1 or 0)
+
+    \retval  0: all fine
+    \retval -1: set dtr failed
+*/
+int ftdi_setdtr(struct ftdi_context *ftdi, int state)
+{
+    unsigned short usb_val;
+
+    if (state)
+        usb_val = SIO_SET_DTR_HIGH;
+    else
+        usb_val = SIO_SET_DTR_LOW;
+
+    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
+                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
+                        NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "set dtr failed");
+
+    return 0;
+}
+
+/**
+    Set rts line
+
+    \param ftdi pointer to ftdi_context
+    \param state state to set line to (1 or 0)
+
+    \retval  0: all fine
+    \retval -1 set rts failed
+*/
+int ftdi_setrts(struct ftdi_context *ftdi, int state)
+{
+    unsigned short usb_val;
+
+    if (state)
+        usb_val = SIO_SET_RTS_HIGH;
+    else
+        usb_val = SIO_SET_RTS_LOW;
+
+    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
+                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
+                        NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "set of rts failed");
+
+    return 0;
+}
+
 /**
     Set the special event character
 
@@ -1807,82 +1884,6 @@ int ftdi_erase_eeprom(struct ftdi_context *ftdi)
 char *ftdi_get_error_string (struct ftdi_context *ftdi)
 {
     return ftdi->error_str;
-}
-
-/*
-    Flow control code by Lorenz Moesenlechner (lorenz@hcilab.org)
-    and Matthias Kranz  (matthias@hcilab.org)
-*/
-/**
-    Set flowcontrol for ftdi chip
-
-    \param ftdi pointer to ftdi_context
-    \param flowctrl flow control to use. should be 
-           SIO_DISABLE_FLOW_CTRL, SIO_RTS_CTS_HS, SIO_DTR_DSR_HS or SIO_XON_XOFF_HS   
-
-    \retval  0: all fine
-    \retval -1: set flow control failed
-*/
-int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl)
-{
-    if (usb_control_msg(ftdi->usb_dev, SIO_SET_FLOW_CTRL_REQUEST_TYPE,
-                        SIO_SET_FLOW_CTRL_REQUEST, 0, (flowctrl | ftdi->interface),
-                        NULL, 0, ftdi->usb_write_timeout) != 0)
-        ftdi_error_return(-1, "set flow control failed");
-
-    return 0;
-}
-
-/**
-    Set dtr line
-
-    \param ftdi pointer to ftdi_context
-    \param state state to set line to (1 or 0)
-
-    \retval  0: all fine
-    \retval -1: set dtr failed
-*/
-int ftdi_setdtr(struct ftdi_context *ftdi, int state)
-{
-    unsigned short usb_val;
-
-    if (state)
-        usb_val = SIO_SET_DTR_HIGH;
-    else
-        usb_val = SIO_SET_DTR_LOW;
-
-    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
-                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
-                        NULL, 0, ftdi->usb_write_timeout) != 0)
-        ftdi_error_return(-1, "set dtr failed");
-
-    return 0;
-}
-
-/**
-    Set rts line
-
-    \param ftdi pointer to ftdi_context
-    \param state state to set line to (1 or 0)
-
-    \retval  0: all fine
-    \retval -1 set rts failed
-*/
-int ftdi_setrts(struct ftdi_context *ftdi, int state)
-{
-    unsigned short usb_val;
-
-    if (state)
-        usb_val = SIO_SET_RTS_HIGH;
-    else
-        usb_val = SIO_SET_RTS_LOW;
-
-    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
-                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
-                        NULL, 0, ftdi->usb_write_timeout) != 0)
-        ftdi_error_return(-1, "set of rts failed");
-
-    return 0;
 }
 
 /* @} end of doxygen libftdi group */

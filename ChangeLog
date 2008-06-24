@@ -1,3 +1,7 @@
+New in 0.14
+-----------
+* Grouped flow control and modem status code together (Intra2net)
+
 New in 0.13
 -----------
 * Build .spec file via configure.in (Intra2net)

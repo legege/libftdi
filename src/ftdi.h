@@ -287,6 +287,11 @@ extern "C" {
 
     int ftdi_poll_modem_status(struct ftdi_context *ftdi, unsigned short *status);
 
+    // flow control
+    int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
+    int ftdi_setdtr(struct ftdi_context *ftdi, int state);
+    int ftdi_setrts(struct ftdi_context *ftdi, int state);
+
     int ftdi_set_event_char(struct ftdi_context *ftdi, unsigned char eventch, unsigned char enable);
     int ftdi_set_error_char(struct ftdi_context *ftdi, unsigned char errorch, unsigned char enable);
 
@@ -306,11 +311,6 @@ extern "C" {
     int ftdi_erase_eeprom(struct ftdi_context *ftdi);
 
     char *ftdi_get_error_string(struct ftdi_context *ftdi);
-
-    // flow control
-    int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
-    int ftdi_setdtr(struct ftdi_context *ftdi, int state);
-    int ftdi_setrts(struct ftdi_context *ftdi, int state);
 
 #ifdef __cplusplus
 }
