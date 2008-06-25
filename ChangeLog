@@ -1,5 +1,6 @@
 New in 0.14
 -----------
+* Small fix to the RPM spec file (Uwe Bonnes)
 * Grouped flow control and modem status code together (Intra2net)
 
 New in 0.13
