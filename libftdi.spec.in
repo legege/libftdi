@@ -30,6 +30,7 @@ Header files and static libraries for libftdi
 
 PARAMS=""
 ./configure --prefix=%{prefix} \
+    --libdir=%{_libdir} \
 %if %{enable_async_mode}
     --with-async-mode \
 %endif
@@ -53,12 +54,12 @@ rm -fr $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %doc COPYING.LIB
-%{prefix}/lib/libftdi.so*
+%{_libdir}/libftdi.so*
 
 %files devel
 %defattr(-,root,root)
 %doc doc/html doc/man
-%{prefix}/bin/libftdi-config
-%{prefix}/lib/libftdi.*a
+%{_bindir}/libftdi-config
 %{prefix}/include/*.h
-%{prefix}/lib/pkgconfig/*.pc
+%{_libdir}/libftdi.*a
+%{_libdir}/pkgconfig/*.pc
