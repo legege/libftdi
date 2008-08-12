@@ -27,8 +27,10 @@ enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2, TYPE_R=3 };
 enum ftdi_parity_type { NONE=0, ODD=1, EVEN=2, MARK=3, SPACE=4 };
 /// Number of stop bits for ftdi_set_line_property()
 enum ftdi_stopbits_type { STOP_BIT_1=0, STOP_BIT_15=1, STOP_BIT_2=2 };
-/// Number of bits ftdi_set_line_property()
+/// Number of bits for ftdi_set_line_property()
 enum ftdi_bits_type { BITS_7=7, BITS_8=8 };
+/// Break type for ftdi_set_line_property2()
+enum ftdi_break_type { BREAK_OFF=0, BREAK_ON=1 };
 
 /// MPSSE bitbang modes
 enum ftdi_mpsse_mode {
@@ -265,6 +267,9 @@ extern "C" {
     int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate);
     int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
                                enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity);
+    int ftdi_set_line_property2(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
+                               enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity,
+                               enum ftdi_break_type break_type);
 
     int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size);
     int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize);

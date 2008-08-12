@@ -755,7 +755,9 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
 }
 
 /**
-    Set (RS232) line characteristics by Alain Abbas
+    Set (RS232) line characteristics.
+    The break type can only be set via ftdi_set_line_property2()
+    and defaults to "off".
 
     \param ftdi pointer to ftdi_context
     \param bits Number of bits
@@ -767,6 +769,25 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
 */
 int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
                            enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity)
+{
+    return ftdi_set_line_property2(ftdi, bits, sbit, parity, BREAK_OFF);
+}
+
+/**
+    Set (RS232) line characteristics
+
+    \param ftdi pointer to ftdi_context
+    \param bits Number of bits
+    \param sbit Number of stop bits
+    \param parity Parity mode
+    \param break_type Break type
+
+    \retval  0: all fine
+    \retval -1: Setting line property failed
+*/
+int ftdi_set_line_property2(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
+                           enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity,
+                           enum ftdi_break_type break_type)
 {
     unsigned short value = bits;
 
@@ -797,6 +818,15 @@ int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
         break;
     case STOP_BIT_2:
         value |= (0x02 << 11);
+        break;
+    }
+
+    switch(break_type) {
+    case BREAK_OFF:
+        value |= (0x00 << 14);
+        break;
+    case BREAK_ON:
+        value |= (0x01 << 14);
         break;
     }
 

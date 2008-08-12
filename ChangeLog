@@ -1,5 +1,6 @@
 New in 0.14
 -----------
+* Ability to set RS232 break type (Intra2net)
 * 64 bit build support in the RPM spec file (Uwe Bonnes)
 * Small fix to the RPM spec file (Uwe Bonnes)
 * Grouped flow control and modem status code together (Intra2net)
