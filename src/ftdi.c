@@ -518,7 +518,9 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
 */
 int ftdi_usb_reset(struct ftdi_context *ftdi)
 {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+   if (usb_control_msg(ftdi->usb_dev, SIO_RESET_REQUEST_TYPE,
+                       SIO_RESET_REQUEST, SIO_RESET_SIO,
+                       ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1,"FTDI reset failed");
 
     // Invalidate data in the readbuffer
@@ -538,7 +540,9 @@ int ftdi_usb_reset(struct ftdi_context *ftdi)
 */
 int ftdi_usb_purge_rx_buffer(struct ftdi_context *ftdi)
 {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 1, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+   if (usb_control_msg(ftdi->usb_dev, SIO_RESET_REQUEST_TYPE,
+                       SIO_RESET_REQUEST, SIO_RESET_PURGE_RX,
+                       ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "FTDI purge of RX buffer failed");
 
     // Invalidate data in the readbuffer
@@ -558,7 +562,9 @@ int ftdi_usb_purge_rx_buffer(struct ftdi_context *ftdi)
 */
 int ftdi_usb_purge_tx_buffer(struct ftdi_context *ftdi)
 {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0, 2, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+   if (usb_control_msg(ftdi->usb_dev, SIO_RESET_REQUEST_TYPE,
+                       SIO_RESET_REQUEST, SIO_RESET_PURGE_TX,
+                       ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "FTDI purge of TX buffer failed");
 
     return 0;
@@ -747,7 +753,9 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
                 : (baudrate * 21 < actual_baudrate * 20)))
         ftdi_error_return (-1, "Unsupported baudrate. Note: bitbang baudrates are automatically multiplied by 4");
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 3, value, index, NULL, 0, ftdi->usb_write_timeout) != 0)
+    if (usb_control_msg(ftdi->usb_dev, SIO_SET_BAUDRATE_REQUEST_TYPE,
+                        SIO_SET_BAUDRATE_REQUEST, value,
+                        index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return (-2, "Setting new baudrate failed");
 
     ftdi->baudrate = baudrate;
@@ -830,7 +838,9 @@ int ftdi_set_line_property2(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
         break;
     }
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x04, value, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+    if (usb_control_msg(ftdi->usb_dev, SIO_SET_DATA_REQUEST_TYPE,
+                        SIO_SET_DATA_REQUEST, value,
+                        ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return (-1, "Setting new line property failed");
 
     return 0;
@@ -1428,11 +1438,6 @@ int ftdi_poll_modem_status(struct ftdi_context *ftdi, unsigned short *status)
     return 0;
 }
 
-
-/*
-    Flow control code by Lorenz Moesenlechner (lorenz@hcilab.org)
-    and Matthias Kranz  (matthias@hcilab.org)
-*/
 /**
     Set flowcontrol for ftdi chip
 
@@ -1446,7 +1451,7 @@ int ftdi_poll_modem_status(struct ftdi_context *ftdi, unsigned short *status)
 int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl)
 {
     if (usb_control_msg(ftdi->usb_dev, SIO_SET_FLOW_CTRL_REQUEST_TYPE,
-                        SIO_SET_FLOW_CTRL_REQUEST, 0, (flowctrl | ftdi->interface),
+                        SIO_SET_FLOW_CTRL_REQUEST, 0, (flowctrl | ftdi->index),
                         NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "set flow control failed");
 
@@ -1472,7 +1477,7 @@ int ftdi_setdtr(struct ftdi_context *ftdi, int state)
         usb_val = SIO_SET_DTR_LOW;
 
     if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
-                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
+                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->index,
                         NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "set dtr failed");
 
@@ -1498,9 +1503,41 @@ int ftdi_setrts(struct ftdi_context *ftdi, int state)
         usb_val = SIO_SET_RTS_LOW;
 
     if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
-                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->interface,
+                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->index,
                         NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "set of rts failed");
+
+    return 0;
+}
+
+/**
+ Set dtr and rts line in one pass
+
+ \param ftdi pointer to ftdi_context
+ \param dtr  DTR state to set line to (1 or 0)
+ \param rts  RTS state to set line to (1 or 0)
+
+ \retval  0: all fine
+ \retval -1 set dtr/rts failed
+ */
+int ftdi_setdtr_rts(struct ftdi_context *ftdi, int dtr, int rts)
+{
+    unsigned short usb_val;
+
+    if (dtr)
+       usb_val = SIO_SET_DTR_HIGH;
+    else
+       usb_val = SIO_SET_DTR_LOW;
+
+    if (rts)
+       usb_val |= SIO_SET_RTS_HIGH;
+    else
+       usb_val |= SIO_SET_RTS_LOW;
+
+    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
+                        SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->index,
+                        NULL, 0, ftdi->usb_write_timeout) != 0)
+       ftdi_error_return(-1, "set of rts/dtr failed");
 
     return 0;
 }

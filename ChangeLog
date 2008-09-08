@@ -1,8 +1,10 @@
 New in 0.14
 -----------
-* Ability to set RS232 break type (Intra2net)
+* Fixed flow control code for second FT2232 interface (Marek Vavruša)
+* Ability to set flow control via one USB call (Marek Vavruša)
 * 64 bit build support in the RPM spec file (Uwe Bonnes)
 * Small fix to the RPM spec file (Uwe Bonnes)
+* Ability to set RS232 break type (Intra2net)
 * Grouped flow control and modem status code together (Intra2net)
 
 New in 0.13

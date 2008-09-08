@@ -94,11 +94,26 @@ enum ftdi_interface {
 /* Address Low  */
 
 /* Definitions for flow control */
+#define SIO_RESET          0 /* Reset the port */
 #define SIO_MODEM_CTRL     1 /* Set the modem control register */
 #define SIO_SET_FLOW_CTRL  2 /* Set flow control register */
+#define SIO_SET_BAUD_RATE  3 /* Set baud rate */
+#define SIO_SET_DATA       4 /* Set the data characteristics of the port */
 
-#define SIO_SET_FLOW_CTRL_REQUEST_TYPE 0x40
+#define SIO_RESET_REQUEST_TYPE 0x40
+#define SIO_RESET_REQUEST SIO_RESET
+#define SIO_RESET_SIO 0
+#define SIO_RESET_PURGE_RX 1
+#define SIO_RESET_PURGE_TX 2
+
+#define SIO_SET_BAUDRATE_REQUEST_TYPE 0x40
+#define SIO_SET_BAUDRATE_REQUEST SIO_SET_BAUD_RATE
+
+#define SIO_SET_DATA_REQUEST_TYPE 0x40
+#define SIO_SET_DATA_REQUEST SIO_SET_DATA
+
 #define SIO_SET_FLOW_CTRL_REQUEST SIO_SET_FLOW_CTRL
+#define SIO_SET_FLOW_CTRL_REQUEST_TYPE 0x40
 
 #define SIO_DISABLE_FLOW_CTRL 0x0 
 #define SIO_RTS_CTS_HS (0x1 << 8)
@@ -294,6 +309,7 @@ extern "C" {
 
     // flow control
     int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
+    int ftdi_setdtr_rts(struct ftdi_context *ftdi, int dtr, int rts);
     int ftdi_setdtr(struct ftdi_context *ftdi, int state);
     int ftdi_setrts(struct ftdi_context *ftdi, int state);
 

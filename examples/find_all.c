@@ -27,7 +27,7 @@ int main(int argc, char **argv)
     i = 0;
     for (curdev = devlist; curdev != NULL; i++) {
         printf("Checking device: %d\n", i);
-        if((ret = ftdi_usb_get_strings(&ftdic, curdev->dev, &manufacturer, 128, description, 128, NULL, 0)) < 0) {
+        if((ret = ftdi_usb_get_strings(&ftdic, curdev->dev, manufacturer, 128, description, 128, NULL, 0)) < 0) {
             fprintf(stderr, "ftdi_usb_get_strings failed: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
             return EXIT_FAILURE;
         }
