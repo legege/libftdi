@@ -1,7 +1,7 @@
 AC_INIT(configure.in)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(libftdi, 0.13)
+AM_INIT_AUTOMAKE(libftdi, 0.14)
 
 AC_LANG_C
 AC_PROG_CC
