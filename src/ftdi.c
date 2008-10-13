@@ -119,7 +119,7 @@ struct ftdi_context *ftdi_new()
 
     if (ftdi_init(ftdi) != 0) {
         free(ftdi);
-	return NULL;
+        return NULL;
     }
 
     return ftdi;
