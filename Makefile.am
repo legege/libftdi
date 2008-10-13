@@ -2,7 +2,7 @@
 # have all needed files, that a GNU package needs
 AUTOMAKE_OPTIONS = foreign 1.4
 
-SUBDIRS = src examples doc
+SUBDIRS = src ftdipp examples doc
 
 EXTRA_DIST = libftdi.spec libftdi.spec.in COPYING.LIB README AUTHORS ChangeLog libftdi-config.in
 

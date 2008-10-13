@@ -52,4 +52,4 @@ AC_PATH_PROG(DOXYGEN, doxygen)
 AM_CONDITIONAL(HAVE_DOXYGEN, test -n $DOXYGEN)
 
 AC_OUTPUT([libftdi-config],[chmod a+x libftdi-config])
-AC_OUTPUT(Makefile src/Makefile examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc libftdi.spec)
+AC_OUTPUT(Makefile src/Makefile ftdipp/Makefile examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc libftdipp.pc libftdi.spec)
