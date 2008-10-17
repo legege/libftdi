@@ -1,5 +1,5 @@
 # set the include path found by configure
-INCLUDES= -I$(top_srcdir)/src $(all_includes)
+INCLUDES= -I$(top_srcdir)/src $(all_includes) @BOOST_CPPFLAGS@
 
 # the library search path.
 lib_LTLIBRARIES = libftdipp.la
@@ -9,4 +9,4 @@ libftdipp_la_SOURCES = $(top_builddir)/src/libftdi.la ftdi.cpp
 # Note:  If you specify a:b:c as the version in the next line,
 #  the library that is made has version (a-c).c.b.  In this
 #  example, the version is 2.1.2. (3:2:1)
-libftdipp_la_LDFLAGS = -version-info 15:0:14 $(all_libraries)
+libftdipp_la_LDFLAGS = -version-info 16:0:15 $(all_libraries) @BOOST_LDFLAGS@
