@@ -1,6 +1,6 @@
 New in 0.15
 -----------
-* C++ wrapper for libftdi. Needs boost (Marek Vavruša and Intra2net)
+* Full C++ wrapper. Needs boost (Marek Vavruša and Intra2net)
 
 New in 0.14
 -----------
