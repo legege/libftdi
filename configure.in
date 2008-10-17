@@ -47,9 +47,49 @@ AC_ARG_WITH(async-mode,
 ])
 AC_SUBST(ENABLE_ASYNC_MODE)
 
+LIBFTDI_MODULES=
+LIBFTDI_MODULES_PKGCONFIG=
+
+dnl libftdi C++ wrapper. Needs boost.
+AX_BOOST_BASE([1.33])
+ENABLE_LIBFTDIPP=0
+AC_MSG_CHECKING(if we can build the C++ wrapper)
+AC_ARG_ENABLE(libftdipp,
+                          AS_HELP_STRING([--enable-libftdipp],
+                                                     [enable libftdi C++ wrapper. Needs boost (default: auto)]),
+[
+    if test "$enableval" != "no"; then
+        if test "x$HAVE_BOOST" != "xyes"; then
+            AC_MSG_ERROR(Sorry, we need the boost library for the C++ wrapper)
+        fi
+        ENABLE_LIBFTDIPP=1
+    fi
+],
+[
+    dnl Build the wrapper if we got the boost library
+    if test "x$HAVE_BOOST" = "xyes"; then
+        ENABLE_LIBFTDIPP=1
+    fi
+])
+if test "x$ENABLE_LIBFTDIPP" = "x1"; then
+    LIBFTDI_MODULES="$LIBFTDI_MODULES ftdipp"
+    LIBFTDI_MODULES_PKGCONFIG="$LIBFTDI_MODULES_PKGCONFIG libftdipp.pc"
+    AC_MSG_RESULT(yes)
+else
+    AC_MSG_RESULT(no)
+fi
+AC_SUBST(ENABLE_LIBFTDIPP)
+
 dnl check for doxygen
 AC_PATH_PROG(DOXYGEN, doxygen)
 AM_CONDITIONAL(HAVE_DOXYGEN, test -n $DOXYGEN)
 
+AC_SUBST(LIBFTDI_MODULES)
+AC_SUBST(LIBFTDI_MODULES_PKGCONFIG)
+
 AC_OUTPUT([libftdi-config],[chmod a+x libftdi-config])
-AC_OUTPUT(Makefile src/Makefile ftdipp/Makefile examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc libftdipp.pc libftdi.spec)
+AC_OUTPUT(Makefile src/Makefile examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc libftdi.spec)
+
+if test "x$ENABLE_LIBFTDIPP" = "x1"; then
+    AC_OUTPUT(ftdipp/Makefile libftdipp.pc)
+fi

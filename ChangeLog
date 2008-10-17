@@ -1,3 +1,7 @@
+New in 0.15
+-----------
+* C++ wrapper for libftdi. Needs boost (Marek Vavruša and Intra2net)
+
 New in 0.14
 -----------
 * Fixed flow control code for second FT2232 interface (Marek Vavruša)

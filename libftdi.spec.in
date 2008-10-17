@@ -54,12 +54,13 @@ rm -fr $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %doc COPYING.LIB
-%{_libdir}/libftdi.so*
+%{_libdir}/libftdi*.so*
 
 %files devel
 %defattr(-,root,root)
 %doc doc/html doc/man
 %{_bindir}/libftdi-config
 %{prefix}/include/*.h
-%{_libdir}/libftdi.*a
+%{prefix}/include/*.hpp
+%{_libdir}/libftdi*.*a
 %{_libdir}/pkgconfig/*.pc
