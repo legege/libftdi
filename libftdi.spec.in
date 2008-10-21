@@ -48,7 +48,6 @@ rm -f $RPM_BUILD_ROOT/usr/bin/bitbang_ft2232
 rm -f $RPM_BUILD_ROOT/usr/bin/bitbang_cbus
 rm -f $RPM_BUILD_ROOT/usr/bin/find_all
 rm -f $RPM_BUILD_ROOT/usr/bin/find_all_pp
-rm -f $RPM_BUILD_ROOT/usr/bin/memorytest
 
 %clean
 rm -fr $RPM_BUILD_ROOT

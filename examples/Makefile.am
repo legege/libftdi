@@ -4,8 +4,7 @@ LDADD = $(top_builddir)/src/libftdi.la
 
 
 if HAVE_LIBFTDIPP
-examples_libftdipp = find_all_pp \
-	memorytest
+examples_libftdipp = find_all_pp
 else
 examples_libftdipp =
 endif
@@ -32,6 +31,4 @@ find_all_SOURCES = find_all.c
 if HAVE_LIBFTDIPP
 find_all_pp_SOURCES = find_all_pp.cpp
 find_all_pp_LDADD = $(top_builddir)/ftdipp/libftdipp.la $(LDADD)
-memorytest_SOURCES = memorytest.cpp
-memorytest_LDADD = $(top_builddir)/ftdipp/libftdipp.la $(LDADD)
 endif

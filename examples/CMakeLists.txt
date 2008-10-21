@@ -29,9 +29,7 @@ if(FTDI_BUILD_CPP)
 
    # Targest
    add_executable(find_all_pp find_all_pp.cpp)
-   add_executable(memorytest memorytest.cpp)
 
    # Linkage
    target_link_libraries(find_all_pp ftdi_cpp)
-   target_link_libraries(memorytest ftdi_cpp)
 endif()
