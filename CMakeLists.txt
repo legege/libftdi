@@ -27,7 +27,7 @@ set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "C++ Headers")
 set(CPACK_COMPONENT_SHAREDLIBS_DESCRIPTION
 "Shared library for general use.")
 set(CPACK_COMPONENT_STATICLIBS_DESCRIPTION
-"Static library, good if you want to embed libkitclient in your application.")
+"Static library, good if you want to embed libftdi in your application.")
 set(CPACK_COMPONENT_HEADERS_DESCRIPTION
 "C/C++ header files.")
 
@@ -38,7 +38,7 @@ set(CPACK_COMPONENT_HEADERS_GROUP "Development")
 # Package information
 set(CPACK_PACKAGE_VERSION              ${VERSION_STRING})
 set(CPACK_PACKAGE_CONTACT              "Marek Vavrusa <marek@vavrusa.com>")
-set(CPACK_PACKAGE_DESCRIPTION          "FITKit multiplatform library.")
+set(CPACK_PACKAGE_DESCRIPTION          "libftdi library.")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY  ${CPACK_PACKAGE_DESCRIPTION}
                                        )
 # Package settings

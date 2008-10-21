@@ -12,7 +12,7 @@ add_executable(bitbang bitbang.c)
 add_executable(bitbang2 bitbang2.c)
 add_executable(bitbang_cbus bitbang_cbus.c)
 add_executable(bitbang_ft2232 bitbang_ft2232.c)
-add_executable(findall find_all.c)
+add_executable(find_all find_all.c)
 
 # Linkage
 target_link_libraries(simple ftdi)
@@ -20,7 +20,7 @@ target_link_libraries(bitbang ftdi)
 target_link_libraries(bitbang2 ftdi)
 target_link_libraries(bitbang_cbus ftdi)
 target_link_libraries(bitbang_ft2232 ftdi)
-target_link_libraries(findall ftdi)
+target_link_libraries(find_all ftdi)
 
 # libftdi++ examples
 if(FTDI_BUILD_CPP)
@@ -28,14 +28,10 @@ if(FTDI_BUILD_CPP)
    include_directories(${CMAKE_SOURCE_DIR}/ftdipp)
 
    # Targest
-   add_executable(findall-cpp find_all.cpp)
+   add_executable(find_all_pp find_all_pp.cpp)
    add_executable(memorytest memorytest.cpp)
 
    # Linkage
-   target_link_libraries(findall-cpp ftdi_cpp)
+   target_link_libraries(find_all_pp ftdi_cpp)
    target_link_libraries(memorytest ftdi_cpp)
-   
 endif()
-
-
-

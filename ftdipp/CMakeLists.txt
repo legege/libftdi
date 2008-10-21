@@ -40,7 +40,7 @@ endif(${UNIX})
 
 if(${WIN32})
 
-   install( TARGETS ftdi_cpp 
+   install( TARGETS ftdi_cpp
             DESTINATION bin
             COMPONENT sharedlibs
             )
@@ -55,4 +55,3 @@ endif(${WIN32})
 else(Boost_FOUND)
    message(STATUS "Boost not found, won't build libftdi++")
 endif(Boost_FOUND)
-
