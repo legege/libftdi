@@ -1,4 +1,4 @@
-/* cpp-simple.cpp
+/* final_all_pp.cpp
 
    Simple libftdi-cpp usage
 
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
    // Parse args
    int vid = 0x0403, pid = 0x6010, tmp = 0;
    for(int i = 0; i < (argc - 1); i++)
-   {        
+   {
       if(strcmp(argv[i], "-v") == 0)
          if((tmp = strtol(argv[++i], 0, 16)) >= 0)
             vid = tmp;

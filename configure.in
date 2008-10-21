@@ -78,7 +78,7 @@ if test "x$ENABLE_LIBFTDIPP" = "x1"; then
 else
     AC_MSG_RESULT(no)
 fi
-AC_SUBST(ENABLE_LIBFTDIPP)
+AM_CONDITIONAL(HAVE_LIBFTDIPP, [test "x$ENABLE_LIBFTDIPP" = "x1"])
 
 dnl check for doxygen
 AC_PATH_PROG(DOXYGEN, doxygen)
