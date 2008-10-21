@@ -19,6 +19,7 @@
 
 #include <list>
 #include <string>
+#include <boost/shared_ptr.hpp>
 #include "ftdi.h"
 
 namespace Ftdi
@@ -124,11 +125,7 @@ protected:
 
 private:
     class Private;
-    Private *d;
-
-    /* Disable copy constructor */
-    Context(const Context &) {}
-    Context& operator=(const Context &) {}
+    boost::shared_ptr<Private> d;
 };
 
 /*! \brief Device EEPROM.
@@ -150,10 +147,10 @@ public:
 
 private:
     class Private;
-    Private *d;
+    boost::shared_ptr<Private> d;
 };
 
-typedef std::list<Context*> ListBase;
+typedef std::list<Context> ListBase;
 
 /*! \brief Device list.
  */
@@ -167,7 +164,7 @@ public:
 
 private:
     class Private;
-    Private *d;
+    boost::shared_ptr<Private> d;
 };
 
 }

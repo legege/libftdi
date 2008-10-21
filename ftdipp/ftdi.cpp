@@ -26,6 +26,15 @@ public:
     Private()
         :  ftdi(0), dev(0), open(false)
     {
+        ftdi = ftdi_new();
+    }
+
+    ~Private()
+    {
+        if(open)
+            ftdi_usb_close(ftdi);
+
+        ftdi_free(ftdi);
     }
 
     bool open;
@@ -43,18 +52,12 @@ public:
 Context::Context()
         : d( new Private() )
 {
-    d->ftdi = ftdi_new();
 }
 
 /*! \brief Destructor.
  */
 Context::~Context()
 {
-    if (d->open)
-        close();
-
-    ftdi_free(d->ftdi);
-    delete d;
 }
 
 bool Context::is_open()
@@ -341,7 +344,6 @@ Eeprom::Eeprom(Context* parent)
 
 Eeprom::~Eeprom()
 {
-    delete d;
 }
 
 void Eeprom::init_defaults()
@@ -387,44 +389,36 @@ int Eeprom::erase()
 class List::Private
 {
 public:
-    Private()
-            : list(0)
+    Private(struct ftdi_device_list* devlist)
+            : list(devlist)
     {}
+
+    ~Private()
+    {
+        ftdi_list_free(&list);
+    }
 
     struct ftdi_device_list* list;
 };
 
 List::List(struct ftdi_device_list* devlist)
-        : ListBase(), d( new Private() )
+        : ListBase(), d( new Private(devlist) )
 {
     if (devlist != 0)
     {
         // Iterate list
-        Context* c = 0;
         for (d->list = devlist; d->list != 0; d->list = d->list->next)
         {
-            c = new Context();
-            c->set_usb_device(d->list->dev);
+            Context c;
+            c.set_usb_device(d->list->dev);
+            c.get_strings();
             push_back(c);
         }
-
-        // Store pointer
-        d->list = devlist;
     }
 }
 
 List::~List()
 {
-    // Deallocate instances
-    for (iterator it = begin(); it != end(); it++)
-        delete *it;
-
-    // Clear list
-    clear();
-    ftdi_list_free(&d->list);
-
-    // Delete d-ptr
-    delete d;
 }
 
 List* List::find_all(int vendor, int product)
