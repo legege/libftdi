@@ -1,6 +1,7 @@
 New in 0.15
 -----------
 * Full C++ wrapper. Needs boost (Marek Vavruša and Intra2net)
+* cmake rules (Marek Vavruša)
 
 New in 0.14
 -----------
