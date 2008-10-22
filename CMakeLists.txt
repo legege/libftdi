@@ -35,6 +35,27 @@ set(CPACK_COMPONENT_SHAREDLIBS_GROUP "Development")
 set(CPACK_COMPONENT_STATICLIBS_GROUP "Development")
 set(CPACK_COMPONENT_HEADERS_GROUP "Development")
 
+# Documentation
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+
+   # Set variables
+   set(PACKAGE libftdi)
+   set(VERSION ${VERSION_STRING})
+   set(top_srcdir ${CMAKE_SOURCE_DIR})
+
+   # Find doxy config
+   message(STATUS "Doxygen found.")
+   set(DOXY_DIR "${CMAKE_SOURCE_DIR}/doc")
+   set(DOXY_CONFIG "${DOXY_DIR}/Doxyfile.in")
+
+   # Copy doxy.config.in
+   configure_file("${DOXY_DIR}/header.html" "${CMAKE_BINARY_DIR}/header.html" COPYONLY)
+   configure_file("${DOXY_CONFIG}" "${CMAKE_BINARY_DIR}/doxy.config")
+   add_custom_target(doc "${DOXYGEN_EXECUTABLE}" "doxy.config")
+
+endif(DOXYGEN_FOUND)
+
 # Package information
 set(CPACK_PACKAGE_VERSION              ${VERSION_STRING})
 set(CPACK_PACKAGE_CONTACT              "Marek Vavrusa <marek@vavrusa.com>")

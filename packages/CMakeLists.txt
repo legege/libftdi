@@ -16,3 +16,6 @@ if("${PACKAGE}" STREQUAL "Debian")
            DESTINATION /etc/udev/rules.d)
 
 endif("${PACKAGE}" STREQUAL "Debian")
+
+# General RPM rules
+set(CPACK_RPM_PACKAGE_DEPENDS       "libusb" PARENT_SCOPE)
