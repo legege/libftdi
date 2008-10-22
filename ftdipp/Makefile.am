@@ -10,3 +10,5 @@ libftdipp_la_SOURCES = $(top_builddir)/src/libftdi.la ftdi.cpp
 #  the library that is made has version (a-c).c.b.  In this
 #  example, the version is 2.1.2. (3:2:1)
 libftdipp_la_LDFLAGS = -version-info 16:0:15 $(all_libraries) @BOOST_LDFLAGS@
+
+EXTRA_DIST = CMakeLists.txt

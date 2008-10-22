@@ -4,7 +4,7 @@ AUTOMAKE_OPTIONS = foreign 1.4
 
 SUBDIRS = src $(LIBFTDI_MODULES) examples doc
 
-EXTRA_DIST = libftdi.spec libftdi.spec.in COPYING.LIB README AUTHORS ChangeLog libftdi-config.in
+EXTRA_DIST = libftdi.spec libftdi.spec.in COPYING.LIB README AUTHORS ChangeLog libftdi-config.in CMakeLists.txt packages
 
 bin_SCRIPTS = libftdi-config
 

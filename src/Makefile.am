@@ -11,3 +11,5 @@ include_HEADERS =  ftdi.h
 #  the library that is made has version (a-c).c.b.  In this
 #  example, the version is 2.1.2. (3:2:1)
 libftdi_la_LDFLAGS = -version-info 16:0:15 $(all_libraries)
+
+EXTRA_DIST = CMakeLists.txt
