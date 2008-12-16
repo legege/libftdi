@@ -33,7 +33,7 @@ set(CPACK_COMPONENT_HEADERS_DESCRIPTION
 
 set(CPACK_COMPONENT_SHAREDLIBS_GROUP "Development")
 set(CPACK_COMPONENT_STATICLIBS_GROUP "Development")
-set(CPACK_COMPONENT_HEADERS_GROUP "Development")
+set(CPACK_COMPONENT_HEADERS_GROUP    "Development")
 
 # Documentation
 find_package(Doxygen)
@@ -92,5 +92,20 @@ add_subdirectory(src)
 add_subdirectory(ftdipp)
 add_subdirectory(examples)
 add_subdirectory(packages)
+
+# PkgConfig
+set(prefix      ${CMAKE_INSTALL_PREFIX})
+set(exec_prefix ${CMAKE_INSTALL_PREFIX}/bin)
+set(includedir  ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME})
+
+if(${UNIX})
+   set(libdir      ${CMAKE_INSTALL_PREFIX}/lib)
+endif(${UNIX})
+if(${WIN32})
+   set(libdir      ${CMAKE_INSTALL_PREFIX}/bin)
+endif(${WIN32})
+
+configure_file(${CMAKE_SOURCE_DIR}/libftdi.pc.in ${CMAKE_BINARY_DIR}/libftdi.pc @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/libftdipp.pc.in ${CMAKE_BINARY_DIR}/libftdipp.pc @ONLY)
 
 include(CPack)
