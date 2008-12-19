@@ -14,7 +14,7 @@ the initial C++ wrapper implementation.
 Changes
 -------
 * Full C++ wrapper. Needs boost (Marek Vavruša and Intra2net)
-
+* cmake rules (Marek Vavruša)
 
 You'll find the newest version of libftdi at:
 http://www.intra2net.com/de/produkte/opensource/ftdi/
