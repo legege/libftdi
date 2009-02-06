@@ -6,11 +6,12 @@ Release:   1
 License:   LGPL
 Group:     System Environment/Libraries
 Vendor:    Intra2net AG
-Source:    %{name}-%{version}.tar.gz
+Source:    http://www.intra2net.com/en/developer/libftdi/download/%{name}-%{version}.tar.gz
 Buildroot: /tmp/%{name}-%{version}-root
 Requires:  libusb
 BuildRequires: libusb, libusb-devel, pkgconfig, doxygen
 Prefix:    /usr
+URL:       http://www.intra2net.com/en/developer/libftdi
 
 %package   devel
 Summary:   Header files and static libraries for libftdi

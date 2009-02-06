@@ -18,7 +18,7 @@
     \mainpage libftdi API documentation
 
     Library to talk to FTDI chips. You find the latest versions of libftdi at
-    http://www.intra2net.com/de/produkte/opensource/ftdi/
+    http://www.intra2net.com/en/developer/libftdi/
 
     The library is easy to use. Have a look at this short example:
     \include simple.c
