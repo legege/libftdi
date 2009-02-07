@@ -1,0 +1,44 @@
+# Normal stuff
+*.o
+*.a
+*.so
+*.lo
+*.la
+*.pc
+.deps/
+.libs/
+build/
+
+# Automake
+Makefile
+Makefile.in
+autom4te.cache
+aclocal.m4
+libtool
+stamp-h1
+configure
+config.*
+*.substvars
+ltmain.sh
+missing
+install-sh
+depcomp
+INSTALL
+
+# kdevelop
+*.kdevelop.pcs
+*.kdevses
+
+# Doxygen documentation
+Doxyfile
+doc/Doxyfile
+doc/html
+
+# Backup files and stuff from patches
+*.orig
+*.rej
+*~
+
+# libftdi specific
+libftdi-config
+libftdi.spec
