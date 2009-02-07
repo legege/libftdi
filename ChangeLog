@@ -1,10 +1,10 @@
-New in 0.15
------------
+New in 0.15 - 2008-12-19
+------------------------
 * Full C++ wrapper. Needs boost (Marek Vavruša and Intra2net)
 * cmake rules (Marek Vavruša)
 
-New in 0.14
------------
+New in 0.14 - 2008-09-09
+------------------------
 * Fixed flow control code for second FT2232 interface (Marek Vavruša)
 * Ability to set flow control via one USB call (Marek Vavruša)
 * 64 bit build support in the RPM spec file (Uwe Bonnes)
@@ -12,15 +12,15 @@ New in 0.14
 * Ability to set RS232 break type (Intra2net)
 * Grouped flow control and modem status code together (Intra2net)
 
-New in 0.13
------------
+New in 0.13 - 2008-06-13
+------------------------
 * Build .spec file via configure.in (Intra2net)
 * Fixed "libusb-config --cflags" call (Mike Frysinger and Intra2net)
 * Always set usb configuration (Mike Frysinger and Intra2net)
 * Improved libusb-win32 support (Mike Frysinger)
 
-New in 0.12
------------
+New in 0.12 - 2008-04-16
+------------------------
 * Fix build of documentation for "out of tree" builds
 * Fix USB config descriptor in the eeprom (Juergen Beisert)
 * Ability to purge RX/TX buffers separately (Arnim Läuger)
@@ -28,8 +28,8 @@ New in 0.12
 * Poll modem status function (Arnim Läuger and Intra2net)
 * Updated documentation and created AUTHORS file
 
-New in 0.11
------------
+New in 0.11 - 2008-03-01
+------------------------
 * Vala bindings helper functions (ftdi_new, ftdi_free, ftdi_list_free2) (Even Nermerson)
 * Support for different EEPROM sizes (Andrew John Rogers, andrew@rogerstech.co.uk)
 * Async write support. Linux only and no error handling.
@@ -37,19 +37,19 @@ New in 0.11
 * Detection of R-type chips
 * FTDIChip-ID read support (Peter Holik)
 
-New in 0.10
------------
+New in 0.10 - 2007-05-08
+------------------------
 * Examples for libftdi_usb_find_all and CBUS mode
 * Fixed ftdi_list_free
 * Small cosmetic changes
 
-New in 0.9
-----------
+New in 0.9 - 2007-02-09
+-----------------------
 * Fixed build without doxygen
 * Correct .so file library version
 
-New in 0.8
-----------
+New in 0.8 - 2007-02-08
+-----------------------
 * Complete doxygen documentation and examples
 * Extended FT2232C bitbang mode example code (Max)
 * ftdi_usb_get_strings function to get device ID strings (Matthijs ten Berge)
@@ -57,14 +57,14 @@ New in 0.8
 * Automatically detach ftdi_sio kernel driver (Uwe Bonnes and Intra2net)
 * Configurable flow control (Lorenz Moesenlechner and Matthias Kranz)
 
-New in 0.7
-----------
+New in 0.7 - 2005-10-11
+-----------------------
 * Baudrate calculation fix for FT2232C (Steven Turner/FTDI)
 * Find all devices by vendor/product id (Tim Ansell and Intra2net)
 * Documentation updates (Tim Ansell)
 
-New in 0.6
-----------
+New in 0.6 - 2005-04-24
+-----------------------
 * Set library version on .so file again
 * Configurable serial line parameters (Alain Abbas)
 * Improved filtering of status bytes (Evgeny Sinelnikov)
@@ -72,16 +72,16 @@ New in 0.6
 * Small improvement to the baudrate calculation code (Emil)
 * Error handling cleanup (Rogier Wolff and Intra2net)
 
-New in 0.5
-----------
+New in 0.5 - 2004-09-24
+-----------------------
 * New autoconf suite
 * pkgconfig support
 * Status byte filtering now works for "big" readbuffer sizes (Thanks Evgeny!)
 * Open device by description and/or serial (Evgeny Sinelnikov)
 * Improved error handling (Evgeny Sinelnikov)
 
-New in 0.4
-----------
+New in 0.4 - 2004-06-15
+-----------------------
 * Fixed filtering of status bytes (Readbuffer size is now 64 bytes)
 * FT2232C support (Steven Turner/FTDI)
 * New baudrate calculation code (Ian Abbott)
@@ -91,22 +91,20 @@ New in 0.4
 * Reset internal readbuffer offsets for reset()/purge_buffers()
 * Small typo fixes (Mark Haemmerling)
 
-New in 0.3
-----------
+New in 0.3 - 2004-03-25
+-----------------------
 * Improved read function which takes arbitrary input buffer sizes
   Attention: Call ftdi_deinit() on exit to free used memory
 * Vastly increased read/write performance (configurable chunksize, default is 4096)
 * Set/get latency timer function working (Thanks Steven Turner/FTDI)
 * Increased library version because the changes require recompilation
 
-
-New in 0.2
-----------
+New in 0.2 - 2004-01-03
+-----------------------
 * EEPROM build fix by Daniel Kirkham (Melbourne, Australia)
 * Implemented basic ftdi_read_data() function
 * EEPROM write fixes
 
-
-New in 0.1
-------------
+New in 0.1 - 2003-06-10
+-----------------------
 * First public release
