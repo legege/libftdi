@@ -21,30 +21,30 @@
 
 #define FTDI_DEFAULT_EEPROM_SIZE 128
 
-/// FTDI chip type
+/** FTDI chip type */
 enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2, TYPE_R=3 };
-/// Parity mode for ftdi_set_line_property()
+/** Parity mode for ftdi_set_line_property() */
 enum ftdi_parity_type { NONE=0, ODD=1, EVEN=2, MARK=3, SPACE=4 };
-/// Number of stop bits for ftdi_set_line_property()
+/** Number of stop bits for ftdi_set_line_property() */
 enum ftdi_stopbits_type { STOP_BIT_1=0, STOP_BIT_15=1, STOP_BIT_2=2 };
-/// Number of bits for ftdi_set_line_property()
+/** Number of bits for ftdi_set_line_property() */
 enum ftdi_bits_type { BITS_7=7, BITS_8=8 };
-/// Break type for ftdi_set_line_property2()
+/** Break type for ftdi_set_line_property2() */
 enum ftdi_break_type { BREAK_OFF=0, BREAK_ON=1 };
 
-/// MPSSE bitbang modes
+/** MPSSE bitbang modes */
 enum ftdi_mpsse_mode {
     BITMODE_RESET  = 0x00,
     BITMODE_BITBANG= 0x01,
     BITMODE_MPSSE  = 0x02,
     BITMODE_SYNCBB = 0x04,
     BITMODE_MCU    = 0x08,
-    // CPU-style fifo mode gets set via EEPROM
+    /* CPU-style fifo mode gets set via EEPROM */
     BITMODE_OPTO   = 0x10,
     BITMODE_CBUS   = 0x20
 };
 
-/// Port interface for FT2232C
+/** Port interface for FT2232C */
 enum ftdi_interface {
     INTERFACE_ANY = 0,
     INTERFACE_A   = 1,
@@ -142,54 +142,54 @@ enum ftdi_interface {
     Do not access directly if possible.
 */
 struct ftdi_context {
-    // USB specific
-    /// libusb's usb_dev_handle
+    /* USB specific */
+    /** libusb's usb_dev_handle */
     struct usb_dev_handle *usb_dev;
-    /// usb read timeout
+    /** usb read timeout */
     int usb_read_timeout;
-    /// usb write timeout
+    /** usb write timeout */
     int usb_write_timeout;
 
-    // FTDI specific
-    /// FTDI chip type
+    /* FTDI specific */
+    /** FTDI chip type */
     enum ftdi_chip_type type;
-    /// baudrate
+    /** baudrate */
     int baudrate;
-    /// bitbang mode state
+    /** bitbang mode state */
     unsigned char bitbang_enabled;
-    /// pointer to read buffer for ftdi_read_data
+    /** pointer to read buffer for ftdi_read_data */
     unsigned char *readbuffer;
-    /// read buffer offset
+    /** read buffer offset */
     unsigned int readbuffer_offset;
-    /// number of remaining data in internal read buffer
+    /** number of remaining data in internal read buffer */
     unsigned int readbuffer_remaining;
-    /// read buffer chunk size
+    /** read buffer chunk size */
     unsigned int readbuffer_chunksize;
-    /// write buffer chunk size
+    /** write buffer chunk size */
     unsigned int writebuffer_chunksize;
 
-    // FTDI FT2232C requirecments
-    /// FT2232C interface number: 0 or 1
-    int interface;   // 0 or 1
-    /// FT2232C index number: 1 or 2
-    int index;       // 1 or 2
-    // Endpoints
-    /// FT2232C end points: 1 or 2
+    /* FTDI FT2232C requirecments */
+    /** FT2232C interface number: 0 or 1 */
+    int interface;   /* 0 or 1 */
+    /** FT2232C index number: 1 or 2 */
+    int index;       /* 1 or 2 */
+    /* Endpoints */
+    /** FT2232C end points: 1 or 2 */
     int in_ep;
-    int out_ep;      // 1 or 2
+    int out_ep;      /* 1 or 2 */
 
-    /// Bitbang mode. 1: (default) Normal bitbang mode, 2: FT2232C SPI bitbang mode
+    /** Bitbang mode. 1: (default) Normal bitbang mode, 2: FT2232C SPI bitbang mode */
     unsigned char bitbang_mode;
 
-    /// EEPROM size. Default is 128 bytes for 232BM and 245BM chips
+    /** EEPROM size. Default is 128 bytes for 232BM and 245BM chips */
     int eeprom_size;
 
-    /// String representation of last error
+    /** String representation of last error */
     char *error_str;
 
-    /// Buffer needed for async communication
+    /** Buffer needed for async communication */
     char *async_usb_buffer;
-    /// Number of URB-structures we can buffer
+    /** Number of URB-structures we can buffer */
     unsigned int async_usb_buffer_size;
 };
 
@@ -197,9 +197,9 @@ struct ftdi_context {
     \brief list of usb devices created by ftdi_usb_find_all()
 */
 struct ftdi_device_list {
-    /// pointer to next entry
+    /** pointer to next entry */
     struct ftdi_device_list *next;
-    /// pointer to libusb's usb_device
+    /** pointer to libusb's usb_device */
     struct usb_device *dev;
 };
 
@@ -207,43 +207,43 @@ struct ftdi_device_list {
     \brief FTDI eeprom structure
 */
 struct ftdi_eeprom {
-    /// vendor id
+    /** vendor id */
     int vendor_id;
-    /// product id
+    /** product id */
     int product_id;
 
-    /// self powered
+    /** self powered */
     int self_powered;
-    /// remote wakepu
+    /** remote wakepu */
     int remote_wakeup;
-    /// chip type
+    /** chip type */
     int BM_type_chip;
 
-    /// input in isochronous transfer mode
+    /** input in isochronous transfer mode */
     int in_is_isochronous;
-    /// output in isochronous transfer mode
+    /** output in isochronous transfer mode */
     int out_is_isochronous;
-    /// suspend pull downs
+    /** suspend pull downs */
     int suspend_pull_downs;
 
-    /// use serial
+    /** use serial */
     int use_serial;
-    /// fake usb version
+    /** fake usb version */
     int change_usb_version;
-    /// usb version
+    /** usb version */
     int usb_version;
-    /// maximum power
+    /** maximum power */
     int max_power;
 
-    /// manufacturer name
+    /** manufacturer name */
     char *manufacturer;
-    /// product name
+    /** product name */
     char *product;
-    /// serial number
+    /** serial number */
     char *serial;
 
-  /// eeprom size in bytes. This doesn't get stored in the eeprom
-  /// but is the only way to pass it to ftdi_eeprom_build.
+  /** eeprom size in bytes. This doesn't get stored in the eeprom
+      but is the only way to pass it to ftdi_eeprom_build. */
   int size;
 };
 
@@ -307,7 +307,7 @@ extern "C" {
 
     int ftdi_poll_modem_status(struct ftdi_context *ftdi, unsigned short *status);
 
-    // flow control
+    /* flow control */
     int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
     int ftdi_setdtr_rts(struct ftdi_context *ftdi, int dtr, int rts);
     int ftdi_setdtr(struct ftdi_context *ftdi, int state);
@@ -316,15 +316,15 @@ extern "C" {
     int ftdi_set_event_char(struct ftdi_context *ftdi, unsigned char eventch, unsigned char enable);
     int ftdi_set_error_char(struct ftdi_context *ftdi, unsigned char errorch, unsigned char enable);
 
-    // set eeprom size
+    /* set eeprom size */
     void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, int size);
 
-    // init and build eeprom from ftdi_eeprom structure
+    /* init and build eeprom from ftdi_eeprom structure */
     void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom);
     int  ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output);
 
-    // "eeprom" needs to be valid 128 byte eeprom (generated by the eeprom generator)
-    // the checksum of the eeprom is valided
+    /* "eeprom" needs to be valid 128 byte eeprom (generated by the eeprom generator)
+       the checksum of the eeprom is valided */
     int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
     int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid);
     int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, int maxsize);

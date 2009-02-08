@@ -1,3 +1,7 @@
+New in 0.16 - 2009-XX-XX
+------------------------
+* Fix compilation in -ansi -pedantic mode (Matthias Janke)
+
 New in 0.15 - 2008-12-19
 ------------------------
 * Full C++ wrapper. Needs boost (Marek Vavruša and Intra2net)
