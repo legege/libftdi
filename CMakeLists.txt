@@ -50,7 +50,6 @@ if(DOXYGEN_FOUND)
    set(DOXY_CONFIG "${DOXY_DIR}/Doxyfile.in")
 
    # Copy doxy.config.in
-   configure_file("${DOXY_DIR}/header.html" "${CMAKE_BINARY_DIR}/header.html" COPYONLY)
    configure_file("${DOXY_CONFIG}" "${CMAKE_BINARY_DIR}/doxy.config")
    add_custom_target(doc "${DOXYGEN_EXECUTABLE}" "doxy.config")
 
