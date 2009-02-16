@@ -10,7 +10,7 @@ set(c_headers     ftdi.h)
 add_library(ftdi SHARED ${c_sources})
 
 # Dependencies
-target_link_libraries(ftdi usb)
+target_link_libraries(ftdi ${LIBUSB_LIBRARIES})
 
 # Install
 if(${UNIX})

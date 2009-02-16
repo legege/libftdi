@@ -21,7 +21,7 @@ message(STATUS "Building libftdi++")
 add_library(ftdi_cpp SHARED ${cpp_sources})
 
 # Dependencies
-target_link_libraries(ftdi_cpp ftdi usb ${BOOST_LIBRARIES})
+target_link_libraries(ftdi_cpp ftdi ${LIBUSB_LIBRARIES} ${BOOST_LIBRARIES})
 
 # Install
 if(${UNIX})
