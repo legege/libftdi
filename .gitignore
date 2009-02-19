@@ -42,3 +42,12 @@ doc/html
 # libftdi specific
 libftdi-config
 libftdi.spec
+
+# CMake
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles
+
+# Misc. binaries
+*.dylib
+opt

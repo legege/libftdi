@@ -31,6 +31,7 @@
 #include <usb.h>
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include "ftdi.h"
 
@@ -1804,6 +1805,153 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     output[eeprom->size-1] = checksum >> 8;
 
     return size_check;
+}
+
+void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf)
+{
+    unsigned char i, j;
+    unsigned short checksum, eeprom_checksum, value;
+    unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
+    int size_check;
+    int eeprom_size = 128;
+#if 0
+    size_check = eeprom->size;
+    size_check -= 28; // 28 are always in use (fixed)
+
+    // Top half of a 256byte eeprom is used just for strings and checksum 
+    // it seems that the FTDI chip will not read these strings from the lower half
+    // Each string starts with two bytes; offset and type (0x03 for string)
+    // the checksum needs two bytes, so without the string data that 8 bytes from the top half
+    if(eeprom->size>=256)size_check = 120;
+    size_check -= manufacturer_size*2;
+    size_check -= product_size*2;
+    size_check -= serial_size*2;
+
+    // eeprom size exceeded?
+    if (size_check < 0)
+        return (-1);
+#endif
+
+    // empty eeprom struct
+    memset (eeprom, 0, sizeof(struct ftdi_eeprom));
+
+    // Addr 00: Stay 00 00
+
+    // Addr 02: Vendor ID
+    eeprom->vendor_id = buf[0x02] + (buf[0x03] << 8);
+
+    // Addr 04: Product ID
+    eeprom->product_id = buf[0x04] + (buf[0x05] << 8);
+
+/*     // Addr 06: Device release number (0400h for BM features) */
+/*     output[0x06] = 0x00; */
+
+    if (buf[0x07] == 0x04) eeprom->BM_type_chip = 1;
+
+    // Addr 08: Config descriptor
+    // Bit 7: always 1
+    // Bit 6: 1 if this device is self powered, 0 if bus powered
+    // Bit 5: 1 if this device uses remote wakeup
+    // Bit 4: 1 if this device is battery powered
+    j = buf[0x08];
+
+    if (j&0x40) eeprom->self_powered = 1;
+    if (j&0x20) eeprom->remote_wakeup = 1;
+
+    // Addr 09: Max power consumption: max power = value * 2 mA
+    eeprom->max_power = buf[0x09];
+
+    // Addr 0A: Chip configuration
+    // Bit 7: 0 - reserved
+    // Bit 6: 0 - reserved
+    // Bit 5: 0 - reserved
+    // Bit 4: 1 - Change USB version
+    // Bit 3: 1 - Use the serial number string
+    // Bit 2: 1 - Enable suspend pull downs for lower power
+    // Bit 1: 1 - Out EndPoint is Isochronous
+    // Bit 0: 1 - In EndPoint is Isochronous
+    //
+    j = buf[0x0A];
+    if (j&1) eeprom->in_is_isochronous = 1;
+    if (j&2) eeprom->out_is_isochronous = 1;
+    if (j&4) eeprom->suspend_pull_downs = 1;
+    if (j&8) eeprom->use_serial = 1;
+    if (j&16) eeprom->change_usb_version = 1;
+
+/*     // Addr 0B: reserved */
+/*     output[0x0B] = 0x00; */
+
+    // Addr 0C: USB version low byte when 0x0A bit 4 is set
+    // Addr 0D: USB version high byte when 0x0A bit 4 is set
+    if (eeprom->change_usb_version == 1) {
+      eeprom->usb_version = buf[0x0C] + (buf[0x0D] << 8);
+    }
+
+    // Addr 0E: Offset of the manufacturer string + 0x80, calculated later
+    // Addr 0F: Length of manufacturer string
+    manufacturer_size = buf[0x0F]/2;
+    if (manufacturer_size > 0) eeprom->manufacturer = malloc(manufacturer_size);
+    else eeprom->manufacturer = NULL;
+
+    // Addr 10: Offset of the product string + 0x80, calculated later
+    // Addr 11: Length of product string
+    product_size = buf[0x11]/2;
+    if (product_size > 0) eeprom->product = malloc(product_size);
+    else eeprom->product = NULL;
+
+    // Addr 12: Offset of the serial string + 0x80, calculated later
+    // Addr 13: Length of serial string
+    serial_size = buf[0x13]/2;
+    if (serial_size > 0) eeprom->serial = malloc(serial_size);
+    else eeprom->serial = NULL;
+
+    // Dynamic content
+    //    if(eeprom->size>=256) i = 0x80;
+
+    // Decode manufacturer 
+    i = buf[0x0E] & 0x7f; // offset
+/*     printf("debug size: %d, %d\n", buf[i]/2, manufacturer_size); // length */
+/*     printf("debug 0x03: %02x\n", buf[i+1]); // type: string */
+    for (j=0;j<manufacturer_size-1;j++) {
+      eeprom->manufacturer[j] = buf[2*j+i+2];
+    }
+    eeprom->manufacturer[j] = '\0';
+
+    // Decode product name
+    i = buf[0x10] & 0x7f; // offset
+/*     printf("debug size: %d, %d\n", buf[i]/2, product_size); // length */
+/*     printf("debug 0x03: %02x\n", buf[i+1]); // type: string */
+    for (j=0;j<product_size-1;j++) {
+      eeprom->product[j] = buf[2*j+i+2];
+    }
+    eeprom->product[j] = '\0';
+
+    // Decode serial
+    i = buf[0x12] & 0x7f; // offset
+/*     printf("debug size: %d, %d\n", buf[i]/2, serial_size); // length */
+/*     printf("debug 0x03: %02x\n", buf[i+1]); // type: string */
+    for (j=0;j<serial_size-1;j++) {
+      eeprom->serial[j] = buf[2*j+i+2];
+    }
+    eeprom->serial[j] = '\0';
+
+    // verify checksum
+    checksum = 0xAAAA;
+
+    for (i = 0; i < eeprom_size/2-1; i++) {
+        value = buf[i*2];
+        value += buf[(i*2)+1] << 8;
+
+        checksum = value^checksum;
+        checksum = (checksum << 1) | (checksum >> 15);
+    }
+
+    eeprom_checksum = buf[eeprom_size-2] + (buf[eeprom_size-1] << 8);
+
+    if (eeprom_checksum != checksum)
+      fprintf(stderr, "Checksum Error: %04x %04x\n", checksum, eeprom_checksum);
+    
+    return;
 }
 
 /**
