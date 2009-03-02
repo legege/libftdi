@@ -519,10 +519,10 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
 */
 int ftdi_usb_reset(struct ftdi_context *ftdi)
 {
-   if (usb_control_msg(ftdi->usb_dev, SIO_RESET_REQUEST_TYPE,
-                       SIO_RESET_REQUEST, SIO_RESET_SIO,
-                       ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
-        ftdi_error_return(-1,"FTDI reset failed");
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
+                        SIO_RESET_REQUEST, SIO_RESET_SIO,
+                        ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+      ftdi_error_return(-1,"FTDI reset failed");
 
     // Invalidate data in the readbuffer
     ftdi->readbuffer_offset = 0;
@@ -541,7 +541,7 @@ int ftdi_usb_reset(struct ftdi_context *ftdi)
 */
 int ftdi_usb_purge_rx_buffer(struct ftdi_context *ftdi)
 {
-   if (usb_control_msg(ftdi->usb_dev, SIO_RESET_REQUEST_TYPE,
+   if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                        SIO_RESET_REQUEST, SIO_RESET_PURGE_RX,
                        ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "FTDI purge of RX buffer failed");
@@ -563,7 +563,7 @@ int ftdi_usb_purge_rx_buffer(struct ftdi_context *ftdi)
 */
 int ftdi_usb_purge_tx_buffer(struct ftdi_context *ftdi)
 {
-   if (usb_control_msg(ftdi->usb_dev, SIO_RESET_REQUEST_TYPE,
+   if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                        SIO_RESET_REQUEST, SIO_RESET_PURGE_TX,
                        ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "FTDI purge of TX buffer failed");
@@ -754,7 +754,7 @@ int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
                 : (baudrate * 21 < actual_baudrate * 20)))
         ftdi_error_return (-1, "Unsupported baudrate. Note: bitbang baudrates are automatically multiplied by 4");
 
-    if (usb_control_msg(ftdi->usb_dev, SIO_SET_BAUDRATE_REQUEST_TYPE,
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                         SIO_SET_BAUDRATE_REQUEST, value,
                         index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return (-2, "Setting new baudrate failed");
@@ -839,7 +839,7 @@ int ftdi_set_line_property2(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
         break;
     }
 
-    if (usb_control_msg(ftdi->usb_dev, SIO_SET_DATA_REQUEST_TYPE,
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                         SIO_SET_DATA_REQUEST, value,
                         ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return (-1, "Setting new line property failed");
@@ -1275,7 +1275,9 @@ int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask)
     /* FT2232C: Set bitbang_mode to 2 to enable SPI */
     usb_val |= (ftdi->bitbang_mode << 8);
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, 
+                        SIO_SET_BITMODE_REQUEST, usb_val, ftdi->index, 
+                        NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "unable to enter bitbang mode. Perhaps not a BM type chip?");
 
     ftdi->bitbang_enabled = 1;
@@ -1292,7 +1294,7 @@ int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask)
 */
 int ftdi_disable_bitbang(struct ftdi_context *ftdi)
 {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_SET_BITMODE_REQUEST, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "unable to leave bitbang mode. Perhaps not a BM type chip?");
 
     ftdi->bitbang_enabled = 0;
@@ -1316,7 +1318,7 @@ int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned 
 
     usb_val = bitmask; // low byte: bitmask
     usb_val |= (mode << 8);
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x0B, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_SET_BITMODE_REQUEST, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "unable to configure bitbang mode. Perhaps not a 2232C type chip?");
 
     ftdi->bitbang_mode = mode;
@@ -1335,7 +1337,7 @@ int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned 
 */
 int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins)
 {
-    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0C, 0, ftdi->index, (char *)pins, 1, ftdi->usb_read_timeout) != 1)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_PINS_REQUEST, 0, ftdi->index, (char *)pins, 1, ftdi->usb_read_timeout) != 1)
         ftdi_error_return(-1, "read pins failed");
 
     return 0;
@@ -1363,7 +1365,7 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency)
         ftdi_error_return(-1, "latency out of range. Only valid for 1-255");
 
     usb_val = latency;
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x09, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_SET_LATENCY_TIMER_REQUEST, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-2, "unable to set latency timer");
 
     return 0;
@@ -1381,7 +1383,7 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency)
 int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency)
 {
     unsigned short usb_val;
-    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x0A, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_GET_LATENCY_TIMER_REQUEST, 0, ftdi->index, (char *)&usb_val, 1, ftdi->usb_read_timeout) != 1)
         ftdi_error_return(-1, "reading latency timer failed");
 
     *latency = (unsigned char)usb_val;
@@ -1431,7 +1433,7 @@ int ftdi_poll_modem_status(struct ftdi_context *ftdi, unsigned short *status)
 {
     char usb_val[2];
 
-    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x05, 0, ftdi->index, usb_val, 2, ftdi->usb_read_timeout) != 2)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_POLL_MODEM_STATUS_REQUEST, 0, ftdi->index, usb_val, 2, ftdi->usb_read_timeout) != 2)
         ftdi_error_return(-1, "getting modem status failed");
 
     *status = (usb_val[1] << 8) | usb_val[0];
@@ -1451,7 +1453,7 @@ int ftdi_poll_modem_status(struct ftdi_context *ftdi, unsigned short *status)
 */
 int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl)
 {
-    if (usb_control_msg(ftdi->usb_dev, SIO_SET_FLOW_CTRL_REQUEST_TYPE,
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                         SIO_SET_FLOW_CTRL_REQUEST, 0, (flowctrl | ftdi->index),
                         NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "set flow control failed");
@@ -1477,7 +1479,7 @@ int ftdi_setdtr(struct ftdi_context *ftdi, int state)
     else
         usb_val = SIO_SET_DTR_LOW;
 
-    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                         SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->index,
                         NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "set dtr failed");
@@ -1503,7 +1505,7 @@ int ftdi_setrts(struct ftdi_context *ftdi, int state)
     else
         usb_val = SIO_SET_RTS_LOW;
 
-    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                         SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->index,
                         NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "set of rts failed");
@@ -1535,7 +1537,7 @@ int ftdi_setdtr_rts(struct ftdi_context *ftdi, int dtr, int rts)
     else
        usb_val |= SIO_SET_RTS_LOW;
 
-    if (usb_control_msg(ftdi->usb_dev, SIO_SET_MODEM_CTRL_REQUEST_TYPE,
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                         SIO_SET_MODEM_CTRL_REQUEST, usb_val, ftdi->index,
                         NULL, 0, ftdi->usb_write_timeout) != 0)
        ftdi_error_return(-1, "set of rts/dtr failed");
@@ -1562,7 +1564,7 @@ int ftdi_set_event_char(struct ftdi_context *ftdi,
     if (enable)
         usb_val |= 1 << 8;
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x06, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_SET_EVENT_CHAR_REQUEST, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "setting event character failed");
 
     return 0;
@@ -1587,7 +1589,7 @@ int ftdi_set_error_char(struct ftdi_context *ftdi,
     if (enable)
         usb_val |= 1 << 8;
 
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x07, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_SET_ERROR_CHAR_REQUEST, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "setting error character failed");
 
     return 0;
@@ -1968,7 +1970,7 @@ int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     int i;
 
     for (i = 0; i < ftdi->eeprom_size/2; i++) {
-        if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
+        if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
             ftdi_error_return(-1, "reading eeprom failed");
     }
 
@@ -2005,10 +2007,10 @@ int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
 {
     unsigned int a = 0, b = 0;
 
-    if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, 0x43, (char *)&a, 2, ftdi->usb_read_timeout) == 2)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, 0x43, (char *)&a, 2, ftdi->usb_read_timeout) == 2)
     {
         a = a << 8 | a >> 8;
-        if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, 0x44, (char *)&b, 2, ftdi->usb_read_timeout) == 2)
+        if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, 0x44, (char *)&b, 2, ftdi->usb_read_timeout) == 2)
         {
             b = b << 8 | b >> 8;
             a = (a << 16) | b;
@@ -2039,7 +2041,9 @@ int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, i
 
     do{
       for (j = 0; i < maxsize/2 && j<size; j++) {
-        if (usb_control_msg(ftdi->usb_dev, 0xC0, 0x90, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
+        if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, 
+                            SIO_READ_EEPROM_REQUEST, 0, i, 
+                            eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
 	  ftdi_error_return(-1, "reading eeprom failed");
 	i++;
       }
@@ -2071,7 +2075,9 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     for (i = 0; i < ftdi->eeprom_size/2; i++) {
         usb_val = eeprom[i*2];
         usb_val += eeprom[(i*2)+1] << 8;
-        if (usb_control_msg(ftdi->usb_dev, 0x40, 0x91, usb_val, i, NULL, 0, ftdi->usb_write_timeout) != 0)
+        if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
+                            SIO_WRITE_EEPROM_REQUEST, usb_val, i, 
+                            NULL, 0, ftdi->usb_write_timeout) != 0)
             ftdi_error_return(-1, "unable to write eeprom");
     }
 
@@ -2081,6 +2087,8 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
 /**
     Erase eeprom
 
+    This is not supported on FT232R/FT245R according to the MProg manual from FTDI.
+
     \param ftdi pointer to ftdi_context
 
     \retval  0: all fine
@@ -2088,7 +2096,7 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
 */
 int ftdi_erase_eeprom(struct ftdi_context *ftdi)
 {
-    if (usb_control_msg(ftdi->usb_dev, 0x40, 0x92, 0, 0, NULL, 0, ftdi->usb_write_timeout) != 0)
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_ERASE_EEPROM_REQUEST, 0, 0, NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "unable to erase eeprom");
 
     return 0;
