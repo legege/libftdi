@@ -1809,7 +1809,20 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     return size_check;
 }
 
-void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf)
+/**
+   Decode binary EEPROM image into an ftdi_eeprom structure.
+
+   \param eeprom Pointer to ftdi_eeprom which will be filled in.
+   \param output Buffer of \a size bytes of raw eeprom data
+   \param size size size of eeprom data in bytes
+
+   \retval 0: all fine
+   \retval -1: something went wrong
+
+   FIXME: How to pass size? How to handle size field in ftdi_eeprom?
+   FIXME: Strings are malloc'ed here and should be freed somewhere
+*/
+void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
 {
     unsigned char i, j;
     unsigned short checksum, eeprom_checksum, value;
@@ -1835,7 +1848,7 @@ void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf)
 #endif
 
     // empty eeprom struct
-    memset (eeprom, 0, sizeof(struct ftdi_eeprom));
+    memset(eeprom, 0, sizeof(struct ftdi_eeprom));
 
     // Addr 00: Stay 00 00
 
@@ -1844,11 +1857,18 @@ void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf)
 
     // Addr 04: Product ID
     eeprom->product_id = buf[0x04] + (buf[0x05] << 8);
-
-/*     // Addr 06: Device release number (0400h for BM features) */
-/*     output[0x06] = 0x00; */
-
-    if (buf[0x07] == 0x04) eeprom->BM_type_chip = 1;
+    
+    switch (buf[0x06] + (buf[0x07]<<8)) {
+    case 0x0400:
+      eeprom->BM_type_chip = 1;
+      break;
+    case 0x0200:
+      eeprom->BM_type_chip = 0;
+      break;
+    default: // Unknown device
+      eeprom->BM_type_chip = 0;
+      break;
+    }
 
     // Addr 08: Config descriptor
     // Bit 7: always 1
@@ -1856,7 +1876,6 @@ void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf)
     // Bit 5: 1 if this device uses remote wakeup
     // Bit 4: 1 if this device is battery powered
     j = buf[0x08];
-
     if (j&0x40) eeprom->self_powered = 1;
     if (j&0x20) eeprom->remote_wakeup = 1;
 
@@ -1874,14 +1893,13 @@ void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf)
     // Bit 0: 1 - In EndPoint is Isochronous
     //
     j = buf[0x0A];
-    if (j&1) eeprom->in_is_isochronous = 1;
-    if (j&2) eeprom->out_is_isochronous = 1;
-    if (j&4) eeprom->suspend_pull_downs = 1;
-    if (j&8) eeprom->use_serial = 1;
-    if (j&16) eeprom->change_usb_version = 1;
+    if (j&0x01) eeprom->in_is_isochronous = 1;
+    if (j&0x02) eeprom->out_is_isochronous = 1;
+    if (j&0x04) eeprom->suspend_pull_downs = 1;
+    if (j&0x08) eeprom->use_serial = 1;
+    if (j&0x10) eeprom->change_usb_version = 1;
 
-/*     // Addr 0B: reserved */
-/*     output[0x0B] = 0x00; */
+    // Addr 0B: reserved
 
     // Addr 0C: USB version low byte when 0x0A bit 4 is set
     // Addr 0D: USB version high byte when 0x0A bit 4 is set
@@ -1907,13 +1925,8 @@ void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf)
     if (serial_size > 0) eeprom->serial = malloc(serial_size);
     else eeprom->serial = NULL;
 
-    // Dynamic content
-    //    if(eeprom->size>=256) i = 0x80;
-
     // Decode manufacturer 
     i = buf[0x0E] & 0x7f; // offset
-/*     printf("debug size: %d, %d\n", buf[i]/2, manufacturer_size); // length */
-/*     printf("debug 0x03: %02x\n", buf[i+1]); // type: string */
     for (j=0;j<manufacturer_size-1;j++) {
       eeprom->manufacturer[j] = buf[2*j+i+2];
     }
@@ -1921,8 +1934,6 @@ void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf)
 
     // Decode product name
     i = buf[0x10] & 0x7f; // offset
-/*     printf("debug size: %d, %d\n", buf[i]/2, product_size); // length */
-/*     printf("debug 0x03: %02x\n", buf[i+1]); // type: string */
     for (j=0;j<product_size-1;j++) {
       eeprom->product[j] = buf[2*j+i+2];
     }
@@ -1930,8 +1941,6 @@ void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf)
 
     // Decode serial
     i = buf[0x12] & 0x7f; // offset
-/*     printf("debug size: %d, %d\n", buf[i]/2, serial_size); // length */
-/*     printf("debug 0x03: %02x\n", buf[i+1]); // type: string */
     for (j=0;j<serial_size-1;j++) {
       eeprom->serial[j] = buf[2*j+i+2];
     }
@@ -1950,10 +1959,12 @@ void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf)
 
     eeprom_checksum = buf[eeprom_size-2] + (buf[eeprom_size-1] << 8);
 
-    if (eeprom_checksum != checksum)
+    if (eeprom_checksum != checksum) {
       fprintf(stderr, "Checksum Error: %04x %04x\n", checksum, eeprom_checksum);
-    
-    return;
+      return -1;
+    }
+
+    return 0;
 }
 
 /**
