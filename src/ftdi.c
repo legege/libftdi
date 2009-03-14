@@ -1822,7 +1822,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
    FIXME: How to pass size? How to handle size field in ftdi_eeprom?
    FIXME: Strings are malloc'ed here and should be freed somewhere
 */
-void ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
+int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
 {
     unsigned char i, j;
     unsigned short checksum, eeprom_checksum, value;
