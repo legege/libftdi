@@ -1,6 +1,7 @@
 New in 0.16 - 2009-XX-XX
 ------------------------
-* cmake system improvements (Marius Kintel)
+* eeprom decode function and small cleanups (Marius Kintel)
+* cmake system improvements (Marius Kintel and Intra2net)
 * Fix compilation in -ansi -pedantic mode (Matthias Janke)
 
 New in 0.15 - 2008-12-19
