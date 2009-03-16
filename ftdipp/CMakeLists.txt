@@ -20,6 +20,14 @@ message(STATUS "Building libftdi++")
 # Targets
 add_library(ftdipp SHARED ${cpp_sources})
 
+# Static library
+add_library(ftdipp-static STATIC ${cpp_sources})
+set_target_properties(ftdipp-static PROPERTIES OUTPUT_NAME "ftdipp")
+
+# Prevent clobbering each other during the build
+set_target_properties(ftdipp PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+set_target_properties(ftdipp-static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+
 # Dependencies
 target_link_libraries(ftdipp ftdi ${LIBUSB_LIBRARIES} ${BOOST_LIBRARIES})
 
@@ -29,6 +37,11 @@ if(${UNIX})
    install( TARGETS ftdipp
             LIBRARY DESTINATION lib
             COMPONENT sharedlibs
+            )
+
+   install( TARGETS ftdipp-static
+            ARCHIVE DESTINATION lib
+            COMPONENT staticlibs
             )
 
    install( FILES ${cpp_headers}
@@ -43,6 +56,11 @@ if(${WIN32})
    install( TARGETS ftdipp
             DESTINATION bin
             COMPONENT sharedlibs
+            )
+
+   install( TARGETS ftdipp-static
+            DESTINATION bin
+            COMPONENT staticlibs
             )
 
    install( FILES ${cpp_headers}
