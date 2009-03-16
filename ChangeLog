@@ -1,5 +1,6 @@
 New in 0.16 - 2009-XX-XX
 ------------------------
+* Fixed ftdi_read_chipid in some cases (Matthias Richter)
 * eeprom decode function and small cleanups (Marius Kintel)
 * cmake system improvements (Marius Kintel and Intra2net)
 * Fix compilation in -ansi -pedantic mode (Matthias Janke)
