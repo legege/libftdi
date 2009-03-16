@@ -116,4 +116,9 @@ configure_file(${CMAKE_SOURCE_DIR}/libftdipp.pc.in ${CMAKE_BINARY_DIR}/libftdipp
 install(FILES ${CMAKE_BINARY_DIR}/libftdi.pc ${CMAKE_BINARY_DIR}/libftdipp.pc
         DESTINATION lib/pkgconfig)
 
+if(${UNIX})
+    configure_file(${CMAKE_SOURCE_DIR}/libftdi-config.in ${CMAKE_BINARY_DIR}/libftdi-config @ONLY)
+    install(PROGRAMS ${CMAKE_BINARY_DIR}/libftdi-config DESTINATION bin)
+endif(${UNIX})
+
 include(CPack)
