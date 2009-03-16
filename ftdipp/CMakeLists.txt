@@ -18,15 +18,15 @@ set(FTDI_BUILD_CPP True PARENT_SCOPE)
 message(STATUS "Building libftdi++")
 
 # Targets
-add_library(ftdi_cpp SHARED ${cpp_sources})
+add_library(ftdipp SHARED ${cpp_sources})
 
 # Dependencies
-target_link_libraries(ftdi_cpp ftdi ${LIBUSB_LIBRARIES} ${BOOST_LIBRARIES})
+target_link_libraries(ftdipp ftdi ${LIBUSB_LIBRARIES} ${BOOST_LIBRARIES})
 
 # Install
 if(${UNIX})
 
-   install( TARGETS ftdi_cpp
+   install( TARGETS ftdipp
             LIBRARY DESTINATION lib
             COMPONENT sharedlibs
             )
@@ -40,7 +40,7 @@ endif(${UNIX})
 
 if(${WIN32})
 
-   install( TARGETS ftdi_cpp
+   install( TARGETS ftdipp
             DESTINATION bin
             COMPONENT sharedlibs
             )

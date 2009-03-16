@@ -31,5 +31,5 @@ if(FTDI_BUILD_CPP)
    add_executable(find_all_pp find_all_pp.cpp)
 
    # Linkage
-   target_link_libraries(find_all_pp ftdi_cpp)
+   target_link_libraries(find_all_pp ftdipp)
 endif()
