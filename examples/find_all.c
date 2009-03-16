@@ -17,7 +17,8 @@ int main(int argc, char **argv)
 
     ftdi_init(&ftdic);
 
-    if((ret = ftdi_usb_find_all(&ftdic, &devlist, 0x0403, 0x6001)) < 0) {
+    if ((ret = ftdi_usb_find_all(&ftdic, &devlist, 0x0403, 0x6001)) < 0)
+    {
         fprintf(stderr, "ftdi_usb_find_all failed: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
         return EXIT_FAILURE;
     }
@@ -25,9 +26,11 @@ int main(int argc, char **argv)
     printf("Number of FTDI devices found: %d\n", ret);
 
     i = 0;
-    for (curdev = devlist; curdev != NULL; i++) {
+    for (curdev = devlist; curdev != NULL; i++)
+    {
         printf("Checking device: %d\n", i);
-        if((ret = ftdi_usb_get_strings(&ftdic, curdev->dev, manufacturer, 128, description, 128, NULL, 0)) < 0) {
+        if ((ret = ftdi_usb_get_strings(&ftdic, curdev->dev, manufacturer, 128, description, 128, NULL, 0)) < 0)
+        {
             fprintf(stderr, "ftdi_usb_get_strings failed: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
             return EXIT_FAILURE;
         }

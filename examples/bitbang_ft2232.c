@@ -22,7 +22,8 @@ int main(int argc, char **argv)
     ftdi_init(&ftdic);
     ftdi_set_interface(&ftdic, INTERFACE_A);
     f = ftdi_usb_open(&ftdic, 0x0403, 0x6001);
-    if(f < 0 && f != -5) {
+    if (f < 0 && f != -5)
+    {
         fprintf(stderr, "unable to open ftdi device: %d (%s)\n", f, ftdi_get_error_string(&ftdic));
         exit(-1);
     }
@@ -35,7 +36,8 @@ int main(int argc, char **argv)
     ftdi_init(&ftdic2);
     ftdi_set_interface(&ftdic2, INTERFACE_B);
     f = ftdi_usb_open(&ftdic2, 0x0403, 0x6001);
-    if(f < 0 && f != -5) {
+    if (f < 0 && f != -5)
+    {
         fprintf(stderr, "unable to open ftdi device: %d (%s)\n", f, ftdi_get_error_string(&ftdic2));
         exit(-1);
     }
@@ -46,32 +48,33 @@ int main(int argc, char **argv)
 
     // Write data
     printf("startloop\n");
-    for(i = 0; i < 23; i++) {
+    for (i = 0; i < 23; i++)
+    {
         buf[0] =  0x1;
         printf("porta: %02i: 0x%02x \n",i,buf[0]);
         f = ftdi_write_data(&ftdic, buf, 1);
-        if(f < 0)
+        if (f < 0)
             fprintf(stderr,"write failed on channel 1 for 0x%x, error %d (%s)\n", buf[0], f, ftdi_get_error_string(&ftdic));
         sleep(1);
 
         buf[0] =  0x2;
         printf("porta: %02i: 0x%02x \n",i,buf[0]);
         f = ftdi_write_data(&ftdic, buf, 1);
-        if(f < 0)
+        if (f < 0)
             fprintf(stderr,"write failed on channel 1 for 0x%x, error %d (%s)\n", buf[0], f, ftdi_get_error_string(&ftdic));
         sleep(1);
 
         buf[0] =  0x1;
         printf("portb: %02i: 0x%02x \n",i,buf[0]);
         f = ftdi_write_data(&ftdic2, buf, 1);
-        if(f < 0)
+        if (f < 0)
             fprintf(stderr,"write failed on channel 2 for 0x%x, error %d (%s)\n", buf[0], f, ftdi_get_error_string(&ftdic2));
         sleep(1);
 
         buf[0] =  0x2;
         printf("portb: %02i: 0x%02x \n",i,buf[0]);
         f = ftdi_write_data(&ftdic2, buf, 1);
-        if(f < 0)
+        if (f < 0)
             fprintf(stderr,"write failed on channel 2 for 0x%x, error %d (%s)\n", buf[0], f, ftdi_get_error_string(&ftdic2));
         sleep(1);
     }

@@ -24,14 +24,14 @@ class Context::Private
 {
 public:
     Private()
-        :  ftdi(0), dev(0), open(false)
+            :  ftdi(0), dev(0), open(false)
     {
         ftdi = ftdi_new();
     }
 
     ~Private()
     {
-        if(open)
+        if (open)
             ftdi_usb_close(ftdi);
 
         ftdi_free(ftdi);

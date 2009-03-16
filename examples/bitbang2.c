@@ -1,30 +1,30 @@
 /* ftdi_out.c
  *
- * Output a (stream of) byte(s) in bitbang mode to the 
- * ftdi245 chip that is (hopefully) attached. 
+ * Output a (stream of) byte(s) in bitbang mode to the
+ * ftdi245 chip that is (hopefully) attached.
  *
- * We have a little board that has a FT245BM chip and 
- * the 8 outputs are connected to several different 
- * things that we can turn on and off with this program. 
+ * We have a little board that has a FT245BM chip and
+ * the 8 outputs are connected to several different
+ * things that we can turn on and off with this program.
  *
  * If you have an idea about hardware that can easily
  * interface onto an FTDI chip, I'd like to collect
  * ideas. If I find it worthwhile to make, I'll consider
  * making it, I'll even send you a prototype (against
  * cost-of-material) if you want.
- * 
- * At "harddisk-recovery.nl" they have a little board that 
- * controls the power to two harddrives and two fans. 
- * 
+ *
+ * At "harddisk-recovery.nl" they have a little board that
+ * controls the power to two harddrives and two fans.
+ *
  * -- REW R.E.Wolff@BitWizard.nl
  *
  *
  *
- * This program was based on libftdi_example_bitbang2232.c 
+ * This program was based on libftdi_example_bitbang2232.c
  * which doesn't carry an author or attribution header.
  *
  *
- * This program is distributed under the GPL, version 2. 
+ * This program is distributed under the GPL, version 2.
  * Millions copies of the GPL float around the internet.
  */
 
@@ -47,11 +47,13 @@ int main(int argc, char **argv)
     unsigned char data;
     int delay = 100000; /* 100 thousand microseconds: 1 tenth of a second */
 
-    while ((t = getopt (argc, argv, "d:")) != -1) {
-        switch (t) {
-        case 'd':
-            delay = atoi (optarg);
-            break;
+    while ((t = getopt (argc, argv, "d:")) != -1)
+    {
+        switch (t)
+        {
+            case 'd':
+                delay = atoi (optarg);
+                break;
         }
     }
 
@@ -63,10 +65,12 @@ int main(int argc, char **argv)
     if (ftdi_enable_bitbang(&ftdic, 0xFF) < 0)
         ftdi_fatal (&ftdic, "Can't enable bitbang");
 
-    for (i=optind; i < argc ; i++) {
+    for (i=optind; i < argc ; i++)
+    {
         sscanf (argv[i], "%x", &t);
         data = t;
-        if(ftdi_write_data(&ftdic, &data, 1) < 0) {
+        if (ftdi_write_data(&ftdic, &data, 1) < 0)
+        {
             fprintf(stderr,"write failed for 0x%x: %s\n",
                     data, ftdi_get_error_string(&ftdic));
         }

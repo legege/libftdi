@@ -33,7 +33,8 @@ enum ftdi_bits_type { BITS_7=7, BITS_8=8 };
 enum ftdi_break_type { BREAK_OFF=0, BREAK_ON=1 };
 
 /** MPSSE bitbang modes */
-enum ftdi_mpsse_mode {
+enum ftdi_mpsse_mode
+{
     BITMODE_RESET  = 0x00,
     BITMODE_BITBANG= 0x01,
     BITMODE_MPSSE  = 0x02,
@@ -45,7 +46,8 @@ enum ftdi_mpsse_mode {
 };
 
 /** Port interface for FT2232C */
-enum ftdi_interface {
+enum ftdi_interface
+{
     INTERFACE_ANY = 0,
     INTERFACE_A   = 1,
     INTERFACE_B   = 2
@@ -77,7 +79,7 @@ enum ftdi_interface {
 #define DIV_VALUE(rate) (rate > 6000000)?0:((6000000/rate -1) > 0xffff)? 0xffff: (6000000/rate -1)
 
 /* Commands in MPSSE and Host Emulation Mode */
-#define SEND_IMMEDIATE 0x87 
+#define SEND_IMMEDIATE 0x87
 #define WAIT_ON_HIGH   0x88
 #define WAIT_ON_LOW    0x89
 
@@ -125,7 +127,7 @@ enum ftdi_interface {
 #define SIO_RESET_PURGE_RX 1
 #define SIO_RESET_PURGE_TX 2
 
-#define SIO_DISABLE_FLOW_CTRL 0x0 
+#define SIO_DISABLE_FLOW_CTRL 0x0
 #define SIO_RTS_CTS_HS (0x1 << 8)
 #define SIO_DTR_DSR_HS (0x2 << 8)
 #define SIO_XON_XOFF_HS (0x4 << 8)
@@ -148,7 +150,8 @@ enum ftdi_interface {
 
     Do not access directly if possible.
 */
-struct ftdi_context {
+struct ftdi_context
+{
     /* USB specific */
     /** libusb's usb_dev_handle */
     struct usb_dev_handle *usb_dev;
@@ -203,7 +206,8 @@ struct ftdi_context {
 /**
     \brief list of usb devices created by ftdi_usb_find_all()
 */
-struct ftdi_device_list {
+struct ftdi_device_list
+{
     /** pointer to next entry */
     struct ftdi_device_list *next;
     /** pointer to libusb's usb_device */
@@ -213,7 +217,8 @@ struct ftdi_device_list {
 /**
     \brief FTDI eeprom structure
 */
-struct ftdi_eeprom {
+struct ftdi_eeprom
+{
     /** vendor id */
     int vendor_id;
     /** product id */
@@ -249,13 +254,14 @@ struct ftdi_eeprom {
     /** serial number */
     char *serial;
 
-  /** eeprom size in bytes. This doesn't get stored in the eeprom
-      but is the only way to pass it to ftdi_eeprom_build. */
-  int size;
+    /** eeprom size in bytes. This doesn't get stored in the eeprom
+        but is the only way to pass it to ftdi_eeprom_build. */
+    int size;
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
     int ftdi_init(struct ftdi_context *ftdi);
@@ -290,8 +296,8 @@ extern "C" {
     int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
                                enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity);
     int ftdi_set_line_property2(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
-                               enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity,
-                               enum ftdi_break_type break_type);
+                                enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity,
+                                enum ftdi_break_type break_type);
 
     int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size);
     int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize);
