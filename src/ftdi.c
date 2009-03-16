@@ -2024,7 +2024,7 @@ int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
         if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, 0x44, (char *)&b, 2, ftdi->usb_read_timeout) == 2)
         {
             b = b << 8 | b >> 8;
-            a = (a << 16) | b;
+            a = (a << 16) | (b & 0xFFFF);
             a = ftdi_read_chipid_shift(a) | ftdi_read_chipid_shift(a>>8)<<8
                 | ftdi_read_chipid_shift(a>>16)<<16 | ftdi_read_chipid_shift(a>>24)<<24;
             *chipid = a ^ 0xa5f0f7d1;
