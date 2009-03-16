@@ -20,6 +20,9 @@ message(STATUS "Building libftdi++")
 # Targets
 add_library(ftdipp SHARED ${cpp_sources})
 
+math(EXPR VERSION_FIXUP "${MAJOR_VERSION} + 1")    # Compatiblity with previous releases
+set_target_properties(ftdipp PROPERTIES VERSION ${VERSION_FIXUP}.${MINOR_VERSION}.0 SOVERSION 1)
+
 # Static library
 add_library(ftdipp-static STATIC ${cpp_sources})
 set_target_properties(ftdipp-static PROPERTIES OUTPUT_NAME "ftdipp")
