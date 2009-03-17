@@ -63,7 +63,7 @@
 */
 int ftdi_init(struct ftdi_context *ftdi)
 {
-    int i;
+    unsigned int i;
 
     ftdi->usb_dev = NULL;
     ftdi->usb_read_timeout = 5000;
@@ -960,7 +960,7 @@ static int _usb_get_async_urbs_pending(struct ftdi_context *ftdi)
 {
     struct usbdevfs_urb *urb;
     int pending=0;
-    int i;
+    unsigned int i;
 
     for (i=0; i < ftdi->async_usb_buffer_size; i++)
     {
@@ -1053,8 +1053,8 @@ static int _usb_bulk_write_async(struct ftdi_context *ftdi, int ep, char *bytes,
 {
     struct usbdevfs_urb *urb;
     int bytesdone = 0, requested;
-    int ret, i;
-    int cleanup_count;
+    int ret, cleanup_count;
+    unsigned int i;
 
     do
     {
