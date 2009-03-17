@@ -346,7 +346,7 @@ extern "C"
     int ftdi_erase_eeprom(struct ftdi_context *ftdi);
 
     char *ftdi_get_error_string(struct ftdi_context *ftdi);
-
+ 
 #ifdef __cplusplus
 }
 #endif
