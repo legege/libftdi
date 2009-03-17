@@ -2183,12 +2183,15 @@ int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, i
 int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
 {
     unsigned short usb_val, status;
-    int i;
+    int i, ret;
 
     /* These commands were traced while running MProg */
-    ftdi_usb_reset(ftdi);
-    ftdi_poll_modem_status(ftdi, &status);
-    ftdi_set_latency_timer(ftdi, 0x77);
+    if ((ret = ftdi_usb_reset(ftdi)) != 0)
+        return ret;
+    if ((ret = ftdi_poll_modem_status(ftdi, &status)) != 0)
+        return ret;
+    if ((ret = ftdi_set_latency_timer(ftdi, 0x77)) != 0)
+        return ret;
 
     for (i = 0; i < ftdi->eeprom_size/2; i++)
     {
