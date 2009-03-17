@@ -8,3 +8,5 @@
 +fie // Allow enum to int conversion
 
 -dLIBFTDI_LINUX_ASYNC_MODE=1        // also lint async code
+
+-ecall(534, usb_close)              // silence ignored return value from usb_close

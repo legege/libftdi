@@ -8,14 +8,18 @@
 #include <stdio.h>
 #include <ftdi.h>
 
-int main(int argc, char **argv)
+int main(void)
 {
     int ret, i;
     struct ftdi_context ftdic;
     struct ftdi_device_list *devlist, *curdev;
     char manufacturer[128], description[128];
 
-    ftdi_init(&ftdic);
+    if (ftdi_init(&ftdic) < 0)
+    {
+        fprintf(stderr, "ftdi_init failed\n");
+        return EXIT_FAILURE;
+    }
 
     if ((ret = ftdi_usb_find_all(&ftdic, &devlist, 0x0403, 0x6001)) < 0)
     {

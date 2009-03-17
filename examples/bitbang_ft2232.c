@@ -19,7 +19,12 @@ int main(int argc, char **argv)
     int f,i;
 
     // Init 1. channel
-    ftdi_init(&ftdic);
+    if (ftdi_init(&ftdic) < 0)
+    {
+        fprintf(stderr, "ftdi_init failed\n");
+        return EXIT_FAILURE;
+    }
+
     ftdi_set_interface(&ftdic, INTERFACE_A);
     f = ftdi_usb_open(&ftdic, 0x0403, 0x6001);
     if (f < 0 && f != -5)
@@ -33,7 +38,11 @@ int main(int argc, char **argv)
     ftdi_enable_bitbang(&ftdic, 0xFF);
 
     // Init 2. channel
-    ftdi_init(&ftdic2);
+    if (ftdi_init(&ftdic2) < 0)
+    {
+        fprintf(stderr, "ftdi_init failed\n");
+        return EXIT_FAILURE;
+    }
     ftdi_set_interface(&ftdic2, INTERFACE_B);
     f = ftdi_usb_open(&ftdic2, 0x0403, 0x6001);
     if (f < 0 && f != -5)

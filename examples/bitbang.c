@@ -10,7 +10,11 @@ int main(int argc, char **argv)
     int f,i;
     char buf[1];
 
-    ftdi_init(&ftdic);
+    if (ftdi_init(&ftdic) < 0)
+    {
+        fprintf(stderr, "ftdi_init failed\n");
+        return EXIT_FAILURE;
+    }
 
     f = ftdi_usb_open(&ftdic, 0x0403, 0x6001);
 

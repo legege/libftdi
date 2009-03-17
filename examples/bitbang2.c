@@ -57,7 +57,11 @@ int main(int argc, char **argv)
         }
     }
 
-    ftdi_init(&ftdic);
+    if (ftdi_init(&ftdic) < 0)
+    {
+        fprintf(stderr, "ftdi_init failed\n");
+        return EXIT_FAILURE;
+    }
 
     if (ftdi_usb_open(&ftdic, 0x0403, 0x6001) < 0)
         ftdi_fatal (&ftdic, "Can't open ftdi device");
