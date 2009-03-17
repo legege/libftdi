@@ -1954,7 +1954,8 @@ int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
     // Addr 04: Product ID
     eeprom->product_id = buf[0x04] + (buf[0x05] << 8);
 
-    switch (buf[0x06] + (buf[0x07]<<8))
+    value = buf[0x06] + (buf[0x07]<<8);
+    switch (value)
     {
         case 0x0400:
             eeprom->BM_type_chip = 1;
