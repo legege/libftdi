@@ -1,0 +1,10 @@
+// PC-Lint 9.00 settings
+
+-emacro(527, ftdi_error_return)     // ignore "unreachable code"
+-emacro(717, ftdi_error_return)
+
+-epu // Pointer to unsigned/signed of the same type is ok
+
++fie // Allow enum to int conversion
+
+-dLIBFTDI_LINUX_ASYNC_MODE=1        // also lint async code
