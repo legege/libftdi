@@ -1,5 +1,6 @@
 New in 0.16 - 2009-XX-XX
 ------------------------
+* Support for mingw cross compile (Uwe Bonnes)
 * Minor autoconf cleanup (Tarek Heiland)
 * Code cleanup in various places (Intra2net)
 * Fixed ftdi_read_chipid in some cases (Matthias Richter)
