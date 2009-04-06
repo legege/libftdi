@@ -10,6 +10,9 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#ifdef __WIN32__
+#define sleep(x) _sleep(x)
+#endif
 #include <ftdi.h>
 
 int main(int argc, char **argv)

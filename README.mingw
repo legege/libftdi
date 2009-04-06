@@ -1,0 +1,11 @@
+To crosscompile for Win32 with mingw
+- Get and build libusb-win32-src-x.tar.gz from Sourceforge
+  Version was "libusb-win32-src-0.1.12.1.tar.gz" for April 4, 2009
+- Compile like  "make host_prefix=i386-mingw32msvc all". Your prefixes may vary.
+- Copy src/usb.h to /opt/cross/i386-mingw32msvc/include/
+- Copy *.a to /opt/cross/i386-mingw32msvc/lib/
+- Create a build directory like "mkdir build-win32", e.g in ../libftdi/
+- cd in that directory and run  
+  "cmake -DCMAKE_TOOLCHAIN_FILE=../Toolchain-mingw32.cmake .."
+- Copy src/ftdi.h to /opt/cross/i386-mingw32msvc/include/
+- Copy build-win32/src/*.a to /opt/cross/i386-mingw32msvc/lib/
