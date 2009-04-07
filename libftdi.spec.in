@@ -3,7 +3,7 @@ Summary:   Library to program and control the FTDI USB controller
 Name:      libftdi
 Version:   @VERSION@
 Release:   1
-License:   LGPL
+License:   LGPL for libftdi and GPLv2+linking exception for the C++ wrapper
 Group:     System Environment/Libraries
 Vendor:    Intra2net AG
 Source:    http://www.intra2net.com/en/developer/libftdi/download/%{name}-%{version}.tar.gz
@@ -55,7 +55,7 @@ rm -fr $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%doc COPYING.LIB
+%doc COPYING.LIB COPYING.GPL LICENSE
 %{_libdir}/libftdi*.so*
 
 %files devel
