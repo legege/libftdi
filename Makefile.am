@@ -2,7 +2,7 @@
 # have all needed files, that a GNU package needs
 AUTOMAKE_OPTIONS = foreign 1.4
 
-SUBDIRS = src $(LIBFTDI_MODULES) examples doc
+SUBDIRS = src bindings $(LIBFTDI_MODULES) examples doc
 
 EXTRA_DIST = libftdi.spec libftdi.spec.in COPYING.LIB COPYING.GPL LICENSE README AUTHORS ChangeLog libftdi-config.in CMakeLists.txt packages
 

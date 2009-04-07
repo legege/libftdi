@@ -3,7 +3,7 @@ New in 0.16 - 2009-XX-XX
 * Relicensed C++ wrapper under GPLv2 + linking exception (Marek Vavruša and Intra2net)
 * Support for FT2232H and FT4232H (David Challis and Intra2net)
 * Support for mingw cross compile (Uwe Bonnes)
-* Minor autoconf cleanup (Tarek Heiland)
+* Python bindings and minor autoconf cleanup (Tarek Heiland)
 * Code cleanup in various places (Intra2net)
 * Fixed ftdi_read_chipid in some cases (Matthias Richter)
 * eeprom decode function and small cleanups (Marius Kintel)

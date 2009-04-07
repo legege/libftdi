@@ -84,11 +84,64 @@ dnl check for doxygen
 AC_PATH_PROG(DOXYGEN, doxygen)
 AM_CONDITIONAL(HAVE_DOXYGEN, test -n $DOXYGEN)
 
+dnl ============================
+dnl Bindings for other languages
+dnl ==
+
+dnl ===============
+dnl Checks for SWIG
+dnl ===============
+AC_PATH_PROG([SWIG], [swig])
+AM_CONDITIONAL(HAVE_SWIG, test "$SWIG")
+
+dnl =================
+dnl Checks for Python
+dnl =================
+AM_PATH_PYTHON([2.0],
+               [],
+               [AC_MSG_WARN([Python not found. Python is required to build presage python binding. Python can be obtained from http://www.pyth
+on.org])])
+if test "$PYTHON"
+then
+     python_include_path=`$PYTHON -c "import distutils.sysconfig; print distutils.sysconfig.get_python_inc();"`
+     AC_CHECK_HEADERS([${python_include_path}/Python.h],
+                      [have_python_header=true],
+                      [AC_MSG_WARN([Python.h header file not found. Python development files are required to build presage python binding. Pyt
+hon can be obtained from http://www.python.org])],
+                      [])
+fi
+AM_CONDITIONAL(HAVE_PYTHON, test "$PYTHON" -a "x$have_python_header" = "xtrue")
+
+AC_ARG_ENABLE([python-binding],
+               AS_HELP_STRING([--enable-python-binding],
+                              [build python binding (default=no)]),
+               [ac_enable_python_binding=$enableval],
+               [ac_enable_python_binding=no])
+if test "x$ac_enable_python_binding" = "xyes"
+then
+    if test ! "$SWIG" -o ! "$PYTHON" -o ! "x$have_python_header" = "xtrue"
+    then
+        AC_MSG_WARN([Python binding for libftdi cannot be built. Ensure that SWIG and Python packages are available.])
+    fi
+else
+    AC_MSG_NOTICE([Python binding for libftdi will not be built.])
+    AC_MSG_NOTICE([Enable Python binding module building with --enable-python-binding])
+fi
+AM_CONDITIONAL(ENABLE_PYTHON_BINDING, test "x$ac_enable_python_binding" = "xyes")
+
+if test "$SWIG" -a "$PYTHON" -a "x$have_python_header" = "xtrue" -a "x$ac_enable_python_binding" = "xyes"
+then
+    AC_MSG_NOTICE([Python binding for libftdi will be built.])
+    build_python_binding="yes"
+else
+    build_python_binding="no"
+fi
+
 AC_SUBST(LIBFTDI_MODULES)
 AC_SUBST(LIBFTDI_MODULES_PKGCONFIG)
 
 AC_OUTPUT([libftdi-config],[chmod a+x libftdi-config])
-AC_OUTPUT(Makefile src/Makefile examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc libftdi.spec)
+AC_OUTPUT(Makefile src/Makefile bindings/Makefile bindings/python/Makefile bindings/python/setup.py examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc libftdi.spec)
 
 if test "x$ENABLE_LIBFTDIPP" = "x1"; then
     AC_OUTPUT(ftdipp/Makefile libftdipp.pc)
