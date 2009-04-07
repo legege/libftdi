@@ -1206,6 +1206,13 @@ int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunk
 int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
     int offset = 0, ret = 1, i, num_of_chunks, chunk_remains;
+    int packet_size;
+
+    // New hi-speed devices from FTDI use a packet size of 512 bytes
+    if (ftdi->type == TYPE_2232H || ftdi->type == TYPE_4232H)
+        packet_size = 512;
+    else
+        packet_size = 64;
 
     // everything we want is still in the readbuffer?
     if (size <= ftdi->readbuffer_remaining)
@@ -1242,23 +1249,23 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
         {
             // skip FTDI status bytes.
             // Maybe stored in the future to enable modem use
-            num_of_chunks = ret / 64;
-            chunk_remains = ret % 64;
+            num_of_chunks = ret / packet_size;
+            chunk_remains = ret % packet_size;
             //printf("ret = %X, num_of_chunks = %X, chunk_remains = %X, readbuffer_offset = %X\n", ret, num_of_chunks, chunk_remains, ftdi->readbuffer_offset);
 
             ftdi->readbuffer_offset += 2;
             ret -= 2;
 
-            if (ret > 62)
+            if (ret > packet_size - 2)
             {
                 for (i = 1; i < num_of_chunks; i++)
-                    memmove (ftdi->readbuffer+ftdi->readbuffer_offset+62*i,
-                             ftdi->readbuffer+ftdi->readbuffer_offset+64*i,
-                             62);
+                    memmove (ftdi->readbuffer+ftdi->readbuffer_offset+(packet_size - 2)*i,
+                             ftdi->readbuffer+ftdi->readbuffer_offset+packet_size*i,
+                             packet_size - 2);
                 if (chunk_remains > 2)
                 {
-                    memmove (ftdi->readbuffer+ftdi->readbuffer_offset+62*i,
-                             ftdi->readbuffer+ftdi->readbuffer_offset+64*i,
+                    memmove (ftdi->readbuffer+ftdi->readbuffer_offset+(packet_size - 2)*i,
+                             ftdi->readbuffer+ftdi->readbuffer_offset+packet_size*i,
                              chunk_remains-2);
                     ret -= 2*num_of_chunks;
                 }
