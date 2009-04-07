@@ -1,9 +1,16 @@
--------------------------------------------------------------------
+--------------------------------------------------------------------
 libftdi version 0.15
--------------------------------------------------------------------
+--------------------------------------------------------------------
 
-libftdi - A library (using libusb) to talk to FTDI's FT2232C,
-FT232BM and FT245BM type chips including the popular bitbang mode.
+libftdi - A library (using libusb) to talk to FTDI's UART/FIFO chips
+including the popular bitbang mode.
+
+The following chips are supported:
+- FT4232H / FT2232H
+- FT232R  / FT245R
+- FT2232L / FT2232D / FT2232C
+- FT232BM / FT245BM (and the BL/BQ variants)
+- FT8U232AM / FT8U245AM
 
 The AUTHORS file contains a list of all the people
 that made libftdi possible what it is today.
@@ -19,6 +26,6 @@ Changes
 You'll find the newest version of libftdi at:
 http://www.intra2net.com/en/developer/libftdi
 
--------------------------------------------------------------------
-www.intra2net.com                            2003-2008 Intra2net AG
--------------------------------------------------------------------
+--------------------------------------------------------------------
+www.intra2net.com                             2003-2009 Intra2net AG
+--------------------------------------------------------------------

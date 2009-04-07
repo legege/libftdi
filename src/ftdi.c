@@ -438,6 +438,10 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
     }
     else if (dev->descriptor.bcdDevice == 0x600)
         ftdi->type = TYPE_R;
+    else if (dev->descriptor.bcdDevice == 0x700)
+        ftdi->type = TYPE_2232H;
+    else if (dev->descriptor.bcdDevice == 0x800)
+        ftdi->type = TYPE_4232H;
 
     ftdi_error_return(0, "all fine");
 }
