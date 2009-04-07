@@ -76,6 +76,7 @@ endif(${UNIX})
 
 add_subdirectory(src)
 add_subdirectory(ftdipp)
+add_subdirectory(bindings)
 add_subdirectory(examples)
 add_subdirectory(packages)
 
