@@ -1,4 +1,4 @@
-New in 0.16 - 2009-XX-XX
+New in 0.16 - 2009-04-27
 ------------------------
 * Relicensed C++ wrapper under GPLv2 + linking exception (Marek Vavruša and Intra2net)
 * Support for FT2232H and FT4232H (David Challis and Intra2net)
