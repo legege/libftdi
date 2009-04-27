@@ -4,7 +4,10 @@ AUTOMAKE_OPTIONS = foreign 1.4
 
 SUBDIRS = src bindings $(LIBFTDI_MODULES) examples doc
 
-EXTRA_DIST = libftdi.spec libftdi.spec.in COPYING.LIB COPYING.GPL LICENSE README AUTHORS ChangeLog libftdi-config.in CMakeLists.txt packages
+EXTRA_DIST = libftdi.spec libftdi.spec.in COPYING.LIB COPYING.GPL LICENSE \
+             README AUTHORS ChangeLog libftdi-config.in CMakeLists.txt \
+             packages COPYING-CMAKE-SCRIPTS FindUSB.cmake README.mingw \
+             Toolchain-mingw32.cmake
 
 bin_SCRIPTS = libftdi-config
 
