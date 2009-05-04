@@ -51,8 +51,17 @@ int main(int argc, char **argv)
         std::cout << "FTDI (" << &*it << "): "
         << it->vendor() << ", "
         << it->description() << ", "
-        << it->serial()
-        << std::endl;
+        << it->serial();
+
+        // Open test
+        if(it->open())
+           std::cout << " (Open OK)";
+        else
+           std::cout << " (Open FAILED)";
+
+        it->close();
+
+        std::cout << std::endl;
 
     }
 

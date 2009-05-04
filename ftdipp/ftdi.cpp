@@ -81,37 +81,39 @@ int Context::open(int vendor, int product, const std::string& description, const
 {
     int ret = 0;
 
+    // Open device
     if (description.empty() && serial.empty())
         ret = ftdi_usb_open(d->ftdi, vendor, product);
     else
         ret = ftdi_usb_open_desc(d->ftdi, vendor, product, description.c_str(), serial.c_str());
 
-    d->dev = usb_device(d->ftdi->usb_dev);
+    if (ret < 0)
+       return ret;
 
-    if ((ret = ftdi_usb_open_dev(d->ftdi, d->dev)) >= 0)
-    {
-        d->open = true;
-        get_strings();
-    }
+    // Get device strings (closes device)
+    get_strings();
+
+    // Reattach device
+    ret = ftdi_usb_open_dev(d->ftdi, d->dev);
+    d->open = (ret >= 0);
 
     return ret;
 }
 
 int Context::open(struct usb_device *dev)
 {
-    int ret = 0;
-
     if (dev != 0)
         d->dev = dev;
 
     if (d->dev == 0)
         return -1;
 
-    if ((ret = ftdi_usb_open_dev(d->ftdi, d->dev)) >= 0)
-    {
-        d->open = true;
-        get_strings();
-    }
+    // Get device strings (closes device)
+    get_strings();
+
+    // Reattach device
+    int ret = ftdi_usb_open_dev(d->ftdi, d->dev);
+    d->open = (ret >= 0);
 
     return ret;
 }
