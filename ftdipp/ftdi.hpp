@@ -162,17 +162,37 @@ private:
     boost::shared_ptr<Private> d;
 };
 
-typedef std::list<Context> ListBase;
-
 /*! \brief Device list.
  */
-class List : public ListBase
+class List
 {
 public:
     List(struct ftdi_device_list* devlist = 0);
     ~List();
 
     static List* find_all(int vendor, int product);
+
+    /*! List size */
+    int size();
+
+    /*! Append element */
+    void push_back(const Context& element);    
+    void append(const Context& element)
+    { push_back(element); }
+
+    /*! Prepend element */
+    void push_front(const Context& element);
+    void prepend(const Context& element)
+    { push_front(element); }
+
+    /*! Clear list */
+    void clear();
+
+    /* Iterators */
+    typedef std::list<Context>::iterator iterator;
+    std::list<Context>::iterator begin();
+    std::list<Context>::iterator end();
+
 
 private:
     class Private;

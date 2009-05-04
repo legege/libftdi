@@ -401,30 +401,32 @@ int Eeprom::erase()
 class List::Private
 {
 public:
-    Private(struct ftdi_device_list* devlist)
-            : list(devlist)
+    Private(struct ftdi_device_list* _devlist)
+            : devlist(_devlist)
     {}
 
     ~Private()
     {
-        ftdi_list_free(&list);
+        if(devlist)
+            ftdi_list_free(&devlist);
     }
 
-    struct ftdi_device_list* list;
+    std::list<Context> list;
+    struct ftdi_device_list* devlist;
 };
 
 List::List(struct ftdi_device_list* devlist)
-        : ListBase(), d( new Private(devlist) )
+        : d( new Private(devlist) )
 {
     if (devlist != 0)
     {
         // Iterate list
-        for (d->list = devlist; d->list != 0; d->list = d->list->next)
+        for (; devlist != 0; devlist = devlist->next)
         {
             Context c;
-            c.set_usb_device(d->list->dev);
+            c.set_usb_device(devlist->dev);
             c.get_strings();
-            push_back(c);
+            d->list.push_back(c);
         }
     }
 }
@@ -432,6 +434,42 @@ List::List(struct ftdi_device_list* devlist)
 List::~List()
 {
 }
+
+int List::size()
+{
+   return d->list.size();
+}
+
+void List::push_front(const Context& element)
+{
+   d->list.push_front(element);
+}
+
+
+void List::push_back(const Context& element)
+{
+   d->list.push_back(element);
+}
+
+void List::clear()
+{
+    d->list.clear();
+
+    // Free device list
+    ftdi_list_free(&d->devlist);
+    d->devlist = 0;
+}
+
+std::list<Context>::iterator List::begin()
+{
+   return d->list.begin();
+}
+
+std::list<Context>::iterator List::end()
+{
+   return d->list.end();
+}
+
 
 List* List::find_all(int vendor, int product)
 {
