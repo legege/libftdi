@@ -172,27 +172,36 @@ public:
 
     static List* find_all(int vendor, int product);
 
-    /*! List size */
-    int size();
+    /// List type storing "Context" objects
+    typedef std::list<Context> ListType;
+    /// Iterator type for the container
+    typedef ListType::iterator iterator;
+    /// Const iterator type for the container
+    typedef ListType::const_iterator const_iterator;
+    /// Reverse iterator type for the container
+    typedef ListType::reverse_iterator reverse_iterator;
+    /// Const reverse iterator type for the container
+    typedef ListType::const_reverse_iterator const_reverse_iterator;
 
-    /*! Append element */
-    void push_back(const Context& element);    
-    void append(const Context& element)
-    { push_back(element); }
+    iterator begin();
+    iterator end();
+    const_iterator begin() const;
+    const_iterator end() const;
 
-    /*! Prepend element */
-    void push_front(const Context& element);
-    void prepend(const Context& element)
-    { push_front(element); }
+    reverse_iterator rbegin();
+    reverse_iterator rend();
+    const_reverse_iterator rbegin() const;
+    const_reverse_iterator rend() const;
 
-    /*! Clear list */
+    ListType::size_type size() const;
+    bool empty() const;
     void clear();
 
-    /* Iterators */
-    typedef std::list<Context>::iterator iterator;
-    std::list<Context>::iterator begin();
-    std::list<Context>::iterator end();
+    void push_back(const Context& element);
+    void push_front(const Context& element);
 
+    iterator erase(iterator pos);
+    iterator erase(iterator beg, iterator end);
 
 private:
     class Private;

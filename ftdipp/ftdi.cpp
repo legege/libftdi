@@ -435,41 +435,152 @@ List::~List()
 {
 }
 
-int List::size()
+/**
+* Return begin iterator for accessing the contained list elements
+* @return Iterator
+*/
+List::iterator List::begin()
 {
-   return d->list.size();
+    return d->list.begin();
 }
 
-void List::push_front(const Context& element)
+/**
+* Return end iterator for accessing the contained list elements
+* @return Iterator
+*/
+List::iterator List::end()
 {
-   d->list.push_front(element);
+    return d->list.end();
 }
 
-
-void List::push_back(const Context& element)
+/**
+* Return begin iterator for accessing the contained list elements
+* @return Const iterator
+*/
+List::const_iterator List::begin() const
 {
-   d->list.push_back(element);
+    return d->list.begin();
 }
 
+/**
+* Return end iterator for accessing the contained list elements
+* @return Const iterator
+*/
+List::const_iterator List::end() const
+{
+    return d->list.end();
+}
+
+/**
+* Return begin reverse iterator for accessing the contained list elements
+* @return Reverse iterator
+*/
+List::reverse_iterator List::rbegin()
+{
+    return d->list.rbegin();
+}
+
+/**
+* Return end reverse iterator for accessing the contained list elements
+* @return Reverse iterator
+*/
+List::reverse_iterator List::rend()
+{
+    return d->list.rend();
+}
+
+/**
+* Return begin reverse iterator for accessing the contained list elements
+* @return Const reverse iterator
+*/
+List::const_reverse_iterator List::rbegin() const
+{
+    return d->list.rbegin();
+}
+
+/**
+* Return end reverse iterator for accessing the contained list elements
+* @return Const reverse iterator
+*/
+List::const_reverse_iterator List::rend() const
+{
+    return d->list.rend();
+
+}
+
+/**
+* Get number of elements stored in the list
+* @return Number of elements
+*/
+List::ListType::size_type List::size() const
+{
+    return d->list.size();
+}
+
+/**
+* Check if list is empty
+* @return True if empty, false otherwise
+*/
+bool List::empty() const
+{
+    return d->list.empty();
+}
+
+/**
+ * Removes all elements. Invalidates all iterators.
+ * Do it in a non-throwing way and also make
+ * sure we really free the allocated memory.
+ */
 void List::clear()
 {
-    d->list.clear();
+    ListType().swap(d->list);
 
     // Free device list
-    ftdi_list_free(&d->devlist);
-    d->devlist = 0;
+    if (d->devlist)
+    {
+        ftdi_list_free(&d->devlist);
+        d->devlist = 0;
+    }
 }
 
-std::list<Context>::iterator List::begin()
+/**
+ * Appends a copy of the element as the new last element.
+ * @param element Value to copy and append
+*/
+void List::push_back(const Context& element)
 {
-   return d->list.begin();
+    d->list.push_back(element);
 }
 
-std::list<Context>::iterator List::end()
+/**
+ * Adds a copy of the element as the new first element.
+ * @param element Value to copy and add
+*/
+void List::push_front(const Context& element)
 {
-   return d->list.end();
+    d->list.push_front(element);
 }
 
+/**
+ * Erase one element pointed by iterator
+ * @param pos Element to erase
+ * @return Position of the following element (or end())
+*/
+List::iterator List::erase(iterator pos)
+{
+    return d->list.erase(pos);
+}
+
+/**
+ * Erase a range of elements
+ * @param beg Begin of range
+ * @param end End of range
+ * @return Position of the element after the erased range (or end())
+*/
+List::iterator List::erase(iterator beg, iterator end)
+{
+    return d->list.erase(beg, end);
+}
 
 List* List::find_all(int vendor, int product)
 {
