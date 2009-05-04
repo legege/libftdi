@@ -54,7 +54,7 @@ int main(int argc, char **argv)
         << it->serial();
 
         // Open test
-        if(it->open())
+        if(it->open() == 0)
            std::cout << " (Open OK)";
         else
            std::cout << " (Open FAILED)";
