@@ -20,8 +20,10 @@ the initial C++ wrapper implementation.
 
 Changes
 -------
-* Relicensed C++ wrapper under GPLv2 + linking exception (Marek Vavruša and Intra2net)
-* Support for FT2232H and FT4232H (David Challis and Intra2net)
+* C++ wrapper: Reopen the device after calling get_strings() in Context::open() (Marek Vavruša and Intra2net)
+* C++ wrapper: Fixed an inheritance problem (Marek Vavruša and Intra2net)
+* C++ wrapper: Relicensed under GPLv2 + linking exception (Marek Vavruša and Intra2net)
+* Support for FT2232H and FT4232H (David Challis, Alex Harford and Intra2net)
 * Support for mingw cross compile (Uwe Bonnes)
 * Python bindings and minor autoconf cleanup (Tarek Heiland)
 * Code cleanup in various places (Intra2net)
