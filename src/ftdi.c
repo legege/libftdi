@@ -132,7 +132,7 @@ struct ftdi_context *ftdi_new()
     Open selected channels on a chip, otherwise use first channel.
 
     \param ftdi pointer to ftdi_context
-    \param interface Interface to use for FT2232C chips.
+    \param interface Interface to use for FT2232C/2232H/4232H chips.
 
     \retval  0: all fine
     \retval -1: unknown interface
@@ -150,6 +150,18 @@ int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
             ftdi->index     = INTERFACE_B;
             ftdi->in_ep     = 0x04;
             ftdi->out_ep    = 0x83;
+            break;
+        case INTERFACE_C:
+            ftdi->interface = 2;
+            ftdi->index     = INTERFACE_C;
+            ftdi->in_ep     = 0x06;
+            ftdi->out_ep    = 0x85;
+            break;
+        case INTERFACE_D:
+            ftdi->interface = 3;
+            ftdi->index     = INTERFACE_D;
+            ftdi->in_ep     = 0x08;
+            ftdi->out_ep    = 0x87;
             break;
         default:
             ftdi_error_return(-1, "Unknown interface");
@@ -431,17 +443,26 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
     else if (dev->descriptor.bcdDevice == 0x200)
         ftdi->type = TYPE_AM;
     else if (dev->descriptor.bcdDevice == 0x500)
-    {
         ftdi->type = TYPE_2232C;
-        if (!ftdi->index)
-            ftdi->index = INTERFACE_A;
-    }
     else if (dev->descriptor.bcdDevice == 0x600)
         ftdi->type = TYPE_R;
     else if (dev->descriptor.bcdDevice == 0x700)
         ftdi->type = TYPE_2232H;
     else if (dev->descriptor.bcdDevice == 0x800)
         ftdi->type = TYPE_4232H;
+
+    // Set default interface on dual/quad type chips
+    switch(ftdi->type)
+    {
+        case TYPE_2232C:
+        case TYPE_2232H:
+        case TYPE_4232H:
+            if (!ftdi->index)
+                ftdi->index = INTERFACE_A;
+            break;
+        default:
+            break;
+    }
 
     ftdi_error_return(0, "all fine");
 }
