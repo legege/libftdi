@@ -1,4 +1,4 @@
-New in 0.16 - 2009-05-06
+New in 0.16 - 2009-05-08
 ------------------------
 * C++ wrapper: Reopen the device after calling get_strings() in Context::open() (Marek Vavruša and Intra2net)
 * C++ wrapper: Fixed an inheritance problem (Marek Vavruša and Intra2net)
