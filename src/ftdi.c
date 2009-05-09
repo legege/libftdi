@@ -110,7 +110,7 @@ int ftdi_init(struct ftdi_context *ftdi)
 
     \return a pointer to a new ftdi_context, or NULL on failure
 */
-struct ftdi_context *ftdi_new()
+struct ftdi_context *ftdi_new(void)
 {
     struct ftdi_context * ftdi = (struct ftdi_context *)malloc(sizeof(struct ftdi_context));
 

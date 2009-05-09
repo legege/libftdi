@@ -267,7 +267,7 @@ extern "C"
 #endif
 
     int ftdi_init(struct ftdi_context *ftdi);
-    struct ftdi_context *ftdi_new();
+    struct ftdi_context *ftdi_new(void);
     int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface);
 
     void ftdi_deinit(struct ftdi_context *ftdi);
