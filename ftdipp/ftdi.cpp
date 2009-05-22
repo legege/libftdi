@@ -303,21 +303,22 @@ int Context::get_strings()
     return 1;
 }
 
-/*! \fn vendor
- * \fn description
- * \fn serial
- * \brief Device strings properties.
+/*! \brief Device strings properties.
  */
 const std::string& Context::vendor()
 {
     return d->vendor;
 }
 
+/*! \brief Device strings properties.
+ */
 const std::string& Context::description()
 {
     return d->description;
 }
 
+/*! \brief Device strings properties.
+ */
 const std::string& Context::serial()
 {
     return d->serial;

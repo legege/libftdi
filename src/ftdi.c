@@ -1941,7 +1941,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
    Decode binary EEPROM image into an ftdi_eeprom structure.
 
    \param eeprom Pointer to ftdi_eeprom which will be filled in.
-   \param output Buffer of \a size bytes of raw eeprom data
+   \param buf Buffer of \a size bytes of raw eeprom data
    \param size size size of eeprom data in bytes
 
    \retval 0: all fine
