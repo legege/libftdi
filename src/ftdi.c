@@ -415,6 +415,7 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
         detach_errno = errno;
 #endif
 
+#ifdef __WIN32__
     // set configuration (needed especially for windows)
     // tolerate EBUSY: one device with one configuration, but two interfaces
     //    and libftdi sessions to both interfaces (e.g. FT2232)
@@ -432,6 +433,7 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
             ftdi_error_return(-3, "unable to set usb configuration. Make sure ftdi_sio is unloaded!");
         }
     }
+#endif
 
     if (usb_claim_interface(ftdi->usb_dev, ftdi->interface) != 0)
     {
