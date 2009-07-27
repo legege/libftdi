@@ -1,3 +1,9 @@
+New in 0.17 - 2009-XX-XX
+------------------------
+* Protect against double close of usb device (Nathan Fraser)
+* Fix out-of-tree-build in python wrapper (Aurelien Jarno)
+* Autoconf and doxygen cleanup (Jim Paris)
+
 New in 0.16 - 2009-05-08
 ------------------------
 * C++ wrapper: Reopen the device after calling get_strings() in Context::open() (Marek Vavruša and Intra2net)
