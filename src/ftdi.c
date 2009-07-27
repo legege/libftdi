@@ -50,6 +50,18 @@
         return code;                       \
    } while(0);
 
+/* internal usb_close wrapper -> sets usb dev handle to NULL */
+int usb_close_intl (struct ftdi_context *ftdi)
+{
+    int ret = 0;
+
+    if (ftdi->usb_dev != NULL)
+    {
+       ret = usb_close (ftdi->usb_dev);
+       ftdi->usb_dev = NULL;
+    }
+    return ret;
+}
 
 /**
     Initializes a ftdi_context.
@@ -176,6 +188,8 @@ int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
 */
 void ftdi_deinit(struct ftdi_context *ftdi)
 {
+    usb_close_intl (ftdi);
+
     if (ftdi->async_usb_buffer != NULL)
     {
         free(ftdi->async_usb_buffer);
@@ -332,7 +346,7 @@ int ftdi_usb_get_strings(struct ftdi_context * ftdi, struct usb_device * dev,
     {
         if (usb_get_string_simple(ftdi->usb_dev, dev->descriptor.iManufacturer, manufacturer, mnf_len) <= 0)
         {
-            usb_close (ftdi->usb_dev);
+            usb_close_intl (ftdi);
             ftdi_error_return(-7, usb_strerror());
         }
     }
@@ -341,7 +355,7 @@ int ftdi_usb_get_strings(struct ftdi_context * ftdi, struct usb_device * dev,
     {
         if (usb_get_string_simple(ftdi->usb_dev, dev->descriptor.iProduct, description, desc_len) <= 0)
         {
-            usb_close (ftdi->usb_dev);
+            usb_close_intl (ftdi);
             ftdi_error_return(-8, usb_strerror());
         }
     }
@@ -350,12 +364,12 @@ int ftdi_usb_get_strings(struct ftdi_context * ftdi, struct usb_device * dev,
     {
         if (usb_get_string_simple(ftdi->usb_dev, dev->descriptor.iSerialNumber, serial, serial_len) <= 0)
         {
-            usb_close (ftdi->usb_dev);
+            usb_close_intl (ftdi);
             ftdi_error_return(-9, usb_strerror());
         }
     }
 
-    if (usb_close (ftdi->usb_dev) != 0)
+    if (usb_close_intl (ftdi) != 0)
         ftdi_error_return(-10, usb_strerror());
 
     return 0;
@@ -399,7 +413,7 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
             usb_set_configuration(ftdi->usb_dev, dev->config[0].bConfigurationValue) &&
             errno != EBUSY)
     {
-        usb_close (ftdi->usb_dev);
+        usb_close_intl (ftdi);
         if (detach_errno == EPERM)
         {
             ftdi_error_return(-8, "inappropriate permissions on device!");
@@ -412,7 +426,7 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
 
     if (usb_claim_interface(ftdi->usb_dev, ftdi->interface) != 0)
     {
-        usb_close (ftdi->usb_dev);
+        usb_close_intl (ftdi);
         if (detach_errno == EPERM)
         {
             ftdi_error_return(-8, "inappropriate permissions on device!");
@@ -425,13 +439,13 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
 
     if (ftdi_usb_reset (ftdi) != 0)
     {
-        usb_close (ftdi->usb_dev);
+        usb_close_intl (ftdi);
         ftdi_error_return(-6, "ftdi_usb_reset failed");
     }
 
     if (ftdi_set_baudrate (ftdi, 9600) != 0)
     {
-        usb_close (ftdi->usb_dev);
+        usb_close_intl (ftdi);
         ftdi_error_return(-7, "set baudrate failed");
     }
 
@@ -531,12 +545,12 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                 {
                     if (usb_get_string_simple(ftdi->usb_dev, dev->descriptor.iProduct, string, sizeof(string)) <= 0)
                     {
-                        usb_close (ftdi->usb_dev);
+                        usb_close_intl (ftdi);
                         ftdi_error_return(-8, "unable to fetch product description");
                     }
                     if (strncmp(string, description, sizeof(string)) != 0)
                     {
-                        if (usb_close (ftdi->usb_dev) != 0)
+                        if (usb_close_intl (ftdi) != 0)
                             ftdi_error_return(-10, "unable to close device");
                         continue;
                     }
@@ -545,18 +559,18 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                 {
                     if (usb_get_string_simple(ftdi->usb_dev, dev->descriptor.iSerialNumber, string, sizeof(string)) <= 0)
                     {
-                        usb_close (ftdi->usb_dev);
+                        usb_close_intl (ftdi);
                         ftdi_error_return(-9, "unable to fetch serial number");
                     }
                     if (strncmp(string, serial, sizeof(string)) != 0)
                     {
-                        if (usb_close (ftdi->usb_dev) != 0)
+                        if (usb_close_intl (ftdi) != 0)
                             ftdi_error_return(-10, "unable to close device");
                         continue;
                     }
                 }
 
-                if (usb_close (ftdi->usb_dev) != 0)
+                if (usb_close_intl (ftdi) != 0)
                     ftdi_error_return(-10, "unable to close device");
 
                 return ftdi_usb_open_dev(ftdi, dev);
@@ -672,10 +686,11 @@ int ftdi_usb_close(struct ftdi_context *ftdi)
     ftdi_async_complete(ftdi,1);
 #endif
 
-    if (usb_release_interface(ftdi->usb_dev, ftdi->interface) != 0)
-        rtn = -1;
+    if (ftdi->usb_dev != NULL)
+        if (usb_release_interface(ftdi->usb_dev, ftdi->interface) != 0)
+            rtn = -1;
 
-    if (usb_close (ftdi->usb_dev) != 0)
+    if (usb_close_intl (ftdi)!= 0)
         rtn = -2;
 
     return rtn;
