@@ -27,12 +27,12 @@ target_link_libraries(ftdi ${LIBUSB_LIBRARIES})
 if(${UNIX})
 
    install( TARGETS ftdi
-            LIBRARY DESTINATION lib
+            LIBRARY DESTINATION lib${LIB_SUFFIX}
             COMPONENT sharedlibs
             )
 
    install( TARGETS ftdi-static
-            ARCHIVE DESTINATION lib
+            ARCHIVE DESTINATION lib${LIB_SUFFIX}
             COMPONENT staticlibs
             )
 

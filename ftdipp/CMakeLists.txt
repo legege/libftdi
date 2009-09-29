@@ -38,12 +38,12 @@ target_link_libraries(ftdipp ftdi ${LIBUSB_LIBRARIES} ${BOOST_LIBRARIES})
 if(${UNIX})
 
    install( TARGETS ftdipp
-            LIBRARY DESTINATION lib
+            LIBRARY DESTINATION lib${LIB_SUFFIX}
             COMPONENT sharedlibs
             )
 
    install( TARGETS ftdipp-static
-            ARCHIVE DESTINATION lib
+            ARCHIVE DESTINATION lib${LIB_SUFFIX}
             COMPONENT staticlibs
             )
 

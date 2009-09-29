@@ -38,6 +38,15 @@ set(CPACK_COMPONENT_SHAREDLIBS_GROUP "Development")
 set(CPACK_COMPONENT_STATICLIBS_GROUP "Development")
 set(CPACK_COMPONENT_HEADERS_GROUP    "Development")
 
+# Create suffix to eventually install in lib64
+IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    SET(LIB_SUFFIX "")
+    SET(PACK_ARCH "")
+  ELSE(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    SET(LIB_SUFFIX 64)
+    SET(PACK_ARCH .x86_64)
+endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+
 # Package information
 set(CPACK_PACKAGE_VERSION              ${VERSION_STRING})
 set(CPACK_PACKAGE_CONTACT              "Marek Vavrusa <marek@vavrusa.com>")
@@ -49,7 +58,7 @@ if(${UNIX})
   set(CPACK_GENERATOR                    "DEB;RPM")
   set(CPACK_CMAKE_GENERATOR              "Unix Makefiles")
   set(CPACK_PACKAGE_NAME                 ${PROJECT_NAME})
-  set(CPACK_PACKAGE_FILE_NAME            ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION})
+  set(CPACK_PACKAGE_FILE_NAME            ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}${PACK_ARCH})
 endif(${UNIX})
 
 if(${WIN32})
@@ -125,7 +134,7 @@ set(exec_prefix ${CMAKE_INSTALL_PREFIX}/bin)
 set(includedir  ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME})
 
 if(${UNIX})
-   set(libdir      ${CMAKE_INSTALL_PREFIX}/lib)
+   set(libdir      ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX})
 endif(${UNIX})
 if(${WIN32})
    set(libdir      ${CMAKE_INSTALL_PREFIX}/bin)
@@ -134,7 +143,7 @@ endif(${WIN32})
 configure_file(${CMAKE_SOURCE_DIR}/libftdi.pc.in ${CMAKE_BINARY_DIR}/libftdi.pc @ONLY)
 configure_file(${CMAKE_SOURCE_DIR}/libftdipp.pc.in ${CMAKE_BINARY_DIR}/libftdipp.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/libftdi.pc ${CMAKE_BINARY_DIR}/libftdipp.pc
-        DESTINATION lib/pkgconfig)
+        DESTINATION lib${LIB_SUFFIX}/pkgconfig)
 
 if(${UNIX})
     configure_file(${CMAKE_SOURCE_DIR}/libftdi-config.in ${CMAKE_BINARY_DIR}/libftdi-config @ONLY)
