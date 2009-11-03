@@ -400,6 +400,7 @@ int ftdi_usb_get_strings(struct ftdi_context * ftdi, struct usb_device * dev,
 int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
 {
     int detach_errno = 0;
+    int config_val = 1;
     if (!(ftdi->usb_dev = usb_open(dev)))
         ftdi_error_return(-4, "usb_open() failed");
 
@@ -419,18 +420,25 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
     // set configuration (needed especially for windows)
     // tolerate EBUSY: one device with one configuration, but two interfaces
     //    and libftdi sessions to both interfaces (e.g. FT2232)
-    if (dev->descriptor.bNumConfigurations > 0 &&
-            usb_set_configuration(ftdi->usb_dev, dev->config[0].bConfigurationValue) &&
-            errno != EBUSY)
+
+    if (dev->descriptor.bNumConfigurations > 0)
     {
-        ftdi_usb_close_internal (ftdi);
-        if (detach_errno == EPERM)
+        // libusb-win32 on Windows 64 can return a null pointer for a valid device
+        if (dev->config)
+            config_val = dev->config[0].bConfigurationValue;
+
+        if (usb_set_configuration(ftdi->usb_dev, config_val) &&
+            errno != EBUSY)
         {
-            ftdi_error_return(-8, "inappropriate permissions on device!");
-        }
-        else
-        {
-            ftdi_error_return(-3, "unable to set usb configuration. Make sure ftdi_sio is unloaded!");
+            ftdi_usb_close_internal (ftdi);
+            if (detach_errno == EPERM)
+            {
+                ftdi_error_return(-8, "inappropriate permissions on device!");
+            }
+            else
+            {
+                ftdi_error_return(-3, "unable to set usb configuration. Make sure ftdi_sio is unloaded!");
+            }
         }
     }
 #endif
