@@ -2130,6 +2130,24 @@ int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
 }
 
 /**
+    Read eeprom location
+
+    \param ftdi pointer to ftdi_context
+    \param eeprom_addr Address of eeprom location to be read
+    \param eeprom_val Pointer to store read eeprom location
+
+    \retval  0: all fine
+    \retval -1: read failed
+*/
+int ftdi_read_eeprom_location (struct ftdi_context *ftdi, int eeprom_addr, unsigned short *eeprom_val)
+{
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, eeprom_addr, (char *)eeprom_val, 2, ftdi->usb_read_timeout) != 2)
+        ftdi_error_return(-1, "reading eeprom failed");
+
+    return 0;
+}
+
+/**
     Read eeprom
 
     \param ftdi pointer to ftdi_context
@@ -2228,6 +2246,26 @@ int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, i
     while (size<=maxsize && memcmp(eeprom,&eeprom[size/2],size/2)!=0);
 
     return size/2;
+}
+
+/**
+    Write eeprom location
+
+    \param ftdi pointer to ftdi_context
+    \param eeprom_addr Address of eeprom location to be written
+    \param eeprom_val Value to be written
+
+    \retval  0: all fine
+    \retval -1: read failed
+*/
+int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr, unsigned short eeprom_val)
+{
+    if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
+                                    SIO_WRITE_EEPROM_REQUEST, eeprom_val, eeprom_addr,
+                                    NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-1, "unable to write eeprom");
+
+    return 0;
 }
 
 /**

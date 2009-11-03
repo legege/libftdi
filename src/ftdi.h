@@ -347,8 +347,11 @@ extern "C"
     int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
     int ftdi_erase_eeprom(struct ftdi_context *ftdi);
 
+    int ftdi_read_eeprom_location (struct ftdi_context *ftdi, int eeprom_addr, unsigned short *eeprom_val);
+    int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr, unsigned short eeprom_val);
+
     char *ftdi_get_error_string(struct ftdi_context *ftdi);
- 
+
 #ifdef __cplusplus
 }
 #endif
