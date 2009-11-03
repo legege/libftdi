@@ -454,12 +454,6 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
         ftdi_error_return(-6, "ftdi_usb_reset failed");
     }
 
-    if (ftdi_set_baudrate (ftdi, 9600) != 0)
-    {
-        ftdi_usb_close_internal (ftdi);
-        ftdi_error_return(-7, "set baudrate failed");
-    }
-
     // Try to guess chip type
     // Bug in the BM type chips: bcdDevice is 0x200 for serial == 0
     if (dev->descriptor.bcdDevice == 0x400 || (dev->descriptor.bcdDevice == 0x200
@@ -487,6 +481,12 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
             break;
         default:
             break;
+    }
+
+    if (ftdi_set_baudrate (ftdi, 9600) != 0)
+    {
+        ftdi_usb_close_internal (ftdi);
+        ftdi_error_return(-7, "set baudrate failed");
     }
 
     ftdi_error_return(0, "all fine");
