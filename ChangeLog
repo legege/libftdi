@@ -1,5 +1,12 @@
 New in 0.17 - 2009-XX-XX
 ------------------------
+* Fix usb_set_configuration() call on Windows 64 (NIL)
+* Fix usb index in ftdi_convert_baudrate() for FT2232H/FT4232H chips (Thimo Eichstaedt)
+* Set initial baudrate on correct interface instead of always the first one (Thimo Eichstaedt)
+* Call usb_set_configuration() on Windows only (Uwe Bonnes)
+* 64 bit and other buildsystem fixes (Uwe Bonnes)
+* Don't build --with-async-mode w/ libusb-compat-0.1 (Clifford Wolf)
+* Functions for read/write of a single eeprom location (Oleg Seiljus)
 * Protect against double close of usb device (Nathan Fraser)
 * Fix out-of-tree-build in python wrapper (Aurelien Jarno)
 * Autoconf and doxygen cleanup (Jim Paris)
