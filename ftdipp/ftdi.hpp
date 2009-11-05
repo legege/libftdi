@@ -153,8 +153,11 @@ public:
     int size(unsigned char *eeprom, int maxsize);
     int chip_id(unsigned int *chipid);
     int build(unsigned char *output);
+
     int read(unsigned char *eeprom);
     int write(unsigned char *eeprom);
+    int read_location(int eeprom_addr, unsigned short *eeprom_val);
+    int write_location(int eeprom_addr, unsigned short eeprom_val);
     int erase();
 
 private:

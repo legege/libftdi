@@ -396,6 +396,16 @@ int Eeprom::write(unsigned char *eeprom)
     return ftdi_write_eeprom(d->context, eeprom);
 }
 
+int Eeprom::read_location(int eeprom_addr, unsigned short *eeprom_val)
+{
+    return ftdi_read_eeprom_location(d->context, eeprom_addr, eeprom_val);
+}
+
+int Eeprom::write_location(int eeprom_addr, unsigned short eeprom_val)
+{
+    return ftdi_write_eeprom_location(d->context, eeprom_addr, eeprom_val);
+}
+
 int Eeprom::erase()
 {
     return ftdi_erase_eeprom(d->context);
