@@ -180,6 +180,8 @@ struct ftdi_context
     unsigned int readbuffer_chunksize;
     /** write buffer chunk size */
     unsigned int writebuffer_chunksize;
+    /** maximum packet size. Needed for filtering modem status bytes every n packets. */
+    unsigned int max_packet_size;
 
     /* FTDI FT2232C requirecments */
     /** FT2232C interface number: 0 or 1 */

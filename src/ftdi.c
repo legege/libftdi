@@ -98,6 +98,7 @@ int ftdi_init(struct ftdi_context *ftdi)
     ftdi->readbuffer_offset = 0;
     ftdi->readbuffer_remaining = 0;
     ftdi->writebuffer_chunksize = 4096;
+    ftdi->max_packet_size = 0;
 
     ftdi->interface = 0;
     ftdi->index = 0;
@@ -385,6 +386,45 @@ int ftdi_usb_get_strings(struct ftdi_context * ftdi, struct usb_device * dev,
 }
 
 /**
+ * Internal function to determine the maximum packet size.
+ * \param ftdi pointer to ftdi_context
+ * \param dev libusb usb_dev to use
+ * \retval Maximum packet size for this device
+ */
+static unsigned int _ftdi_determine_max_packet_size(struct ftdi_context *ftdi, struct usb_device *dev)
+{
+    unsigned int packet_size;
+
+    // Determine maximum packet size. Init with default value.
+    // New hi-speed devices from FTDI use a packet size of 512 bytes
+    // but could be connected to a normal speed USB hub -> 64 bytes packet size.
+    if (ftdi->type == TYPE_2232H || ftdi->type == TYPE_4232H)
+        packet_size = 512;
+    else
+        packet_size = 64;
+
+    if (dev->descriptor.bNumConfigurations > 0 && dev->config)
+    {
+        struct usb_config_descriptor config = dev->config[0];
+
+        if (ftdi->interface < config.bNumInterfaces)
+        {
+            struct usb_interface interface = config.interface[ftdi->interface];
+            if (interface.num_altsetting > 0)
+            {
+                struct usb_interface_descriptor descriptor = interface.altsetting[0];
+                if (descriptor.bNumEndpoints > 0)
+                {
+                    packet_size = descriptor.endpoint[0].wMaxPacketSize;
+                }
+            }
+        }
+    }
+
+    return packet_size;
+}
+
+/**
     Opens a ftdi device given by a usb_device.
 
     \param ftdi pointer to ftdi_context
@@ -490,6 +530,9 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev)
         default:
             break;
     }
+
+    // Determine maximum packet size
+    ftdi->max_packet_size = _ftdi_determine_max_packet_size(ftdi, dev);
 
     if (ftdi_set_baudrate (ftdi, 9600) != 0)
     {
@@ -1266,13 +1309,11 @@ int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunk
 int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
     int offset = 0, ret = 1, i, num_of_chunks, chunk_remains;
-    int packet_size;
+    int packet_size = ftdi->max_packet_size;
 
-    // New hi-speed devices from FTDI use a packet size of 512 bytes
-    if (ftdi->type == TYPE_2232H || ftdi->type == TYPE_4232H)
-        packet_size = 512;
-    else
-        packet_size = 64;
+    // Packet size sanity check (avoid division by zero)
+    if (packet_size == 0)
+        ftdi_error_return(-1, "max_packet_size is bogus (zero)");
 
     // everything we want is still in the readbuffer?
     if (size <= ftdi->readbuffer_remaining)
