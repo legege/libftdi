@@ -13,7 +13,7 @@ add_executable(bitbang2 bitbang2.c)
 add_executable(bitbang_cbus bitbang_cbus.c)
 add_executable(bitbang_ft2232 bitbang_ft2232.c)
 add_executable(find_all find_all.c)
-add_executable(sio sio.c)
+add_executable(serial_read serial_read.c)
 
 # Linkage
 target_link_libraries(simple ftdi)
@@ -22,7 +22,7 @@ target_link_libraries(bitbang2 ftdi)
 target_link_libraries(bitbang_cbus ftdi)
 target_link_libraries(bitbang_ft2232 ftdi)
 target_link_libraries(find_all ftdi)
-target_link_libraries(sio ftdi)
+target_link_libraries(serial_read ftdi)
 
 # libftdi++ examples
 if(FTDI_BUILD_CPP)

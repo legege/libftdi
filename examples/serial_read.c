@@ -1,4 +1,4 @@
-/* sio.c
+/* serial_read.c
 
    Read data via serial I/O
 
