@@ -1,5 +1,8 @@
 New in 0.17 - 2009-XX-XX
 ------------------------
+* New serial input example code (Jim Paris)
+* Fix modem status byte filtering for USB high speed chips (Intra2net and Jim Paris)
+* Add bitmode for synchronous fifo in FT2232H (Uwe Bonnes)
 * Fix usb_set_configuration() call on Windows 64 (NIL)
 * Fix usb index in ftdi_convert_baudrate() for FT2232H/FT4232H chips (Thimo Eichstaedt)
 * Set initial baudrate on correct interface instead of always the first one (Thimo Eichstaedt)
