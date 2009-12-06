@@ -186,12 +186,12 @@ int main(int argc, char **argv)
         if(test_mode==BITMODE_SYNCBB)
         {
             // read the same amount of data as sent
-            ftdi_read_data(&ftdic, rxbuf, txchunksize);
+            ftdi_read_data(&ftdic, rxbuf, sendsize);
         }
     }
 
     duration=get_prec_time()-start;
-    printf("and took %.4f seconds, this is factor %.3f\n",duration,plan/duration);
+    printf("and took %.4f seconds, this is %.0f baud or factor %.3f\n",duration,(plan*baud)/duration,plan/duration);
 
     ftdi_usb_close(&ftdic);
     ftdi_deinit(&ftdic);
