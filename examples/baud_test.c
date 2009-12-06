@@ -167,6 +167,10 @@ int main(int argc, char **argv)
 
     start=get_prec_time();
 
+    // don't wait for more data to arrive, take what we get and keep on sending
+    // yes, we really would like to have libusb 1.0+ with async read/write...
+    ftdic.usb_read_timeout=1;
+
     i=0;
     while(i < datasize)
     {
