@@ -5,7 +5,7 @@
  * options:
  *  -p <usb-product-id> (vendor is fixed to ftdi / 0x0403)
  *  -d <datasize to send in bytes>
- *  -b <baudrate> (multiplies by 16 if bitbang as written in the ftdi datasheets)
+ *  -b <baudrate> (divides by 16 if bitbang as taken from the ftdi datasheets)
  *  -m <mode to use> r: serial a: async bitbang s:sync bitbang 
  *
  * (C) 2009 by Gerd v. Egidy <gerd.von.egidy@intra2net.com>
