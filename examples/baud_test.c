@@ -172,7 +172,7 @@ int main(int argc, char **argv)
     }
 
     duration=get_prec_time()-start;
-    printf("and took %.4f seconds, this is factor %.2f\n",duration,plan/duration);
+    printf("and took %.4f seconds, this is factor %.3f\n",duration,plan/duration);
 
     ftdi_usb_close(&ftdic);
     ftdi_deinit(&ftdic);
