@@ -7,6 +7,7 @@
  *  -d <datasize to send in bytes>
  *  -b <baudrate> (divides by 16 if bitbang as taken from the ftdi datasheets)
  *  -m <mode to use> r: serial a: async bitbang s:sync bitbang 
+ *  -c <chunksize>
  *
  * (C) 2009 by Gerd v. Egidy <gerd.von.egidy@intra2net.com>
  *
@@ -44,8 +45,8 @@ int main(int argc, char **argv)
 {
     struct ftdi_context ftdic;
     int i, t;
-    char txbuf[256];
-    char rxbuf[4096];
+    char *txbuf;
+    char *rxbuf;
     double start, duration, plan;
 
     // default values
@@ -53,9 +54,10 @@ int main(int argc, char **argv)
     int set_baud;
     int datasize=100000;
     int product_id=0x6001;
+    int txchunksize=256;
     enum ftdi_mpsse_mode test_mode=BITMODE_BITBANG;
     
-    while ((t = getopt (argc, argv, "b:d:p:m:")) != -1)
+    while ((t = getopt (argc, argv, "b:d:p:m:c:")) != -1)
     {
         switch (t)
         {
@@ -85,7 +87,18 @@ int main(int argc, char **argv)
             case 'p':
                 sscanf(optarg,"0x%x",&product_id);
                 break;
+            case 'c':
+                txchunksize = atoi (optarg);
+                break;
         }
+    }
+
+    txbuf=malloc(txchunksize);
+    rxbuf=malloc(txchunksize);
+    if (txbuf == NULL || rxbuf == NULL)
+    {
+        fprintf(stderr, "can't malloc\n");
+        return EXIT_FAILURE;
     }
 
     if (ftdi_init(&ftdic) < 0)
@@ -131,7 +144,7 @@ int main(int argc, char **argv)
 
     // prepare data to send: 0 and 1 bits alternating (except for serial start/stopbit):
     // maybe someone wants to look at this with a scope or logic analyzer
-    for (i=0; i<sizeof(txbuf); i++)
+    for (i=0; i<txchunksize; i++)
     {
         if (test_mode==BITMODE_RESET)
             txbuf[i]=0xAA;
@@ -139,19 +152,25 @@ int main(int argc, char **argv)
             txbuf[i]=(i%2) ? 0xff : 0;
     }
 
+    if (ftdi_write_data_set_chunksize(&ftdic, txchunksize) < 0 ||
+        ftdi_read_data_set_chunksize(&ftdic, txchunksize) < 0)
+    {
+        fprintf(stderr,"Can't set chunksize: %s\n",ftdi_get_error_string(&ftdic));
+        return EXIT_FAILURE;
+    }
+
     if(test_mode==BITMODE_SYNCBB)
     {
-        // clear the receive buffer before beginning
-        // will read only as much as available
-        ftdi_read_data(&ftdic, rxbuf, sizeof(rxbuf));
+        // completely clear the receive buffer before beginning
+        while(ftdi_read_data(&ftdic, rxbuf, txchunksize)>0);
     }
-    
+
     start=get_prec_time();
 
     i=0;
     while(i < datasize)
     {
-        int sendsize=sizeof(txbuf);
+        int sendsize=txchunksize;
         if (i+sendsize > datasize)
             sendsize=datasize-i;
 
@@ -166,8 +185,8 @@ int main(int argc, char **argv)
 
         if(test_mode==BITMODE_SYNCBB)
         {
-            // read everything available
-            ftdi_read_data(&ftdic, rxbuf, sizeof(rxbuf));
+            // read the same amount of data as sent
+            ftdi_read_data(&ftdic, rxbuf, txchunksize);
         }
     }
 
