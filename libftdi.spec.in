@@ -50,6 +50,7 @@ rm -f $RPM_BUILD_ROOT/usr/bin/bitbang_cbus
 rm -f $RPM_BUILD_ROOT/usr/bin/find_all
 rm -f $RPM_BUILD_ROOT/usr/bin/find_all_pp
 rm -f $RPM_BUILD_ROOT/usr/bin/serial_read
+rm -f $RPM_BUILD_ROOT/usr/bin/baud_test
 
 %clean
 rm -fr $RPM_BUILD_ROOT
