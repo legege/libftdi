@@ -3,7 +3,13 @@
  * test setting the baudrate and compare it with the expected runtime
  *
  * options:
- *  -p <usb-product-id> (vendor is fixed to ftdi / 0x0403)
+ *  -p <devicestring> defaults to "i:0x0403:0x6001" (this is the first FT232R with default id)
+ *       d:<devicenode> path of bus and device-node (e.g. "003/001") within usb device tree (usually at /proc/bus/usb/)
+ *       i:<vendor>:<product> first device with given vendor and product id,
+ *                            ids can be decimal, octal (preceded by "0") or hex (preceded by "0x")
+ *       i:<vendor>:<product>:<index> as above with index being the number of the device (starting with 0)
+ *                            if there are more than one
+ *       s:<vendor>:<product>:<serial> first device with given vendor id, product id and serial string
  *  -d <datasize to send in bytes>
  *  -b <baudrate> (divides by 16 if bitbang as taken from the ftdi datasheets)
  *  -m <mode to use> r: serial a: async bitbang s:sync bitbang 
@@ -53,7 +59,9 @@ int main(int argc, char **argv)
     int baud=9600;
     int set_baud;
     int datasize=100000;
-    int product_id=0x6001;
+
+    char default_devicedesc[] = "i:0x0403:0x6001";
+    char *devicedesc=default_devicedesc;
     int txchunksize=256;
     enum ftdi_mpsse_mode test_mode=BITMODE_BITBANG;
     
@@ -85,7 +93,7 @@ int main(int argc, char **argv)
                 baud = atoi (optarg);
                 break;
             case 'p':
-                sscanf(optarg,"0x%x",&product_id);
+                devicedesc=optarg;
                 break;
             case 'c':
                 txchunksize = atoi (optarg);
@@ -107,7 +115,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (ftdi_usb_open(&ftdic, 0x0403, product_id) < 0)
+    if (ftdi_usb_open_string(&ftdic, devicedesc) < 0)
     {
         fprintf(stderr,"Can't open ftdi device: %s\n",ftdi_get_error_string(&ftdic));
         return EXIT_FAILURE;
