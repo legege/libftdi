@@ -741,7 +741,7 @@ int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description)
         unsigned int vendor;
         unsigned int product;
         unsigned int index=0;
-        const char *serial;
+        const char *serial=NULL;
         const char *startp, *endp;
 
         errno=0;
