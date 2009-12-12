@@ -582,6 +582,35 @@ int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product)
 int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                        const char* description, const char* serial)
 {
+    return ftdi_usb_open_desc_index(ftdi,vendor,product,description,serial,0);
+}
+
+/**
+    Opens the index-th device with a given, vendor id, product id,
+    description and serial.
+
+    \param ftdi pointer to ftdi_context
+    \param vendor Vendor ID
+    \param product Product ID
+    \param description Description to search for. Use NULL if not needed.
+    \param serial Serial to search for. Use NULL if not needed.
+    \param index Number of matching device to open if there are more than one, starts with 0.
+
+    \retval  0: all fine
+    \retval -1: usb_find_busses() failed
+    \retval -2: usb_find_devices() failed
+    \retval -3: usb device not found
+    \retval -4: unable to open device
+    \retval -5: unable to claim device
+    \retval -6: reset failed
+    \retval -7: set baudrate failed
+    \retval -8: get product description failed
+    \retval -9: get serial number failed
+    \retval -10: unable to close device
+*/
+int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
+                       const char* description, const char* serial, unsigned int index)
+{
     struct usb_bus *bus;
     struct usb_device *dev;
     char string[256];
@@ -635,6 +664,12 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                 if (ftdi_usb_close_internal (ftdi) != 0)
                     ftdi_error_return(-10, "unable to close device");
 
+                if (index > 0)
+                {
+                    index--;
+                    continue;
+                }
+
                 return ftdi_usb_open_dev(ftdi, dev);
             }
         }
@@ -642,6 +677,110 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
 
     // device not found
     ftdi_error_return(-3, "device not found");
+}
+
+/**
+    Opens the ftdi-device described by a description-string.
+    Intended to be used for parsing a device-description given as commandline argument.
+
+    \param ftdi pointer to ftdi_context
+    \param description NULL-terminated description-string, using this format:
+        \li <tt>d:\<devicenode></tt> path of bus and device-node (e.g. "003/001") within usb device tree (usually at /proc/bus/usb/)
+        \li <tt>i:\<vendor>:\<product></tt> first device with given vendor and product id, ids can be decimal, octal (preceded by "0") or hex (preceded by "0x")
+        \li <tt>i:\<vendor>:\<product>:\<index></tt> as above with index being the number of the device (starting with 0) if there are more than one
+        \li <tt>s:\<vendor>:\<product>:\<serial></tt> first device with given vendor id, product id and serial string
+
+    \note The description format may be extended in later versions.
+
+    \retval  0: all fine
+    \retval -1: usb_find_busses() failed
+    \retval -2: usb_find_devices() failed
+    \retval -3: usb device not found
+    \retval -4: unable to open device
+    \retval -5: unable to claim device
+    \retval -6: reset failed
+    \retval -7: set baudrate failed
+    \retval -8: get product description failed
+    \retval -9: get serial number failed
+    \retval -10: unable to close device
+    \retval -11: illegal description format
+*/
+int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description)
+{
+    if (description[0] == 0 || description[1] != ':')
+        ftdi_error_return(-11, "illegal description format");
+
+    if (description[0] == 'd')
+    {
+        struct usb_bus *bus;
+        struct usb_device *dev;
+        char dev_name[PATH_MAX+1];
+
+        usb_init();
+
+        if (usb_find_busses() < 0)
+            ftdi_error_return(-1, "usb_find_busses() failed");
+        if (usb_find_devices() < 0)
+            ftdi_error_return(-2, "usb_find_devices() failed");
+
+        for (bus = usb_get_busses(); bus; bus = bus->next)
+        {
+            for (dev = bus->devices; dev; dev = dev->next)
+            {
+                snprintf(dev_name, sizeof(dev_name), "%s/%s",bus->dirname,dev->filename);
+                if (strcmp(description+2,dev_name) == 0)
+                    return ftdi_usb_open_dev(ftdi, dev);
+            }
+        }
+
+        // device not found
+        ftdi_error_return(-3, "device not found");
+    }
+    else if (description[0] == 'i' || description[0] == 's')
+    {
+        unsigned int vendor;
+        unsigned int product;
+        unsigned int index=0;
+        const char *serial;
+        const char *startp, *endp;
+
+        errno=0;
+        startp=description+2;
+        vendor=strtoul((char*)startp,(char**)&endp,0);
+        if (*endp != ':' || endp == startp || errno != 0)
+            ftdi_error_return(-11, "illegal description format");
+
+        startp=endp+1;
+        product=strtoul((char*)startp,(char**)&endp,0);
+        if (endp == startp || errno != 0)
+            ftdi_error_return(-11, "illegal description format");
+
+        if (description[0] == 'i' && *endp != 0)
+        {
+            /* optional index field in i-mode */
+            if (*endp != ':')
+                ftdi_error_return(-11, "illegal description format");
+
+            startp=endp+1;
+            index=strtoul((char*)startp,(char**)&endp,0);
+            if (*endp != 0 || endp == startp || errno != 0)
+                ftdi_error_return(-11, "illegal description format");
+        }
+        if (description[0] == 's')
+        {
+            if (*endp != ':')
+                ftdi_error_return(-11, "illegal description format");
+
+            /* rest of the description is the serial */
+            serial=endp+1;
+        }
+
+        return ftdi_usb_open_desc_index(ftdi, vendor, product, NULL, serial, index);
+    }
+    else
+    {
+        ftdi_error_return(-11, "illegal description format");
+    }
 }
 
 /**

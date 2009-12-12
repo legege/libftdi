@@ -289,7 +289,10 @@ extern "C"
     int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product);
     int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                            const char* description, const char* serial);
+    int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
+                           const char* description, const char* serial, unsigned int index);
     int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev);
+    int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description);
 
     int ftdi_usb_close(struct ftdi_context *ftdi);
     int ftdi_usb_reset(struct ftdi_context *ftdi);
