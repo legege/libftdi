@@ -77,27 +77,44 @@ bool Context::is_open()
     return d->open;
 }
 
-int Context::open(int vendor, int product, const std::string& description, const std::string& serial)
+int Context::open(int vendor, int product)
 {
-    int ret = 0;
-
     // Open device
-    if (description.empty() && serial.empty())
-        ret = ftdi_usb_open(d->ftdi, vendor, product);
-    else
-        ret = ftdi_usb_open_desc(d->ftdi, vendor, product, description.c_str(), serial.c_str());
+    int ret = ftdi_usb_open(d->ftdi, vendor, product);
 
     if (ret < 0)
        return ret;
 
-    // Get device strings (closes device)
-    get_strings();
+    return get_strings_and_reopen();
+}
 
-    // Reattach device
-    ret = ftdi_usb_open_dev(d->ftdi, d->dev);
-    d->open = (ret >= 0);
+int Context::open(int vendor, int product, const std::string& description, const std::string& serial, unsigned int index)
+{
+    // translate empty strings to NULL
+    // -> do not use them to find the device (vs. require an empty string to be set in the EEPROM)
+    const char* c_description=NULL;
+    const char* c_serial=NULL;
+    if (!description.empty())
+        c_description=description.c_str();
+    if (!serial.empty())
+        c_serial=serial.c_str();
 
-    return ret;
+    int ret = ftdi_usb_open_desc_index(d->ftdi, vendor, product, c_description, c_serial, index);
+
+    if (ret < 0)
+       return ret;
+
+    return get_strings_and_reopen();
+}
+
+int Context::open(const std::string& description)
+{
+    int ret = ftdi_usb_open_string(d->ftdi, description.c_str());
+
+    if (ret < 0)
+       return ret;
+
+    return get_strings_and_reopen();
 }
 
 int Context::open(struct usb_device *dev)
@@ -108,14 +125,7 @@ int Context::open(struct usb_device *dev)
     if (d->dev == 0)
         return -1;
 
-    // Get device strings (closes device)
-    get_strings();
-
-    // Reattach device
-    int ret = ftdi_usb_open_dev(d->ftdi, d->dev);
-    d->open = (ret >= 0);
-
-    return ret;
+    return get_strings_and_reopen();
 }
 
 int Context::close()
@@ -263,7 +273,7 @@ int Context::set_error_char(unsigned char errorch, unsigned char enable)
 
 int Context::bitbang_enable(unsigned char bitmask)
 {
-    return ftdi_enable_bitbang(d->ftdi, bitmask);
+    return ftdi_set_bitmode(d->ftdi, bitmask, BITMODE_BITBANG);
 }
 
 int Context::bitbang_disable()
@@ -272,6 +282,11 @@ int Context::bitbang_disable()
 }
 
 int Context::set_bitmode(unsigned char bitmask, unsigned char mode)
+{
+    return set_bitmode(bitmask, mode);
+}
+
+int Context::set_bitmode(unsigned char bitmask, enum ftdi_mpsse_mode mode)
 {
     return ftdi_set_bitmode(d->ftdi, bitmask, mode);
 }
@@ -301,6 +316,23 @@ int Context::get_strings()
     d->serial = serial;
 
     return 1;
+}
+
+int Context::get_strings_and_reopen()
+{
+    // Get device strings (closes device)
+    int ret=get_strings();
+    if (ret < 0)
+    {
+        d->open = 0;
+        return ret;
+    }
+
+    // Reattach device
+    ret = ftdi_usb_open_dev(d->ftdi, d->dev);
+    d->open = (ret >= 0);
+
+    return ret;
 }
 
 /*! \brief Device strings properties.

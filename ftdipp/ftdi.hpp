@@ -80,7 +80,9 @@ public:
     /* Device manipulators */
     bool is_open();
     int open(struct usb_device *dev = 0);
-    int open(int vendor, int product, const std::string& description = std::string(), const std::string& serial = std::string());
+    int open(int vendor, int product);
+    int open(int vendor, int product, const std::string& description, const std::string& serial = std::string(), unsigned int index=0);
+    int open(const std::string& description);
     int close();
     int reset();
     int flush(int mask = Input|Output);
@@ -120,6 +122,7 @@ public:
 
     /* BitBang mode */
     int set_bitmode(unsigned char bitmask, unsigned char mode);
+    int set_bitmode(unsigned char bitmask, enum ftdi_mpsse_mode mode);
     int DEPRECATED(bitbang_enable(unsigned char bitmask));
     int bitbang_disable();
     int read_pins(unsigned char *pins);
@@ -129,6 +132,7 @@ public:
 
 protected:
     int get_strings();
+    int get_strings_and_reopen();
 
     /* Properties */
     struct ftdi_context* context();
