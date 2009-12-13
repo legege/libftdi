@@ -120,7 +120,7 @@ public:
 
     /* BitBang mode */
     int set_bitmode(unsigned char bitmask, unsigned char mode);
-    int bitbang_enable(unsigned char bitmask);
+    int DEPRECATED(bitbang_enable(unsigned char bitmask));
     int bitbang_disable();
     int read_pins(unsigned char *pins);
 
