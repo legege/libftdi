@@ -1599,7 +1599,7 @@ int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunks
 /**
     Enable bitbang mode.
 
-    For advanced bitbang modes of the FT2232C chip use ftdi_set_bitmode().
+    \deprecated use \ref ftdi_set_bitmode with mode BITMODE_BITBANG instead
 
     \param ftdi pointer to ftdi_context
     \param bitmask Bitmask to configure lines.
@@ -1648,7 +1648,7 @@ int ftdi_disable_bitbang(struct ftdi_context *ftdi)
     \param ftdi pointer to ftdi_context
     \param bitmask Bitmask to configure lines.
            HIGH/ON value configures a line as output.
-    \param mode Bitbang mode: use the values defined in \ref ftdi_mpsse_mode, use BITMODE_RESET to switch off bitbang
+    \param mode Bitbang mode: use the values defined in \ref ftdi_mpsse_mode
 
     \retval  0: all fine
     \retval -1: can't enable bitbang mode

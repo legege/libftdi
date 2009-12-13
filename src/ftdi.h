@@ -148,6 +148,16 @@ enum ftdi_interface
    (taken from libusb) */
 #define FTDI_URB_USERCONTEXT_COOKIE ((void *)0x1)
 
+#ifdef __GNUC__
+    #define DEPRECATED(func) func __attribute__ ((deprecated))
+#elif defined(_MSC_VER)
+    #define DEPRECATED(func) __declspec(deprecated) func
+#else
+    #pragma message("WARNING: You need to implement DEPRECATED for this compiler")
+    #define DEPRECATED(func) func
+#endif
+
+
 /**
     \brief Main context structure for all libftdi functions.
 
@@ -318,7 +328,7 @@ extern "C"
     int ftdi_write_data_async(struct ftdi_context *ftdi, unsigned char *buf, int size);
     void ftdi_async_complete(struct ftdi_context *ftdi, int wait_for_more);
 
-    int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask);
+    int DEPRECATED(ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask));
     int ftdi_disable_bitbang(struct ftdi_context *ftdi);
     int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned char mode);
     int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins);
