@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     if (ftdi_usb_open(&ftdic, 0x0403, 0x6001) < 0)
         ftdi_fatal (&ftdic, "Can't open ftdi device");
 
-    if (ftdi_enable_bitbang(&ftdic, 0xFF) < 0)
+    if (ftdi_set_bitmode(&ftdic, 0xFF, BITMODE_BITBANG) < 0)
         ftdi_fatal (&ftdic, "Can't enable bitbang");
 
     for (i=optind; i < argc ; i++)

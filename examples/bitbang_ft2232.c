@@ -38,7 +38,7 @@ int main(int argc, char **argv)
     printf("ftdi open succeeded(channel 1): %d\n",f);
 
     printf("enabling bitbang mode(channel 1)\n");
-    ftdi_enable_bitbang(&ftdic, 0xFF);
+    ftdi_set_bitmode(&ftdic, 0xFF, BITMODE_BITBANG);
 
     // Init 2. channel
     if (ftdi_init(&ftdic2) < 0)
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     printf("ftdi open succeeded(channel 2): %d\n",f);
 
     printf("enabling bitbang mode (channel 2)\n");
-    ftdi_enable_bitbang(&ftdic2, 0xFF);
+    ftdi_set_bitmode(&ftdic2, 0xFF, BITMODE_BITBANG);
 
     // Write data
     printf("startloop\n");

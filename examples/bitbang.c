@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     printf("ftdi open succeeded: %d\n",f);
 
     printf("enabling bitbang mode\n");
-    ftdi_enable_bitbang(&ftdic, 0xFF);
+    ftdi_set_bitmode(&ftdic, 0xFF, BITMODE_BITBANG);
 
     sleep(3);
 
