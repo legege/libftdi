@@ -50,6 +50,7 @@
         return code;                       \
    } while(0);
 
+
 /**
     Internal function to close usb device pointer.
     Sets ftdi->usb_dev to NULL.
@@ -92,7 +93,7 @@ int ftdi_init(struct ftdi_context *ftdi)
 
     ftdi->type = TYPE_BM;    /* chip type */
     ftdi->baudrate = -1;
-    ftdi->bitbang_enabled = 0;
+    ftdi->bitbang_enabled = 0;  /* 0: normal mode 1: any of the bitbang modes enabled */
 
     ftdi->readbuffer = NULL;
     ftdi->readbuffer_offset = 0;
@@ -104,7 +105,7 @@ int ftdi_init(struct ftdi_context *ftdi)
     ftdi->index = 0;
     ftdi->in_ep = 0x02;
     ftdi->out_ep = 0x81;
-    ftdi->bitbang_mode = 1; /* 1: Normal bitbang mode, 2: SPI bitbang mode */
+    ftdi->bitbang_mode = 1; /* when bitbang is enabled this holds the number of the mode  */
 
     ftdi->error_str = NULL;
 
@@ -425,7 +426,7 @@ static unsigned int _ftdi_determine_max_packet_size(struct ftdi_context *ftdi, s
 }
 
 /**
-    Opens a ftdi device given by a usb_device.
+    Opens a ftdi device given by an usb_device.
 
     \param ftdi pointer to ftdi_context
     \param dev libusb usb_dev to use
@@ -899,7 +900,7 @@ int ftdi_usb_close(struct ftdi_context *ftdi)
     return rtn;
 }
 
-/*
+/**
     ftdi_convert_baudrate returns nearest supported baud rate to that requested.
     Function is only used internally
     \internal
@@ -1442,8 +1443,6 @@ int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunk
     \retval  0: no data was available
     \retval >0: number of bytes read
 
-    \remark This function is not useful in bitbang mode.
-            Use ftdi_read_pins() to get the current state of the pins.
 */
 int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
@@ -1644,12 +1643,12 @@ int ftdi_disable_bitbang(struct ftdi_context *ftdi)
 }
 
 /**
-    Enable advanced bitbang mode for FT2232C chips.
+    Enable/disable bitbang modes.
 
     \param ftdi pointer to ftdi_context
     \param bitmask Bitmask to configure lines.
            HIGH/ON value configures a line as output.
-    \param mode Bitbang mode: 1 for normal mode, 2 for SPI mode
+    \param mode Bitbang mode: use the values defined in \ref ftdi_mpsse_mode, use BITMODE_RESET to switch off bitbang
 
     \retval  0: all fine
     \retval -1: can't enable bitbang mode
@@ -1661,15 +1660,15 @@ int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned 
     usb_val = bitmask; // low byte: bitmask
     usb_val |= (mode << 8);
     if (usb_control_msg(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_SET_BITMODE_REQUEST, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) != 0)
-        ftdi_error_return(-1, "unable to configure bitbang mode. Perhaps not a 2232C type chip?");
+        ftdi_error_return(-1, "unable to configure bitbang mode. Perhaps selected mode not supported on your chip?");
 
     ftdi->bitbang_mode = mode;
-    ftdi->bitbang_enabled = (mode == BITMODE_BITBANG || mode == BITMODE_SYNCBB)?1:0;
+    ftdi->bitbang_enabled = (mode == BITMODE_RESET) ? 0 : 1;
     return 0;
 }
 
 /**
-    Directly read pin state. Useful for bitbang mode.
+    Directly read pin state, circumventing the read buffer. Useful for bitbang mode.
 
     \param ftdi pointer to ftdi_context
     \param pins Pointer to store pins into

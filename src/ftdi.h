@@ -35,18 +35,18 @@ enum ftdi_break_type { BREAK_OFF=0, BREAK_ON=1 };
 /** MPSSE bitbang modes */
 enum ftdi_mpsse_mode
 {
-    BITMODE_RESET  = 0x00,
-    BITMODE_BITBANG= 0x01,
-    BITMODE_MPSSE  = 0x02,
-    BITMODE_SYNCBB = 0x04,
-    BITMODE_MCU    = 0x08,
-    /* CPU-style fifo mode gets set via EEPROM */
-    BITMODE_OPTO   = 0x10,
-    BITMODE_CBUS   = 0x20,
-    BITMODE_SYNCFF = 0x40
+    BITMODE_RESET  = 0x00,    /**< switch off bitbang mode, back to regular serial/FIFO */
+    BITMODE_BITBANG= 0x01,    /**< classical asynchronous bitbang mode, introduced with B-type chips */
+    BITMODE_MPSSE  = 0x02,    /**< MPSSE mode, available on 2232x chips */
+    BITMODE_SYNCBB = 0x04,    /**< synchronous bitbang mode, available on 2232x and R-type chips  */
+    BITMODE_MCU    = 0x08,    /**< MCU Host Bus Emulation mode, available on 2232x chips */
+                              /* CPU-style fifo mode gets set via EEPROM */
+    BITMODE_OPTO   = 0x10,    /**< Fast Opto-Isolated Serial Interface Mode, available on 2232x chips  */
+    BITMODE_CBUS   = 0x20,    /**< Bitbang on CBUS pins of R-type chips, configure in EEPROM before */
+    BITMODE_SYNCFF = 0x40,    /**< Single Channel Synchronous FIFO mode, available on 2232H chips */
 };
 
-/** Port interface for FT2232C */
+/** Port interface for chips with multiple interfaces */
 enum ftdi_interface
 {
     INTERFACE_ANY = 0,
