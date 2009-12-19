@@ -1,5 +1,9 @@
-New in 0.17 - 2009-XX-XX
+New in 0.17 - 2009-12-19
 ------------------------
+* C++ wrapper: Reduced code duplication and small other changes (Intra2net)
+* Deprecated old ftdi_enable_bitbang() function (Intra2net)
+* New ftdi_usb_open_desc_index() function (Intra2net)
+* Added baud rate test example code (Intra2net)
 * New serial input example code (Jim Paris)
 * Fix modem status byte filtering for USB high speed chips (Intra2net and Jim Paris)
 * Add bitmode for synchronous fifo in FT2232H (Uwe Bonnes)
