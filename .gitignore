@@ -33,6 +33,21 @@ INSTALL
 Doxyfile
 doc/Doxyfile
 doc/html
+doc/man
+
+# examples
+examples/baud_test
+examples/bitbang
+examples/bitbang2
+examples/bitbang_cbus
+examples/bitbang_ft2232
+examples/find_all
+examples/find_all_pp
+examples/serial_read
+examples/simple
+
+# python bindings
+bindings/python/setup.py
 
 # Backup files and stuff from patches
 *.orig
