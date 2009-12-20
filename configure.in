@@ -140,9 +140,11 @@ fi
 AC_SUBST(LIBFTDI_MODULES)
 AC_SUBST(LIBFTDI_MODULES_PKGCONFIG)
 
-AC_OUTPUT([libftdi-config],[chmod a+x libftdi-config])
-AC_OUTPUT(Makefile src/Makefile bindings/Makefile bindings/python/Makefile bindings/python/setup.py examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc libftdi.spec)
+AC_CONFIG_FILES([libftdi-config],[chmod a+x libftdi-config])
+AC_CONFIG_FILES(Makefile src/Makefile bindings/Makefile bindings/python/Makefile bindings/python/setup.py examples/Makefile doc/Doxyfile doc/Makefile libftdi.pc libftdi.spec)
 
 if test "x$ENABLE_LIBFTDIPP" = "x1"; then
-    AC_OUTPUT(ftdipp/Makefile libftdipp.pc)
+    AC_CONFIG_FILES(ftdipp/Makefile libftdipp.pc)
 fi
+
+AC_OUTPUT
