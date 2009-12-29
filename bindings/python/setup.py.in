@@ -12,6 +12,6 @@ setup(name='@PACKAGE_NAME@',
       py_modules=['ftdi'],
       ext_modules=[Extension('_ftdi', ['ftdi_wrap.c'],
                              include_dirs=['@top_srcdir@/src'],
-                             library_dirs=['@top_buildir@/src/.libs','lib','/usr/lib'],
+                             library_dirs=['@top_builddir@/src/.libs','lib','/usr/lib'],
                              libraries=['ftdi'])],
       )
