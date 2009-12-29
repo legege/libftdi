@@ -715,7 +715,6 @@ int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description)
     {
         struct usb_bus *bus;
         struct usb_device *dev;
-        char dev_name[PATH_MAX+1];
 
         usb_init();
 
@@ -728,9 +727,18 @@ int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description)
         {
             for (dev = bus->devices; dev; dev = dev->next)
             {
-                snprintf(dev_name, sizeof(dev_name), "%s/%s",bus->dirname,dev->filename);
-                if (strcmp(description+2,dev_name) == 0)
-                    return ftdi_usb_open_dev(ftdi, dev);
+                /* XXX: This doesn't handle symlinks/odd paths/etc... */
+                const char *desc = description + 2;
+                size_t len = strlen(bus->dirname);
+                if (strncmp(desc, bus->dirname, len))
+                    continue;
+                desc += len;
+                if (desc[0] != '/')
+                    continue;
+                ++desc;
+                if (strcmp(desc, dev->filename))
+                    continue;
+                return ftdi_usb_open_dev(ftdi, dev);
             }
         }
 
