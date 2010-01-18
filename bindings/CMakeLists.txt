@@ -2,8 +2,9 @@ include(FindSWIG)
 include(FindPythonLibs)
 include(UseSWIG)
 
-if(SWIG_FOUND)
-if(PYTHONLIBS_FOUND)
+option(PYTHON_BINDINGS "Build python bindings via swig" ON)
+
+if(PYTHON_BINDINGS AND SWIG_FOUND AND PYTHONLIBS_FOUND)
     INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src)
     INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 
@@ -17,5 +18,6 @@ if(PYTHONLIBS_FOUND)
     INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/ftdi.py DESTINATION ${SITEPACKAGE})
 
     message(STATUS "Building python bindings via swig. Will be installed under ${SITEPACKAGE}")
-endif(PYTHONLIBS_FOUND)
-endif(SWIG_FOUND)
+else(PYTHON_BINDINGS AND SWIG_FOUND AND PYTHONLIBS_FOUND)
+    message(STATUS "Not building python bindings")
+endif(PYTHON_BINDINGS AND SWIG_FOUND AND PYTHONLIBS_FOUND)

@@ -92,8 +92,11 @@ add_subdirectory(packages)
 
 
 # Documentation
+
+option(DOCUMENTATION "Generate API documentation with Doxygen" ON)
+
 find_package(Doxygen)
-if(DOXYGEN_FOUND)
+if(DOCUMENTATION AND DOXYGEN_FOUND)
 
    # Set variables
    set(PACKAGE libftdi)
@@ -126,7 +129,10 @@ if(DOXYGEN_FOUND)
 
    add_custom_target(docs ALL DEPENDS ${CMAKE_BINARY_DIR}/doc/html/index.html)
 
-endif(DOXYGEN_FOUND)
+   message(STATUS "Generating API documentation with Doxygen")
+else(DOCUMENTATION AND DOXYGEN_FOUND)
+   message(STATUS "Not generating API documentation")
+endif(DOCUMENTATION AND DOXYGEN_FOUND)
 
 # PkgConfig
 set(prefix      ${CMAKE_INSTALL_PREFIX})
