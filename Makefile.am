@@ -14,3 +14,7 @@ bin_SCRIPTS = libftdi-config
 # Install the pkg-config file:
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libftdi.pc $(LIBFTDI_MODULES_PKGCONFIG)
+
+USB_LIBS = @USB_LIBS@
+
+ACLOCAL_AMFLAGS=-I m4

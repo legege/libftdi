@@ -9,6 +9,7 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #ifdef __WIN32__
 #define sleep(x) _sleep(x)
@@ -18,7 +19,7 @@
 int main(int argc, char **argv)
 {
     struct ftdi_context ftdic, ftdic2;
-    char buf[1];
+    unsigned char buf[1];
     int f,i;
 
     // Init 1. channel
@@ -101,4 +102,6 @@ int main(int argc, char **argv)
     ftdi_disable_bitbang(&ftdic2);
     ftdi_usb_close(&ftdic2);
     ftdi_deinit(&ftdic2);
+
+    return 0;
 }

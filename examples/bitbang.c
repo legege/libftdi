@@ -1,6 +1,7 @@
 /* This program is distributed under the GPL, version 2 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #ifdef __WIN32__
 #define sleep(x) Sleep(x)
@@ -11,7 +12,7 @@ int main(int argc, char **argv)
 {
     struct ftdi_context ftdic;
     int f,i;
-    char buf[1];
+    unsigned char buf[1];
 
     if (ftdi_init(&ftdic) < 0)
     {
@@ -78,4 +79,6 @@ int main(int argc, char **argv)
 
     ftdi_usb_close(&ftdic);
     ftdi_deinit(&ftdic);
+
+    return 0;
 }

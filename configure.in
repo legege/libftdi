@@ -7,29 +7,20 @@ AC_PROG_CC
 AM_PROG_LIBTOOL
 AC_PROG_CXX
 
-dnl check for libusb-config
-AC_PATH_PROG(HAVELIBUSB, libusb-config, $PATH)
+AC_CONFIG_MACRO_DIR([m4])
 
-if test ! -z "$HAVELIBUSB"; then
-   LIBUSB_CFLAGS=`$HAVELIBUSB --cflags`
-   LIBUSB_LIBS=`$HAVELIBUSB --libs`
-
-   CFLAGS="$CFLAGS $LIBUSB_CFLAGS"
-   LIBS="$LIBS $LIBUSB_LIBS"
+dnl check for libusb-1.0
+have_libusb_1_0=no
+PKG_CHECK_MODULES(LIBUSB_1_0, [ libusb-1.0 >= 1.0.0 ], have_libusb_1_0=yes, have_libusb_1_0=no)
+if test "$have_libusb_1_0" = "yes"; then
+  CFLAGS="$CFLAGS $LIBUSB_1_0_CFLAGS"
+  CXXFLAGS="$CXXFLAGS $LIBUSB_1_0_CFLAGS"
+  USB_LIBS="$USB_LIBS $LIBUSB_1_0_LIBS"
+  HAVE_USB=yes
+  AC_DEFINE(HAVE_LIBUSB_1_0, 1, [Define to 1 if you have libusb-1.0.])
+  AC_SUBST(USB_LIBS)
 else
-   AC_MSG_ERROR([*** libusb-config not found. You need a working libusb installation.])
-fi
-
-dnl check for version of libusb
-AC_MSG_CHECKING([if libusb version is >= 0.1.7])
-libusb_version_needed="1007"
-libusb_version=`$HAVELIBUSB --version | sed -e "s/libusb //" | awk 'BEGIN { FS = "."; } { printf "%d", ($''1 * 1000 + $''2) * 1000 + $''3;}'`
-
-if test $libusb_version -lt $libusb_version_needed; then
-   AC_MSG_RESULT(no)
-   AC_MSG_ERROR([*** libusb is too old ($libusb_version). You need a libusb installation newer or equal to 0.1.7.])
-else
-   AC_MSG_RESULT(yes)
+  AC_MSG_ERROR([libusb-1.0 not found.])
 fi
 
 ENABLE_ASYNC_MODE=0

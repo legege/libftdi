@@ -17,7 +17,7 @@
 #ifndef __libftdi_h__
 #define __libftdi_h__
 
-#include <usb.h>
+#include <libusb.h>
 
 #define FTDI_DEFAULT_EEPROM_SIZE 128
 
@@ -105,8 +105,8 @@ enum ftdi_interface
 #define SIO_SET_BAUD_RATE  3 /* Set baud rate */
 #define SIO_SET_DATA       4 /* Set the data characteristics of the port */
 
-#define FTDI_DEVICE_OUT_REQTYPE (USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_ENDPOINT_OUT)
-#define FTDI_DEVICE_IN_REQTYPE (USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_ENDPOINT_IN)
+#define FTDI_DEVICE_OUT_REQTYPE (LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_OUT)
+#define FTDI_DEVICE_IN_REQTYPE (LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_IN)
 
 /* Requests */
 #define SIO_RESET_REQUEST             SIO_RESET
@@ -157,6 +157,15 @@ enum ftdi_interface
     #define DEPRECATED(func) func
 #endif
 
+struct ftdi_transfer_control
+{
+    int completed;
+    unsigned char *buf;
+    int size;
+    int offset;
+    struct ftdi_context *ftdi;
+    struct libusb_transfer *transfer;
+};
 
 /**
     \brief Main context structure for all libftdi functions.
@@ -167,7 +176,7 @@ struct ftdi_context
 {
     /* USB specific */
     /** libusb's usb_dev_handle */
-    struct usb_dev_handle *usb_dev;
+    struct libusb_device_handle *usb_dev;
     /** usb read timeout */
     int usb_read_timeout;
     /** usb write timeout */
@@ -211,11 +220,6 @@ struct ftdi_context
 
     /** String representation of last error */
     char *error_str;
-
-    /** Buffer needed for async communication */
-    char *async_usb_buffer;
-    /** Number of URB-structures we can buffer */
-    unsigned int async_usb_buffer_size;
 };
 
 /**
@@ -226,7 +230,7 @@ struct ftdi_device_list
     /** pointer to next entry */
     struct ftdi_device_list *next;
     /** pointer to libusb's usb_device */
-    struct usb_device *dev;
+    struct libusb_device *dev;
 };
 
 /**
@@ -285,13 +289,13 @@ extern "C"
 
     void ftdi_deinit(struct ftdi_context *ftdi);
     void ftdi_free(struct ftdi_context *ftdi);
-    void ftdi_set_usbdev (struct ftdi_context *ftdi, usb_dev_handle *usbdev);
+    void ftdi_set_usbdev (struct ftdi_context *ftdi, struct libusb_device_handle *usbdev);
 
     int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devlist,
                           int vendor, int product);
     void ftdi_list_free(struct ftdi_device_list **devlist);
     void ftdi_list_free2(struct ftdi_device_list *devlist);
-    int ftdi_usb_get_strings(struct ftdi_context *ftdi, struct usb_device *dev,
+    int ftdi_usb_get_strings(struct ftdi_context *ftdi, struct libusb_device *dev,
                              char * manufacturer, int mnf_len,
                              char * description, int desc_len,
                              char * serial, int serial_len);
@@ -301,7 +305,7 @@ extern "C"
                            const char* description, const char* serial);
     int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
                            const char* description, const char* serial, unsigned int index);
-    int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev);
+    int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct libusb_device *dev);
     int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description);
 
     int ftdi_usb_close(struct ftdi_context *ftdi);

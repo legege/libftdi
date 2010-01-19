@@ -79,7 +79,7 @@ public:
 
     /* Device manipulators */
     bool is_open();
-    int open(struct usb_device *dev = 0);
+    int open(struct libusb_device *dev = 0);
     int open(int vendor, int product);
     int open(int vendor, int product, const std::string& description, const std::string& serial = std::string(), unsigned int index=0);
     int open(const std::string& description);
@@ -87,7 +87,7 @@ public:
     int reset();
     int flush(int mask = Input|Output);
     int set_interface(enum ftdi_interface interface);
-    void set_usb_device(struct usb_dev_handle *dev);
+    void set_usb_device(struct libusb_device_handle *dev);
 
     /* Line manipulators */
     int set_baud_rate(int baudrate);
@@ -137,7 +137,7 @@ protected:
     /* Properties */
     struct ftdi_context* context();
     void set_context(struct ftdi_context* context);
-    void set_usb_device(struct usb_device *dev);
+    void set_usb_device(struct libusb_device *dev);
 
 private:
     class Private;

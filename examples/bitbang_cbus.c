@@ -40,7 +40,7 @@ int main(void)
     int f;
     unsigned char buf[1];
     unsigned char bitmask;
-    unsigned char input[10];
+    char input[10];
 
     if (ftdi_init(&ftdic) < 0)
     {
@@ -84,4 +84,6 @@ int main(void)
 
     ftdi_usb_close(&ftdic);
     ftdi_deinit(&ftdic);
+
+    return 0;
 }

@@ -52,7 +52,7 @@ public:
     bool open;
 
     struct ftdi_context* ftdi;
-    struct usb_device*   dev;
+    struct libusb_device* dev;
 
     std::string vendor;
     std::string description;
@@ -117,7 +117,7 @@ int Context::open(const std::string& description)
     return get_strings_and_reopen();
 }
 
-int Context::open(struct usb_device *dev)
+int Context::open(struct libusb_device *dev)
 {
     if (dev != 0)
         d->dev = dev;
@@ -156,10 +156,10 @@ int Context::set_interface(enum ftdi_interface interface)
     return ftdi_set_interface(d->ftdi, interface);
 }
 
-void Context::set_usb_device(struct usb_dev_handle *dev)
+void Context::set_usb_device(struct libusb_device_handle *dev)
 {
     ftdi_set_usbdev(d->ftdi, dev);
-    d->dev = usb_device(dev);
+    d->dev = libusb_get_device(dev);
 }
 
 int Context::set_baud_rate(int baudrate)
@@ -362,7 +362,7 @@ void Context::set_context(struct ftdi_context* context)
     d->ftdi = context;
 }
 
-void Context::set_usb_device(struct usb_device *dev)
+void Context::set_usb_device(struct libusb_device *dev)
 {
     d->dev = dev;
 }
