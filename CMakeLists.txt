@@ -5,6 +5,11 @@ set(MINOR_VERSION 17)
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION})
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 
+option(ASYNC-MODE "enable experimental async mode. Linux only")
+if(ASYNC-MODE)
+  add_definitions(-DLIBFTDI_LINUX_ASYNC_MODE)
+endif(ASYNC-MODE)
+
 # CMake
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
    set(CMAKE_BUILD_TYPE     Debug)
