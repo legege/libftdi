@@ -1163,11 +1163,7 @@ static void ftdi_read_data_cb(struct libusb_transfer *transfer)
     struct ftdi_context *ftdi = tc->ftdi;
     int packet_size, actual_length, num_of_chunks, chunk_remains, i, ret;
 
-    // New hi-speed devices from FTDI use a packet size of 512 bytes
-    if (ftdi->type == TYPE_2232H || ftdi->type == TYPE_4232H)
-        packet_size = 512;
-    else
-        packet_size = 64;
+    packet_size = ftdi->max_packet_size;
 
     actual_length = transfer->actual_length;
 
