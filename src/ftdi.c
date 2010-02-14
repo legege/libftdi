@@ -1624,7 +1624,7 @@ int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksi
 #ifdef __linux__
     /* We can't set readbuffer_chunksize larger than MAX_BULK_BUFFER_LENGTH,
        which is defined in libusb-1.0.  Otherwise, each USB read request will
-       be devided into multiple URBs.  This will cause issues on Linux kernel
+       be divided into multiple URBs.  This will cause issues on Linux kernel
        older than 2.6.32.  */
     if (chunksize > 16384)
         chunksize = 16384;
