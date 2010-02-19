@@ -2,7 +2,7 @@
                           ftdi.c  -  description
                              -------------------
     begin                : Fri Apr 4 2003
-    copyright            : (C) 2003-2008 by Intra2net AG
+    copyright            : (C) 2003-2010 by Intra2net AG
     email                : opensource@intra2net.com
  ***************************************************************************/
 
@@ -53,7 +53,7 @@
 */
 static void ftdi_usb_close_internal (struct ftdi_context *ftdi)
 {
-    if (ftdi->usb_dev)
+    if (ftdi && ftdi->usb_dev)
     {
        libusb_close (ftdi->usb_dev);
        ftdi->usb_dev = NULL;
@@ -131,9 +131,13 @@ struct ftdi_context *ftdi_new(void)
 
     \retval  0: all fine
     \retval -1: unknown interface
+    \retval -2: USB device unavailable
 */
 int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
 {
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     switch (interface)
     {
         case INTERFACE_ANY:
@@ -171,6 +175,9 @@ int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
 */
 void ftdi_deinit(struct ftdi_context *ftdi)
 {
+    if (ftdi == NULL)
+        return;
+
     ftdi_usb_close_internal (ftdi);
 
     if (ftdi->readbuffer != NULL)
@@ -199,6 +206,9 @@ void ftdi_free(struct ftdi_context *ftdi)
 */
 void ftdi_set_usbdev (struct ftdi_context *ftdi, libusb_device_handle *usb)
 {
+    if (ftdi == NULL)
+        return;
+
     ftdi->usb_dev = usb;
 }
 
@@ -372,6 +382,10 @@ static unsigned int _ftdi_determine_max_packet_size(struct ftdi_context *ftdi, l
     struct libusb_config_descriptor *config0;
     unsigned int packet_size;
 
+    // Sanity check
+    if (ftdi == NULL || dev == NULL)
+        return 64;
+
     // Determine maximum packet size. Init with default value.
     // New hi-speed devices from FTDI use a packet size of 512 bytes
     // but could be connected to a normal speed USB hub -> 64 bytes packet size.
@@ -418,6 +432,7 @@ static unsigned int _ftdi_determine_max_packet_size(struct ftdi_context *ftdi, l
     \retval -5: unable to claim device
     \retval -6: reset failed
     \retval -7: set baudrate failed
+    \retval -8: ftdi context invalid
     \retval -9: libusb_get_device_descriptor() failed
     \retval -10: libusb_get_config_descriptor() failed
     \retval -11: libusb_etach_kernel_driver() failed
@@ -428,6 +443,9 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, libusb_device *dev)
     struct libusb_device_descriptor desc;
     struct libusb_config_descriptor *config0;
     int cfg, cfg0;
+
+    if (ftdi == NULL)
+        ftdi_error_return(-8, "ftdi context invalid");
 
     if (libusb_open(dev, &ftdi->usb_dev) < 0)
         ftdi_error_return(-4, "libusb_open() failed");
@@ -585,6 +603,7 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
     \retval -8: get product description failed
     \retval -9: get serial number failed
     \retval -10: unable to close device
+    \retval -11: ftdi context invalid
 */
 int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
                        const char* description, const char* serial, unsigned int index)
@@ -599,6 +618,9 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
 
     if (libusb_get_device_list(NULL, &devs) < 0)
         ftdi_error_return(-12, "libusb_get_device_list() failed");
+
+    if (ftdi == NULL)
+        ftdi_error_return(-11, "ftdi context invalid");
 
     while ((dev = devs[i++]) != NULL)
     {
@@ -680,9 +702,13 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
     \retval -9: get serial number failed
     \retval -10: unable to close device
     \retval -11: illegal description format
+    \retval -12: ftdi context invalid
 */
 int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description)
 {
+    if (ftdi == NULL)
+        ftdi_error_return(-12, "ftdi context invalid");
+
     if (description[0] == 0 || description[1] != ':')
         ftdi_error_return(-11, "illegal description format");
 
@@ -767,9 +793,13 @@ int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description)
 
     \retval  0: all fine
     \retval -1: FTDI reset failed
+    \retval -2: USB device unavailable
 */
 int ftdi_usb_reset(struct ftdi_context *ftdi)
 {
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                                 SIO_RESET_REQUEST, SIO_RESET_SIO,
                                 ftdi->index, NULL, 0, ftdi->usb_write_timeout) < 0)
@@ -789,9 +819,13 @@ int ftdi_usb_reset(struct ftdi_context *ftdi)
 
     \retval  0: all fine
     \retval -1: read buffer purge failed
+    \retval -2: USB device unavailable
 */
 int ftdi_usb_purge_rx_buffer(struct ftdi_context *ftdi)
 {
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                                 SIO_RESET_REQUEST, SIO_RESET_PURGE_RX,
                                 ftdi->index, NULL, 0, ftdi->usb_write_timeout) < 0)
@@ -811,9 +845,13 @@ int ftdi_usb_purge_rx_buffer(struct ftdi_context *ftdi)
 
     \retval  0: all fine
     \retval -1: write buffer purge failed
+    \retval -2: USB device unavailable
 */
 int ftdi_usb_purge_tx_buffer(struct ftdi_context *ftdi)
 {
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                                 SIO_RESET_REQUEST, SIO_RESET_PURGE_TX,
                                 ftdi->index, NULL, 0, ftdi->usb_write_timeout) < 0)
@@ -830,10 +868,14 @@ int ftdi_usb_purge_tx_buffer(struct ftdi_context *ftdi)
     \retval  0: all fine
     \retval -1: read buffer purge failed
     \retval -2: write buffer purge failed
+    \retval -3: USB device unavailable
 */
 int ftdi_usb_purge_buffers(struct ftdi_context *ftdi)
 {
     int result;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-3, "USB device unavailable");
 
     result = ftdi_usb_purge_rx_buffer(ftdi);
     if (result < 0)
@@ -855,10 +897,14 @@ int ftdi_usb_purge_buffers(struct ftdi_context *ftdi)
 
     \retval  0: all fine
     \retval -1: usb_release failed
+    \retval -3: ftdi context invalid
 */
 int ftdi_usb_close(struct ftdi_context *ftdi)
 {
     int rtn = 0;
+
+    if (ftdi == NULL)
+        ftdi_error_return(-3, "ftdi context invalid");
 
     if (ftdi->usb_dev != NULL)
         if (libusb_release_interface(ftdi->usb_dev, ftdi->interface) < 0)
@@ -1004,11 +1050,15 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
     \retval  0: all fine
     \retval -1: invalid baudrate
     \retval -2: setting baudrate failed
+    \retval -3: USB device unavailable
 */
 int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate)
 {
     unsigned short value, index;
     int actual_baudrate;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-3, "USB device unavailable");
 
     if (ftdi->bitbang_enabled)
     {
@@ -1065,12 +1115,16 @@ int ftdi_set_line_property(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
 
     \retval  0: all fine
     \retval -1: Setting line property failed
+    \retval -2: USB device unavailable
 */
 int ftdi_set_line_property2(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
                             enum ftdi_stopbits_type sbit, enum ftdi_parity_type parity,
                             enum ftdi_break_type break_type)
 {
     unsigned short value = bits;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     switch (parity)
     {
@@ -1129,6 +1183,7 @@ int ftdi_set_line_property2(struct ftdi_context *ftdi, enum ftdi_bits_type bits,
     \param buf Buffer with the data
     \param size Size of the buffer
 
+    \retval -666: USB device unavailable
     \retval <0: error code from usb_bulk_write()
     \retval >0: number of bytes written
 */
@@ -1136,6 +1191,9 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
     int offset = 0;
     int actual_length;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-666, "USB device unavailable");
 
     while (offset < size)
     {
@@ -1288,6 +1346,12 @@ struct ftdi_transfer_control *ftdi_write_data_submit(struct ftdi_context *ftdi, 
     struct libusb_transfer *transfer = libusb_alloc_transfer(0);
     int write_size, ret;
 
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+    {
+        libusb_free_transfer(transfer);
+        return NULL;
+    }
+
     tc = (struct ftdi_transfer_control *) malloc (sizeof (*tc));
 
     if (!tc || !transfer)
@@ -1340,6 +1404,9 @@ struct ftdi_transfer_control *ftdi_read_data_submit(struct ftdi_context *ftdi, u
     struct ftdi_transfer_control *tc;
     struct libusb_transfer *transfer;
     int ret;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        return NULL;
 
     tc = (struct ftdi_transfer_control *) malloc (sizeof (*tc));
     if (!tc)
@@ -1454,9 +1521,13 @@ int ftdi_transfer_data_done(struct ftdi_transfer_control *tc)
     \param chunksize Chunk size
 
     \retval 0: all fine
+    \retval -1: ftdi context invalid
 */
 int ftdi_write_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize)
 {
+    if (ftdi == NULL)
+        ftdi_error_return(-1, "ftdi context invalid");
+
     ftdi->writebuffer_chunksize = chunksize;
     return 0;
 }
@@ -1468,9 +1539,13 @@ int ftdi_write_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunks
     \param chunksize Pointer to store chunk size in
 
     \retval 0: all fine
+    \retval -1: ftdi context invalid
 */
 int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize)
 {
+    if (ftdi == NULL)
+        ftdi_error_return(-1, "ftdi context invalid");
+
     *chunksize = ftdi->writebuffer_chunksize;
     return 0;
 }
@@ -1484,6 +1559,7 @@ int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunk
     \param buf Buffer to store data in
     \param size Size of the buffer
 
+    \retval -666: USB device unavailable
     \retval <0: error code from libusb_bulk_transfer()
     \retval  0: no data was available
     \retval >0: number of bytes read
@@ -1494,6 +1570,9 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
     int offset = 0, ret, i, num_of_chunks, chunk_remains;
     int packet_size = ftdi->max_packet_size;
     int actual_length = 1;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-666, "USB device unavailable");
 
     // Packet size sanity check (avoid division by zero)
     if (packet_size == 0)
@@ -1609,10 +1688,14 @@ int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
     \param chunksize Chunk size
 
     \retval 0: all fine
+    \retval -1: ftdi context invalid
 */
 int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize)
 {
     unsigned char *new_buf;
+
+    if (ftdi == NULL)
+        ftdi_error_return(-1, "ftdi context invalid");
 
     // Invalidate all remaining data
     ftdi->readbuffer_offset = 0;
@@ -1642,9 +1725,13 @@ int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksi
     \param chunksize Pointer to store chunk size in
 
     \retval 0: all fine
+    \retval -1: FTDI context invalid
 */
 int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize)
 {
+    if (ftdi == NULL)
+        ftdi_error_return(-1, "FTDI context invalid");
+
     *chunksize = ftdi->readbuffer_chunksize;
     return 0;
 }
@@ -1661,10 +1748,14 @@ int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunks
 
     \retval  0: all fine
     \retval -1: can't enable bitbang mode
+    \retval -2: USB device unavailable
 */
 int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask)
 {
     unsigned short usb_val;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     usb_val = bitmask; // low byte: bitmask
     /* FT2232C: Set bitbang_mode to 2 to enable SPI */
@@ -1686,9 +1777,13 @@ int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask)
 
     \retval  0: all fine
     \retval -1: can't disable bitbang mode
+    \retval -2: USB device unavailable
 */
 int ftdi_disable_bitbang(struct ftdi_context *ftdi)
 {
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_SET_BITMODE_REQUEST, 0, ftdi->index, NULL, 0, ftdi->usb_write_timeout) < 0)
         ftdi_error_return(-1, "unable to leave bitbang mode. Perhaps not a BM type chip?");
 
@@ -1706,10 +1801,14 @@ int ftdi_disable_bitbang(struct ftdi_context *ftdi)
 
     \retval  0: all fine
     \retval -1: can't enable bitbang mode
+    \retval -2: USB device unavailable
 */
 int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned char mode)
 {
     unsigned short usb_val;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     usb_val = bitmask; // low byte: bitmask
     usb_val |= (mode << 8);
@@ -1729,9 +1828,13 @@ int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned 
 
     \retval  0: all fine
     \retval -1: read pins failed
+    \retval -2: USB device unavailable
 */
 int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins)
 {
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_PINS_REQUEST, 0, ftdi->index, (unsigned char *)pins, 1, ftdi->usb_read_timeout) != 1)
         ftdi_error_return(-1, "read pins failed");
 
@@ -1751,6 +1854,7 @@ int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins)
     \retval  0: all fine
     \retval -1: latency out of range
     \retval -2: unable to set latency timer
+    \retval -3: USB device unavailable
 */
 int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency)
 {
@@ -1758,6 +1862,9 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency)
 
     if (latency < 1)
         ftdi_error_return(-1, "latency out of range. Only valid for 1-255");
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-3, "USB device unavailable");
 
     usb_val = latency;
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_SET_LATENCY_TIMER_REQUEST, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) < 0)
@@ -1774,10 +1881,15 @@ int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency)
 
     \retval  0: all fine
     \retval -1: unable to get latency timer
+    \retval -2: USB device unavailable
 */
 int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency)
 {
     unsigned short usb_val;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_GET_LATENCY_TIMER_REQUEST, 0, ftdi->index, (unsigned char *)&usb_val, 1, ftdi->usb_read_timeout) != 1)
         ftdi_error_return(-1, "reading latency timer failed");
 
@@ -1823,10 +1935,14 @@ int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency)
 
     \retval  0: all fine
     \retval -1: unable to retrieve status information
+    \retval -2: USB device unavailable
 */
 int ftdi_poll_modem_status(struct ftdi_context *ftdi, unsigned short *status)
 {
     char usb_val[2];
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_POLL_MODEM_STATUS_REQUEST, 0, ftdi->index, (unsigned char *)usb_val, 2, ftdi->usb_read_timeout) != 2)
         ftdi_error_return(-1, "getting modem status failed");
@@ -1845,9 +1961,13 @@ int ftdi_poll_modem_status(struct ftdi_context *ftdi, unsigned short *status)
 
     \retval  0: all fine
     \retval -1: set flow control failed
+    \retval -2: USB device unavailable
 */
 int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl)
 {
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                                 SIO_SET_FLOW_CTRL_REQUEST, 0, (flowctrl | ftdi->index),
                                 NULL, 0, ftdi->usb_write_timeout) < 0)
@@ -1864,10 +1984,14 @@ int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl)
 
     \retval  0: all fine
     \retval -1: set dtr failed
+    \retval -2: USB device unavailable
 */
 int ftdi_setdtr(struct ftdi_context *ftdi, int state)
 {
     unsigned short usb_val;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     if (state)
         usb_val = SIO_SET_DTR_HIGH;
@@ -1889,11 +2013,15 @@ int ftdi_setdtr(struct ftdi_context *ftdi, int state)
     \param state state to set line to (1 or 0)
 
     \retval  0: all fine
-    \retval -1 set rts failed
+    \retval -1: set rts failed
+    \retval -2: USB device unavailable
 */
 int ftdi_setrts(struct ftdi_context *ftdi, int state)
 {
     unsigned short usb_val;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     if (state)
         usb_val = SIO_SET_RTS_HIGH;
@@ -1909,18 +2037,22 @@ int ftdi_setrts(struct ftdi_context *ftdi, int state)
 }
 
 /**
- Set dtr and rts line in one pass
+    Set dtr and rts line in one pass
 
- \param ftdi pointer to ftdi_context
- \param dtr  DTR state to set line to (1 or 0)
- \param rts  RTS state to set line to (1 or 0)
+    \param ftdi pointer to ftdi_context
+    \param dtr  DTR state to set line to (1 or 0)
+    \param rts  RTS state to set line to (1 or 0)
 
- \retval  0: all fine
- \retval -1 set dtr/rts failed
+    \retval  0: all fine
+    \retval -1: set dtr/rts failed
+    \retval -2: USB device unavailable
  */
 int ftdi_setdtr_rts(struct ftdi_context *ftdi, int dtr, int rts)
 {
     unsigned short usb_val;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     if (dtr)
         usb_val = SIO_SET_DTR_HIGH;
@@ -1949,11 +2081,15 @@ int ftdi_setdtr_rts(struct ftdi_context *ftdi, int dtr, int rts)
 
     \retval  0: all fine
     \retval -1: unable to set event character
+    \retval -2: USB device unavailable
 */
 int ftdi_set_event_char(struct ftdi_context *ftdi,
                         unsigned char eventch, unsigned char enable)
 {
     unsigned short usb_val;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     usb_val = eventch;
     if (enable)
@@ -1974,11 +2110,15 @@ int ftdi_set_event_char(struct ftdi_context *ftdi,
 
     \retval  0: all fine
     \retval -1: unable to set error character
+    \retval -2: USB device unavailable
 */
 int ftdi_set_error_char(struct ftdi_context *ftdi,
                         unsigned char errorch, unsigned char enable)
 {
     unsigned short usb_val;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     usb_val = errorch;
     if (enable)
@@ -2000,6 +2140,9 @@ int ftdi_set_error_char(struct ftdi_context *ftdi,
 */
 void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, int size)
 {
+    if (ftdi == NULL)
+        return;
+
     ftdi->eeprom_size=size;
     eeprom->size=size;
 }
@@ -2011,6 +2154,9 @@ void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, 
 */
 void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom)
 {
+    if (eeprom == NULL)
+        return;
+
     eeprom->vendor_id = 0x0403;
     eeprom->product_id = 0x6001;
 
@@ -2035,14 +2181,15 @@ void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom)
 }
 
 /**
-   Build binary output from ftdi_eeprom structure.
-   Output is suitable for ftdi_write_eeprom().
+    Build binary output from ftdi_eeprom structure.
+    Output is suitable for ftdi_write_eeprom().
 
-   \param eeprom Pointer to ftdi_eeprom
-   \param output Buffer of 128 bytes to store eeprom image to
+    \param eeprom Pointer to ftdi_eeprom
+    \param output Buffer of 128 bytes to store eeprom image to
 
-   \retval >0: used eeprom size
-   \retval -1: eeprom size (128 bytes) exceeded by custom strings
+    \retval >0: used eeprom size
+    \retval -1: eeprom size (128 bytes) exceeded by custom strings
+    \retval -2: Invalid eeprom pointer
 */
 int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
 {
@@ -2050,6 +2197,9 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     unsigned short checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
     int size_check;
+
+    if (eeprom == NULL)
+        return -2;
 
     if (eeprom->manufacturer != NULL)
         manufacturer_size = strlen(eeprom->manufacturer);
@@ -2228,6 +2378,9 @@ int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
     unsigned short checksum, eeprom_checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
     int eeprom_size = 128;
+
+    if (eeprom == NULL)
+        return -1;
 #if 0
     size_check = eeprom->size;
     size_check -= 28; // 28 are always in use (fixed)
@@ -2383,9 +2536,13 @@ int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
 
     \retval  0: all fine
     \retval -1: read failed
+    \retval -2: USB device unavailable
 */
 int ftdi_read_eeprom_location (struct ftdi_context *ftdi, int eeprom_addr, unsigned short *eeprom_val)
 {
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, eeprom_addr, (char *)eeprom_val, 2, ftdi->usb_read_timeout) != 2)
         ftdi_error_return(-1, "reading eeprom failed");
 
@@ -2400,10 +2557,14 @@ int ftdi_read_eeprom_location (struct ftdi_context *ftdi, int eeprom_addr, unsig
 
     \retval  0: all fine
     \retval -1: read failed
+    \retval -2: USB device unavailable
 */
 int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
 {
     int i;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     for (i = 0; i < ftdi->eeprom_size/2; i++)
     {
@@ -2439,10 +2600,14 @@ static unsigned char ftdi_read_chipid_shift(unsigned char value)
 
     \retval  0: all fine
     \retval -1: read failed
+    \retval -2: USB device unavailable
 */
 int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
 {
     unsigned int a = 0, b = 0;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, 0x43, (unsigned char *)&a, 2, ftdi->usb_read_timeout) == 2)
     {
@@ -2462,19 +2627,24 @@ int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
 }
 
 /**
-   Guesses size of eeprom by reading eeprom and comparing halves - will not work with blank eeprom
-   Call this function then do a write then call again to see if size changes, if so write again.
+    Guesses size of eeprom by reading eeprom and comparing halves - will not work with blank eeprom
+    Call this function then do a write then call again to see if size changes, if so write again.
 
-   \param ftdi pointer to ftdi_context
-   \param eeprom Pointer to store eeprom into
-   \param maxsize the size of the buffer to read into
+    \param ftdi pointer to ftdi_context
+    \param eeprom Pointer to store eeprom into
+    \param maxsize the size of the buffer to read into
 
-   \retval size of eeprom
+    \retval -1: eeprom read failed
+    \retval -2: USB device unavailable
+    \retval >=0: size of eeprom
 */
 int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, int maxsize)
 {
     int i=0,j,minsize=32;
     int size=minsize;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     do
     {
@@ -2483,7 +2653,7 @@ int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, i
             if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE,
                                         SIO_READ_EEPROM_REQUEST, 0, i,
                                         eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
-                ftdi_error_return(-1, "reading eeprom failed");
+                ftdi_error_return(-1, "eeprom read failed");
             i++;
         }
         size*=2;
@@ -2502,9 +2672,13 @@ int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, i
 
     \retval  0: all fine
     \retval -1: read failed
+    \retval -2: USB device unavailable
 */
 int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr, unsigned short eeprom_val)
 {
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                                     SIO_WRITE_EEPROM_REQUEST, eeprom_val, eeprom_addr,
                                     NULL, 0, ftdi->usb_write_timeout) != 0)
@@ -2521,11 +2695,15 @@ int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr, unsig
 
     \retval  0: all fine
     \retval -1: read failed
+    \retval -2: USB device unavailable
 */
 int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
 {
     unsigned short usb_val, status;
     int i, ret;
+
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
 
     /* These commands were traced while running MProg */
     if ((ret = ftdi_usb_reset(ftdi)) != 0)
@@ -2557,9 +2735,13 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
 
     \retval  0: all fine
     \retval -1: erase failed
+    \retval -2: USB device unavailable
 */
 int ftdi_erase_eeprom(struct ftdi_context *ftdi)
 {
+    if (ftdi == NULL || ftdi->usb_dev == NULL)
+        ftdi_error_return(-2, "USB device unavailable");
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_ERASE_EEPROM_REQUEST, 0, 0, NULL, 0, ftdi->usb_write_timeout) < 0)
         ftdi_error_return(-1, "unable to erase eeprom");
 
@@ -2575,6 +2757,9 @@ int ftdi_erase_eeprom(struct ftdi_context *ftdi)
 */
 char *ftdi_get_error_string (struct ftdi_context *ftdi)
 {
+    if (ftdi == NULL)
+        return "";
+
     return ftdi->error_str;
 }
 
