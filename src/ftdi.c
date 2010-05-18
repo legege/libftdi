@@ -442,7 +442,7 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, libusb_device *dev)
 {
     struct libusb_device_descriptor desc;
     struct libusb_config_descriptor *config0;
-    int cfg, cfg0;
+    int cfg, cfg0, detach_errno = 0;
 
     if (ftdi == NULL)
         ftdi_error_return(-8, "ftdi context invalid");
@@ -458,22 +458,17 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, libusb_device *dev)
     cfg0 = config0->bConfigurationValue;
     libusb_free_config_descriptor (config0);
 
-#ifdef LIBUSB_HAS_GET_DRIVER_NP
     // Try to detach ftdi_sio kernel module.
-    // Returns ENODATA if driver is not loaded.
     //
     // The return code is kept in a separate variable and only parsed
     // if usb_set_configuration() or usb_claim_interface() fails as the
     // detach operation might be denied and everything still works fine.
     // Likely scenario is a static ftdi_sio kernel module.
-    ret = libusb_detach_kernel_driver(ftdi->usb_dev, ftdi->interface);
-    if (ret < 0 && ret != LIBUSB_ERROR_NOT_FOUND)
-        ftdi_error_return(-11, "libusb_detach_kernel_driver () failed");
-#endif
+    if (libusb_detach_kernel_driver(ftdi->usb_dev, ftdi->interface) !=0)
+        detach_errno = errno;
 
     if (libusb_get_configuration (ftdi->usb_dev, &cfg) < 0)
         ftdi_error_return(-12, "libusb_get_configuration () failed");
-
     // set configuration (needed especially for windows)
     // tolerate EBUSY: one device with one configuration, but two interfaces
     //    and libftdi sessions to both interfaces (e.g. FT2232)
@@ -482,14 +477,28 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, libusb_device *dev)
         if (libusb_set_configuration(ftdi->usb_dev, cfg0) < 0)
         {
             ftdi_usb_close_internal (ftdi);
-            ftdi_error_return(-3, "unable to set usb configuration. Make sure ftdi_sio is unloaded!");
+            if(detach_errno == EPERM)
+            {
+                ftdi_error_return(-8, "inappropriate permissions on device!");
+            }
+            else
+            {
+                ftdi_error_return(-3, "unable to set usb configuration. Make sure ftdi_sio is unloaded!");
+            }
         }
     }
 
     if (libusb_claim_interface(ftdi->usb_dev, ftdi->interface) < 0)
     {
         ftdi_usb_close_internal (ftdi);
-        ftdi_error_return(-5, "unable to claim usb device. Make sure ftdi_sio is unloaded!");
+        if(detach_errno == EPERM)
+        {
+            ftdi_error_return(-8, "inappropriate permissions on device!");
+        }
+        else
+        {
+            ftdi_error_return(-5, "unable to claim usb device. Make sure ftdi_sio is unloaded!");
+        }
     }
 
     if (ftdi_usb_reset (ftdi) != 0)
