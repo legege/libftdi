@@ -1,6 +1,6 @@
 # the library search path.
 lib_LTLIBRARIES =  libftdi.la
-libftdi_la_SOURCES =  ftdi.c
+libftdi_la_SOURCES =  ftdi.c ftdi_stream.c
 include_HEADERS =  ftdi.h
 
 # Note:  If you specify a:b:c as the version in the next line,

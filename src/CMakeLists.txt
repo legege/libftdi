@@ -4,7 +4,7 @@ include_directories( ${CMAKE_CURRENT_BINARY_DIR}
                      )
 
 # Targets
-set(c_sources     ftdi.c)
+set(c_sources     ftdi.c ftdi_stream.c)
 set(c_headers     ftdi.h)
 
 add_library(ftdi SHARED ${c_sources})

@@ -278,6 +278,29 @@ struct ftdi_eeprom
     int size;
 };
 
+/**
+    \brief Progress Info for streaming read
+*/
+struct size_and_time
+{
+        uint64_t totalBytes;
+        struct timeval time;
+};
+
+typedef struct
+{
+    struct size_and_time first;
+    struct size_and_time prev;
+    struct size_and_time current;
+    double totalTime;
+    double totalRate;
+    double currentRate;
+} FTDIProgressInfo;
+
+typedef int (FTDIStreamCallback)(uint8_t *buffer, int length,
+                                 FTDIProgressInfo *progress, void *userdata);
+
+
 #ifdef __cplusplus
 extern "C"
 {
