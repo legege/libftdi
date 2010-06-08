@@ -185,6 +185,7 @@ void ftdi_deinit(struct ftdi_context *ftdi)
         free(ftdi->readbuffer);
         ftdi->readbuffer = NULL;
     }
+    libusb_exit(NULL);
 }
 
 /**
