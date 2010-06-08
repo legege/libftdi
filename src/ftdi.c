@@ -41,6 +41,12 @@
         return code;                       \
    } while(0);
 
+#define ftdi_error_return_free_device_list(code, str, devs) do {    \
+        libusb_free_device_list(devs,1);   \
+        ftdi->error_str = str;             \
+        return code;                       \
+   } while(0);
+
 
 /**
     Internal function to close usb device pointer.
@@ -626,30 +632,31 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
     if (libusb_init(NULL) < 0)
         ftdi_error_return(-11, "libusb_init() failed");
 
-    if (libusb_get_device_list(NULL, &devs) < 0)
-        ftdi_error_return(-12, "libusb_get_device_list() failed");
-
     if (ftdi == NULL)
         ftdi_error_return(-11, "ftdi context invalid");
+
+    if (libusb_get_device_list(NULL, &devs) < 0)
+        ftdi_error_return(-12, "libusb_get_device_list() failed");
 
     while ((dev = devs[i++]) != NULL)
     {
         struct libusb_device_descriptor desc;
+        int res;
 
         if (libusb_get_device_descriptor(dev, &desc) < 0)
-            ftdi_error_return(-13, "libusb_get_device_descriptor() failed");
+            ftdi_error_return_free_device_list(-13, "libusb_get_device_descriptor() failed", devs);
 
         if (desc.idVendor == vendor && desc.idProduct == product)
         {
             if (libusb_open(dev, &ftdi->usb_dev) < 0)
-                ftdi_error_return(-4, "usb_open() failed");
+                ftdi_error_return_free_device_list(-4, "usb_open() failed", devs);
 
             if (description != NULL)
             {
                 if (libusb_get_string_descriptor_ascii(ftdi->usb_dev, desc.iProduct, (unsigned char *)string, sizeof(string)) < 0)
                 {
                     libusb_close (ftdi->usb_dev);
-                    ftdi_error_return(-8, "unable to fetch product description");
+                    ftdi_error_return_free_device_list(-8, "unable to fetch product description", devs);
                 }
                 if (strncmp(string, description, sizeof(string)) != 0)
                 {
@@ -662,7 +669,7 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
                 if (libusb_get_string_descriptor_ascii(ftdi->usb_dev, desc.iSerialNumber, (unsigned char *)string, sizeof(string)) < 0)
                 {
                     ftdi_usb_close_internal (ftdi);
-                    ftdi_error_return(-9, "unable to fetch serial number");
+                    ftdi_error_return_free_device_list(-9, "unable to fetch serial number", devs);
                 }
                 if (strncmp(string, serial, sizeof(string)) != 0)
                 {
@@ -679,12 +686,14 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
                     continue;
                 }
 
-            return ftdi_usb_open_dev(ftdi, dev);
+            res = ftdi_usb_open_dev(ftdi, dev);
+            libusb_free_device_list(devs,1);
+            return res;
         }
     }
 
     // device not found
-    ftdi_error_return(-3, "device not found");
+    ftdi_error_return_free_device_list(-3, "device not found", devs);
 }
 
 /**
@@ -737,17 +746,22 @@ int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description)
 
         /* XXX: This doesn't handle symlinks/odd paths/etc... */
         if (sscanf (description + 2, "%u/%u", &bus_number, &device_address) != 2)
-	    ftdi_error_return(-11, "illegal description format");
+	    ftdi_error_return_free_device_list(-11, "illegal description format", devs);
 
 	while ((dev = devs[i++]) != NULL)
         {
+            int ret;
 	    if (bus_number == libusb_get_bus_number (dev)
 		&& device_address == libusb_get_device_address (dev))
-                return ftdi_usb_open_dev(ftdi, dev);
+            {
+                ret = ftdi_usb_open_dev(ftdi, dev);
+                libusb_free_device_list(devs,1);
+                return ret;
+            }
         }
 
         // device not found
-        ftdi_error_return(-3, "device not found");
+        ftdi_error_return_free_device_list(-3, "device not found", devs);
     }
     else if (description[0] == 'i' || description[0] == 's')
     {
