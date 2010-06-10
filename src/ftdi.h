@@ -352,6 +352,8 @@ extern "C"
     int ftdi_write_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize);
     int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize);
 
+    int ftdi_readstream(struct ftdi_context *ftdi, FTDIStreamCallback *callback, 
+                        void *userdata, int packetsPerTransfer, int numTransfers);
     int ftdi_write_data_async(struct ftdi_context *ftdi, unsigned char *buf, int size);
     void ftdi_async_complete(struct ftdi_context *ftdi, int wait_for_more);
 
