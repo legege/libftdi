@@ -65,7 +65,7 @@ usage(const char *argv0)
 
 static uint32_t start = 0;
 static uint32_t offset = 0;
-static uint32_t blocks = 0;
+static uint64_t blocks = 0;
 static uint32_t skips = 0;
 static uint32_t n_err = 0;
 static int
@@ -83,7 +83,7 @@ readCallback(uint8_t *buffer, int length, FTDIProgressInfo *progress, void *user
                if (start && (num != start +0x4000))
                {
                    uint32_t delta = ((num-start)/0x4000)-1;
-                   fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10d \n",
+                   fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10ld \n",
                            delta, start -0x4000, num, blocks);
                    n_err++;
                    skips += delta;
@@ -98,7 +98,7 @@ readCallback(uint8_t *buffer, int length, FTDIProgressInfo *progress, void *user
                if (start && (num != start +0x4000))
                {
                    uint32_t delta = ((num-start)/0x4000)-1;
-                   fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10d \n",
+                   fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10ld \n",
                            delta, start -0x4000, num, blocks);
                    n_err++;
                    skips += delta;
@@ -124,11 +124,12 @@ readCallback(uint8_t *buffer, int length, FTDIProgressInfo *progress, void *user
    }
    if (progress)
    {
-       fprintf(stderr, "%10.02fs total time %9.3f MiB captured %7.1f kB/s curr rate %7.1f kB/s totalrate \n",
+       fprintf(stderr, "%10.02fs total time %9.3f MiB captured %7.1f kB/s curr rate %7.1f kB/s totalrate %d dropouts\n",
                progress->totalTime,
                progress->current.totalBytes / (1024.0 * 1024.0),
                progress->currentRate / 1024.0,
-               progress->totalRate / 1024.0);
+               progress->totalRate / 1024.0,
+               n_err);
    }
    return exitRequested ? 1 : 0;
 }
@@ -192,7 +193,7 @@ int main(int argc, char **argv)
    /* A timeout value of 1 results in may skipped blocks */
    if(ftdi_set_latency_timer(&ftdic, 2))
    {
-       fprintf(stderr,"Can't set latency\n",ftdi_get_error_string(&ftdic));
+       fprintf(stderr,"Can't set latency, Error %s\n",ftdi_get_error_string(&ftdic));
        return EXIT_FAILURE;
    }
    
@@ -221,7 +222,7 @@ int main(int argc, char **argv)
    
    if (ftdi_set_bitmode(&ftdic,  0xff, BITMODE_RESET) < 0)
    {
-       fprintf(stderr,"Can't set synchronous fifo mode\n",ftdi_get_error_string(&ftdic));
+       fprintf(stderr,"Can't set synchronous fifo mode, Error %s\n",ftdi_get_error_string(&ftdic));
        return EXIT_FAILURE;
    }
    ftdi_usb_close(&ftdic);
@@ -238,7 +239,7 @@ int main(int argc, char **argv)
        fclose(outputFile);
    }
    else if (check)
-       fprintf(stderr,"%d errors of %d blocks (%Le), %d (%Le) blocks skipped\n",
+       fprintf(stderr,"%d errors of %ld blocks (%Le), %d (%Le) blocks skipped\n",
                n_err, blocks, (long double)n_err/(long double) blocks,
                skips, (long double)skips/(long double) blocks);
    exit (0);
@@ -256,7 +257,6 @@ void check_outfile(char *descstring)
        int err_count = 0;
        unsigned int num_start, num_end;
 
-       unsigned int block[4];
        pa = buf0;
        pb = buf1;
        pc = buf0;
@@ -313,7 +313,6 @@ void check_outfile(char *descstring)
         uint32_t *pc = block0;
         uint32_t start= 0;
         uint32_t nread = 0;
-        int expect = 1;
         int n_shown = 0;
         int n_errors = 0;
         if (fread(pa, sizeof(uint32_t), 4,outputFile) < 4)
@@ -329,7 +328,7 @@ void check_outfile(char *descstring)
             {
                 if(n_shown < 30)
                 {
-                    fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10d \n",
+                    fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10ld \n",
                             (nread-start)/0x4000, start -0x4000, nread, blocks);
                     n_shown ++;
                 }
@@ -343,9 +342,9 @@ void check_outfile(char *descstring)
             pc = pa;
         }
         if(n_errors)
-            fprintf(stderr, "%d blocks wrong from %d blocks read\n",
+            fprintf(stderr, "%d blocks wrong from %ld blocks read\n",
                     n_errors, blocks);
         else
-            fprintf(stderr, "%d blocks all fine\n",blocks);
+            fprintf(stderr, "%ld blocks all fine\n",blocks);
     }
 }

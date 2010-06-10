@@ -49,66 +49,64 @@ typedef struct
     FTDIStreamCallback *callback;
     void *userdata;
     int packetsize;
+    int activity;
     int result;
     FTDIProgressInfo progress;
 } FTDIStreamState;
 
+/* Handle callbacks
+ * 
+ * With Exit request, free memory and release the transfer
+ *
+ * state->result is only set when some error happens 
+ */
 static void
 ftdi_readstream_cb(struct libusb_transfer *transfer)
 {
    FTDIStreamState *state = transfer->user_data;
    int packet_size = state->packetsize;
 
-   if(transfer->status & LIBUSB_TRANSFER_CANCELLED)
+   state->activity++;
+   if (transfer->status == LIBUSB_TRANSFER_COMPLETED)
    {
-       free(transfer->buffer);
-       libusb_free_transfer(transfer);
-       return;
-   }
-   if (state->result == 0)
-   {
-       if (transfer->status == LIBUSB_TRANSFER_COMPLETED)
+       int i;
+       uint8_t *ptr = transfer->buffer;
+       int length = transfer->actual_length;
+       int numPackets = (length + packet_size - 1) / packet_size;
+       int res;
+
+       for (i = 0; i < numPackets; i++)
        {
-           int i;
-           uint8_t *ptr = transfer->buffer;
-           int length = transfer->actual_length;
-           int numPackets = (length + packet_size - 1) / packet_size;
+           int payloadLen;
+           int packetLen = length;
+           
+           if (packetLen > packet_size)
+               packetLen = packet_size;
+           
+           payloadLen = packetLen - 2;
+           state->progress.current.totalBytes += payloadLen;
+           
+           res = state->callback(ptr + 2, payloadLen,
+                                 NULL, state->userdata);
 
-           for (i = 0; i < numPackets; i++)
-           {
-               int payloadLen;
-               int packetLen = length;
-
-               if (packetLen > packet_size)
-                   packetLen = packet_size;
-
-               payloadLen = packetLen - 2;
-               state->progress.current.totalBytes += payloadLen;
-
-               state->result = state->callback(ptr + 2, payloadLen,
-                                               NULL, state->userdata);
-               if (state->result)
-                   break;
-
-               ptr += packetLen;
-               length -= packetLen;
-           }
-
-
+           ptr += packetLen;
+           length -= packetLen;
+       }
+       if (res)
+       {
+           free(transfer->buffer);
+           libusb_free_transfer(transfer);           
        }
        else
        {
-           fprintf(stderr, "unknown status %d\n",transfer->status); 
-           state->result = LIBUSB_ERROR_IO;
+           transfer->status = -1;
+           state->result = libusb_submit_transfer(transfer);
        }
    }
    else
-       fprintf(stderr,"state->result %d\n", state->result);
-
-   if (state->result == 0)
    {
-       transfer->status = -1;
-       state->result = libusb_submit_transfer(transfer);
+       fprintf(stderr, "unknown status %d\n",transfer->status); 
+       state->result = LIBUSB_ERROR_IO;
    }
 }
 
@@ -126,7 +124,7 @@ TimevalDiff(const struct timeval *a, const struct timeval *b)
 
 /**
     Streaming reading of data from the device
-
+    
     Use asynchronous transfers in libusb-1.0 for high-performance
     streaming of data from a device interface back to the PC. This
     function continuously transfers data until either an error occurs
@@ -150,43 +148,43 @@ ftdi_readstream(struct ftdi_context *ftdi,
                       int packetsPerTransfer, int numTransfers)
 {
     struct libusb_transfer **transfers;
-    FTDIStreamState state = { callback, userdata, ftdi->max_packet_size };
+    FTDIStreamState state = { callback, userdata, ftdi->max_packet_size, 1 };
     int bufferSize = packetsPerTransfer * ftdi->max_packet_size;
     int xferIndex;
     int err = 0;
-
+    
     fprintf(stderr, "ftdi_readstream\n");
     /*
      * Set up all transfers
      */
-
+    
     transfers = calloc(numTransfers, sizeof *transfers);
     if (!transfers) {
         err = LIBUSB_ERROR_NO_MEM;
         goto cleanup;
     }
-
+    
     for (xferIndex = 0; xferIndex < numTransfers; xferIndex++)
     {
         struct libusb_transfer *transfer;
-
+        
         transfer = libusb_alloc_transfer(0);
         transfers[xferIndex] = transfer;
         if (!transfer) {
             err = LIBUSB_ERROR_NO_MEM;
             goto cleanup;
         }
-
+        
         libusb_fill_bulk_transfer(transfer, ftdi->usb_dev, ftdi->out_ep,
                                   malloc(bufferSize), bufferSize, 
 				  ftdi_readstream_cb,
                                   &state, 0);
-
+        
         if (!transfer->buffer) {
             err = LIBUSB_ERROR_NO_MEM;
             goto cleanup;
         }
-
+        
         transfer->status = -1;
         err = libusb_submit_transfer(transfer);
         if (err)
@@ -208,22 +206,29 @@ ftdi_readstream(struct ftdi_context *ftdi,
     /*
      * Run the transfers, and periodically assess progress.
      */
-
+    
     gettimeofday(&state.progress.first.time, NULL);
-
+    
     do
     {
         FTDIProgressInfo  *progress = &state.progress;
         const double progressInterval = 1.0;
         struct timeval timeout = { 0, ftdi->usb_read_timeout };
         struct timeval now;
-
+        
         int err = libusb_handle_events_timeout(NULL, &timeout);
+        if (err ==  LIBUSB_ERROR_INTERRUPTED)
+            /* restart interrupted events */
+            err = libusb_handle_events_timeout(NULL, &timeout);  
         if (!state.result)
         {
             state.result = err;
         }
-
+        if (state.activity == 0)
+            state.result = 1;
+        else
+            state.activity = 0;
+        
         // If enough time has elapsed, update the progress
         gettimeofday(&now, NULL);
         if (TimevalDiff(&now, &progress->current.time) >= progressInterval)
@@ -231,49 +236,37 @@ ftdi_readstream(struct ftdi_context *ftdi,
             progress->current.time = now;
             progress->totalTime = TimevalDiff(&progress->current.time,
                                               &progress->first.time);
-
+            
             if (progress->prev.totalBytes)
             {
                 // We have enough information to calculate rates
-
+                
                 double currentTime;
-
+                
                 currentTime = TimevalDiff(&progress->current.time,
                                           &progress->prev.time);
-
+                
                 progress->totalRate = 
 		    progress->current.totalBytes /progress->totalTime;
                 progress->currentRate = 
 		    (progress->current.totalBytes -
 		     progress->prev.totalBytes) / currentTime;
             }
-
-            state.result = state.callback(NULL, 0, progress, state.userdata);
+            
+            state.callback(NULL, 0, progress, state.userdata);
             progress->prev = progress->current;
-
+            
         }
     } while (!state.result);
-
+    
     /*
      * Cancel any outstanding transfers, and free memory.
      */
-
+    
  cleanup:
     fprintf(stderr, "cleanup\n");
-    if (transfers) {
-        int i;
-        for (xferIndex = 0; xferIndex < numTransfers; xferIndex++)
-        {
-            struct libusb_transfer *transfer = transfers[xferIndex];
-
-            if (transfer) {
-                    libusb_cancel_transfer(transfer);
-            }
-        }
-            libusb_handle_events(NULL);
-        free(transfers);
-    }
-
+    if (transfers)
+       free(transfers);
     if (err)
         return err;
     else
