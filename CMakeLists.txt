@@ -26,6 +26,9 @@ endif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
 FIND_PACKAGE(USB1 REQUIRED)
 INCLUDE_DIRECTORIES(${LIBUSB_INCLUDE_DIR})
 
+# Find Boost (optional package)
+find_package(Boost)
+
 # Set components
 set(CPACK_COMPONENTS_ALL sharedlibs staticlibs headers)
 set(CPACK_COMPONENT_SHAREDLIBS_DISPLAY_NAME "Shared libraries")
@@ -43,14 +46,19 @@ set(CPACK_COMPONENT_SHAREDLIBS_GROUP "Development")
 set(CPACK_COMPONENT_STATICLIBS_GROUP "Development")
 set(CPACK_COMPONENT_HEADERS_GROUP    "Development")
 
-# Create suffix to eventually install in lib64
-IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    SET(LIB_SUFFIX "")
-    SET(PACK_ARCH "")
-  ELSE(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    SET(LIB_SUFFIX 64)
-    SET(PACK_ARCH .x86_64)
-endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+if(NOT APPLE)
+  # Create suffix to eventually install in lib64
+  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+      SET(LIB_SUFFIX "")
+      SET(PACK_ARCH "")
+    else(CMAKE_SIZEOF_VOID_P EQUAL 8)
+      SET(LIB_SUFFIX 64)
+      SET(PACK_ARCH .x86_64)
+  endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+else(NOT APPLE)
+  SET(LIB_SUFFIX "")
+  SET(PACK_ARCH "")
+endif(NOT APPLE)
 
 # Package information
 set(CPACK_PACKAGE_VERSION              ${VERSION_STRING})

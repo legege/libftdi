@@ -35,14 +35,17 @@ if (EXAMPLES)
 
     # libftdi++ examples
     if(FTDI_BUILD_CPP)
-        message(STATUS "Building libftdi++ examples.")
-        include_directories(${CMAKE_SOURCE_DIR}/ftdipp)
+        if(Boost_FOUND)
+            message(STATUS "Building libftdi++ examples.")
+            include_directories(${CMAKE_SOURCE_DIR}/ftdipp
+                                ${Boost_INCLUDE_DIRS})
 
-        # Targest
-        add_executable(find_all_pp find_all_pp.cpp)
+            # Target
+            add_executable(find_all_pp find_all_pp.cpp)
 
-        # Linkage
-        target_link_libraries(find_all_pp ftdipp)
+            # Linkage
+            target_link_libraries(find_all_pp ftdipp)
+        endif(Boost_FOUND)
     endif(FTDI_BUILD_CPP)
 else(EXAMPLES)
     message(STATUS "Not building example programs.")
