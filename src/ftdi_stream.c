@@ -216,10 +216,10 @@ ftdi_readstream(struct ftdi_context *ftdi,
         struct timeval timeout = { 0, ftdi->usb_read_timeout };
         struct timeval now;
         
-        int err = libusb_handle_events_timeout(NULL, &timeout);
+        int err = libusb_handle_events_timeout(ftdi->usb_ctx, &timeout);
         if (err ==  LIBUSB_ERROR_INTERRUPTED)
             /* restart interrupted events */
-            err = libusb_handle_events_timeout(NULL, &timeout);  
+            err = libusb_handle_events_timeout(ftdi->usb_ctx, &timeout);  
         if (!state.result)
         {
             state.result = err;

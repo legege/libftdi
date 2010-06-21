@@ -78,6 +78,7 @@ static void ftdi_usb_close_internal (struct ftdi_context *ftdi)
 */
 int ftdi_init(struct ftdi_context *ftdi)
 {
+    ftdi->usb_ctx = NULL;
     ftdi->usb_dev = NULL;
     ftdi->usb_read_timeout = 5000;
     ftdi->usb_write_timeout = 5000;
@@ -191,7 +192,7 @@ void ftdi_deinit(struct ftdi_context *ftdi)
         free(ftdi->readbuffer);
         ftdi->readbuffer = NULL;
     }
-    libusb_exit(NULL);
+    libusb_exit(ftdi->usb_ctx);
 }
 
 /**
@@ -243,10 +244,10 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
     int count = 0;
     int i = 0;
 
-    if (libusb_init(NULL) < 0)
+    if (libusb_init(&ftdi->usb_ctx) < 0)
         ftdi_error_return(-4, "libusb_init() failed");
 
-    if (libusb_get_device_list(NULL, &devs) < 0)
+    if (libusb_get_device_list(ftdi->usb_ctx, &devs) < 0)
         ftdi_error_return(-5, "libusb_get_device_list() failed");
 
     curdev = devlist;
@@ -629,13 +630,13 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
     char string[256];
     int i = 0;
 
-    if (libusb_init(NULL) < 0)
+    if (libusb_init(&ftdi->usb_ctx) < 0)
         ftdi_error_return(-11, "libusb_init() failed");
 
     if (ftdi == NULL)
         ftdi_error_return(-11, "ftdi context invalid");
 
-    if (libusb_get_device_list(NULL, &devs) < 0)
+    if (libusb_get_device_list(ftdi->usb_ctx, &devs) < 0)
         ftdi_error_return(-12, "libusb_get_device_list() failed");
 
     while ((dev = devs[i++]) != NULL)
@@ -738,10 +739,10 @@ int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description)
 	unsigned int bus_number, device_address;
 	int i = 0;
 
-        if (libusb_init (NULL) < 0)
+        if (libusb_init (&ftdi->usb_ctx) < 0)
 	    ftdi_error_return(-1, "libusb_init() failed");
 
-	if (libusb_get_device_list(NULL, &devs) < 0)
+	if (libusb_get_device_list(ftdi->usb_ctx, &devs) < 0)
 	    ftdi_error_return(-2, "libusb_get_device_list() failed");
 
         /* XXX: This doesn't handle symlinks/odd paths/etc... */
@@ -1509,14 +1510,14 @@ int ftdi_transfer_data_done(struct ftdi_transfer_control *tc)
 
     while (!tc->completed)
     {
-        ret = libusb_handle_events(NULL);
+        ret = libusb_handle_events(ftdi->usb_ctx);
         if (ret < 0)
         {
             if (ret == LIBUSB_ERROR_INTERRUPTED)
                 continue;
             libusb_cancel_transfer(tc->transfer);
             while (!tc->completed)
-                if (libusb_handle_events(NULL) < 0)
+                if (libusb_handle_events(ftdi->usb_ctx) < 0)
                     break;
             libusb_free_transfer(tc->transfer);
             free (tc);

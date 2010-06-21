@@ -175,6 +175,8 @@ struct ftdi_transfer_control
 struct ftdi_context
 {
     /* USB specific */
+    /** libusb's context */
+    struct libusb_context *usb_ctx;
     /** libusb's usb_dev_handle */
     struct libusb_device_handle *usb_dev;
     /** usb read timeout */
