@@ -1510,14 +1510,14 @@ int ftdi_transfer_data_done(struct ftdi_transfer_control *tc)
 
     while (!tc->completed)
     {
-        ret = libusb_handle_events(ftdi->usb_ctx);
+        ret = libusb_handle_events(tc->ftdi->usb_ctx);
         if (ret < 0)
         {
             if (ret == LIBUSB_ERROR_INTERRUPTED)
                 continue;
             libusb_cancel_transfer(tc->transfer);
             while (!tc->completed)
-                if (libusb_handle_events(ftdi->usb_ctx) < 0)
+                if (libusb_handle_events(tc->ftdi->usb_ctx) < 0)
                     break;
             libusb_free_transfer(tc->transfer);
             free (tc);
