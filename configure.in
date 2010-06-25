@@ -23,21 +23,6 @@ else
   AC_MSG_ERROR([libusb-1.0 not found.])
 fi
 
-ENABLE_ASYNC_MODE=0
-AC_ARG_WITH(async-mode,
-[  --with-async-mode       enable experimental async mode. Linux only.],
-[
-  AC_MSG_CHECKING(for experimental linux async mode)
-  if test "$withval" != "no"; then
-    ENABLE_ASYNC_MODE=1
-    CFLAGS="$CFLAGS -DLIBFTDI_LINUX_ASYNC_MODE"
-    AC_MSG_RESULT(yes)
-  else
-    AC_MSG_RESULT(no)
-  fi
-])
-AC_SUBST(ENABLE_ASYNC_MODE)
-
 AC_ARG_WITH(examples,
   AS_HELP_STRING([--without-examples], [disable example programs]))
 AM_CONDITIONAL(BUILD_EXAMPLES, [test "x$with_examples" != "xno"])

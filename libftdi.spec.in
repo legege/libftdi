@@ -1,4 +1,3 @@
-%define    enable_async_mode @ENABLE_ASYNC_MODE@
 Summary:   Library to program and control the FTDI USB controller
 Name:      libftdi
 Version:   @VERSION@
@@ -31,9 +30,7 @@ Header files and static libraries for libftdi
 
 PARAMS=""
 ./configure --prefix=%{prefix} \
-    --libdir=%{_libdir} \
-%if %{enable_async_mode}
-    --with-async-mode \
+    --libdir=%{_libdir}
 %endif
 
 make

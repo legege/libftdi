@@ -1236,10 +1236,6 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
     return offset;
 }
 
-#ifdef LIBFTDI_LINUX_ASYNC_MODE
-#ifdef USB_CLASS_PTP
-#error LIBFTDI_LINUX_ASYNC_MODE is not compatible with libusb-compat-0.1!
-#endif
 static void ftdi_read_data_cb(struct libusb_transfer *transfer)
 {
     struct ftdi_transfer_control *tc = (struct ftdi_transfer_control *) transfer->user_data;
@@ -1354,8 +1350,7 @@ static void ftdi_write_data_cb(struct libusb_transfer *transfer)
     Writes data to the chip. Does not wait for completion of the transfer
     nor does it make sure that the transfer was successful.
 
-    Use libusb 1.0 Asynchronous API.
-    Only available if compiled with --with-async-mode.
+    Use libusb 1.0 asynchronous API.
 
     \param ftdi pointer to ftdi_context
     \param buf Buffer with the data
@@ -1413,8 +1408,7 @@ struct ftdi_transfer_control *ftdi_write_data_submit(struct ftdi_context *ftdi, 
     Reads data from the chip. Does not wait for completion of the transfer
     nor does it make sure that the transfer was successful.
 
-    Use libusb 1.0 Asynchronous API.
-    Only available if compiled with --with-async-mode.
+    Use libusb 1.0 asynchronous API.
 
     \param ftdi pointer to ftdi_context
     \param buf Buffer with the data
@@ -1495,8 +1489,7 @@ struct ftdi_transfer_control *ftdi_read_data_submit(struct ftdi_context *ftdi, u
 /**
     Wait for completion of the transfer.
 
-    Use libusb 1.0 Asynchronous API.
-    Only available if compiled with --with-async-mode.
+    Use libusb 1.0 asynchronous API.
 
     \param tc pointer to ftdi_transfer_control
 
@@ -1535,8 +1528,6 @@ int ftdi_transfer_data_done(struct ftdi_transfer_control *tc)
     free(tc);
     return ret;
 }
-
-#endif // LIBFTDI_LINUX_ASYNC_MODE
 
 /**
     Configure write buffer chunk size.
