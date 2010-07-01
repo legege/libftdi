@@ -53,6 +53,7 @@ bindings/python/setup.py
 *.orig
 *.rej
 *~
+.*.swp
 
 # libftdi specific
 libftdi-config
