@@ -1322,9 +1322,9 @@ static void ftdi_write_data_cb(struct libusb_transfer *transfer)
 {
     struct ftdi_transfer_control *tc = (struct ftdi_transfer_control *) transfer->user_data;
     struct ftdi_context *ftdi = tc->ftdi;
-
-    tc->offset = transfer->actual_length;
-
+    
+    tc->offset += transfer->actual_length;
+    
     if (tc->offset == tc->size)
     {
         tc->completed = 1;
@@ -1388,7 +1388,9 @@ struct ftdi_transfer_control *ftdi_write_data_submit(struct ftdi_context *ftdi, 
     else
       write_size = ftdi->writebuffer_chunksize;
 
-    libusb_fill_bulk_transfer(transfer, ftdi->usb_dev, ftdi->in_ep, buf, write_size, ftdi_write_data_cb, tc, ftdi->usb_write_timeout);
+    libusb_fill_bulk_transfer(transfer, ftdi->usb_dev, ftdi->in_ep, buf,
+                              write_size, ftdi_write_data_cb, tc,
+                              ftdi->usb_write_timeout);
     transfer->type = LIBUSB_TRANSFER_TYPE_BULK;
 
     ret = libusb_submit_transfer(transfer);
@@ -1514,17 +1516,20 @@ int ftdi_transfer_data_done(struct ftdi_transfer_control *tc)
                     break;
             libusb_free_transfer(tc->transfer);
             free (tc);
-            tc = NULL;
             return ret;
         }
     }
 
-    if (tc->transfer->status == LIBUSB_TRANSFER_COMPLETED)
-        ret = tc->offset;
-    else
-        ret = -1;
-
-    libusb_free_transfer(tc->transfer);
+    ret = tc->offset;
+    /**
+     * tc->transfer could be NULL if "(size <= ftdi->readbuffer_remaining)"
+     * at ftdi_read_data_submit(). Therefore, has to check it here.
+     **/
+    if (tc->transfer) {
+      if (tc->transfer->status != LIBUSB_TRANSFER_COMPLETED)
+          ret = -1;
+      libusb_free_transfer(tc->transfer);
+    }
     free(tc);
     return ret;
 }
