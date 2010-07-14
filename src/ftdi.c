@@ -1523,12 +1523,13 @@ int ftdi_transfer_data_done(struct ftdi_transfer_control *tc)
     ret = tc->offset;
     /**
      * tc->transfer could be NULL if "(size <= ftdi->readbuffer_remaining)"
-     * at ftdi_read_data_submit(). Therefore, has to check it here.
+     * at ftdi_read_data_submit(). Therefore, we need to check it here.
      **/
-    if (tc->transfer) {
-      if (tc->transfer->status != LIBUSB_TRANSFER_COMPLETED)
-          ret = -1;
-      libusb_free_transfer(tc->transfer);
+    if (tc->transfer)
+    {
+        if (tc->transfer->status != LIBUSB_TRANSFER_COMPLETED)
+            ret = -1;
+        libusb_free_transfer(tc->transfer);
     }
     free(tc);
     return ret;
