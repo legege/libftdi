@@ -2506,9 +2506,6 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
         eeprom_size = 0x80;
     eeprom = ftdi->eeprom;
 
-    // Addr 00: High current IO
-    eeprom->high_current = (buf[0x02] & HIGH_CURRENT_DRIVE);
-
     // Addr 02: Vendor ID
     eeprom->vendor_id = buf[0x02] + (buf[0x03] << 8);
 
