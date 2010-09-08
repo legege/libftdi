@@ -2488,7 +2488,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
    FIXME: How to pass size? How to handle size field in ftdi_eeprom?
    FIXME: Strings are malloc'ed here and should be freed somewhere
 */
-int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
+int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, int verbose)
 {
     unsigned char i, j;
     unsigned short checksum, eeprom_checksum, value;
@@ -2519,9 +2519,8 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
     // Bit 6: 1 if this device is self powered, 0 if bus powered
     // Bit 5: 1 if this device uses remote wakeup
     // Bit 4: 1 if this device is battery powered
-    j = buf[0x08];
-    if (j&0x40) eeprom->self_powered = 1;
-    if (j&0x20) eeprom->remote_wakeup = 1;
+    eeprom->self_powered = buf[0x08] & 0x40;
+    eeprom->remote_wakeup = buf[0x08] & 0x20;;
 
     // Addr 09: Max power consumption: max power = value * 2 mA
     eeprom->max_power = buf[0x09];
@@ -2630,6 +2629,12 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
         ftdi_error_return(-1,"EEPROM checksum error");
     }
 
+    if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM) || (ftdi->type == TYPE_2232C))
+    {
+        eeprom->chip = buf[14];
+    }
+    if(ftdi->type == TYPE_2)
+    {
     if(ftdi->type == TYPE_R)
     {
         // Addr 14: CBUS function: CBUS0, CBUS1
@@ -2644,6 +2649,26 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
         } else {
         for (j=0; j<5; j++) eeprom->cbus_function[j] = 0;
         }
+    }
+    if(verbose)
+    {
+        fprintf(stdout, "VID:     0x%04x\n",eeprom->vendor_id);
+        fprintf(stdout, "PID:     0x%04x\n",eeprom->product_id);
+        fprintf(stdout, "Release: 0x%04x\n",eeprom->release);
+
+        if(eeprom->self_powered)
+            fprintf(stdout, "Self-Powered%s", (eeprom->remote_wakeup)?", USB Remote Wake Up\n":"\n");
+        else
+            fprintf(stdout, "Bus Powered: %3d mA%s", eeprom->max_power*2,
+                    (eeprom->remote_wakeup)?" USB Remote Wake Up\n":"\n");
+        if(eeprom->manufacturer)
+            fprintf(stdout, "Manufacturer: %s\n",eeprom->manufacturer);
+        if(eeprom->product)
+            fprintf(stdout, "Product:      %s\n",eeprom->product);
+        if(eeprom->serial)
+            fprintf(stdout, "Serial:       %s\n",eeprom->serial);
+        fprintf(stderr,     "Checksum      : %04x %04x\n", checksum);
+
     }
 
     return 0;
