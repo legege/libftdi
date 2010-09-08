@@ -2628,14 +2628,15 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         ftdi_error_return(-1,"EEPROM checksum error");
     }
 
-    if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM) || (ftdi->type == TYPE_2232C))
+    else if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM))
     {
         eeprom->chip = buf[14];
     }
-    if(ftdi->type == TYPE_2232C)
+    else if(ftdi->type == TYPE_2232C)
     {
+        eeprom->chip = buf[14];
     }
-    if(ftdi->type == TYPE_R)
+    else if(ftdi->type == TYPE_R)
     {
         // Addr 14: CBUS function: CBUS0, CBUS1
         // Addr 15: CBUS function: CBUS2, CBUS3
@@ -2650,6 +2651,13 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         for (j=0; j<5; j++) eeprom->cbus_function[j] = 0;
         }
     }
+    else if (ftdi->type == TYPE_2232H)
+    {
+    }
+    else if (ftdi->type == TYPE_4232H)
+    {
+    }
+    
     if(verbose)
     {
         fprintf(stdout, "VID:     0x%04x\n",eeprom->vendor_id);
