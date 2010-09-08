@@ -451,7 +451,6 @@ extern "C"
        the checksum of the eeprom is valided */
     int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
     int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid);
-    int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, int maxsize);
     int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
     int ftdi_erase_eeprom(struct ftdi_context *ftdi);
 

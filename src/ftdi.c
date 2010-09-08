@@ -2705,12 +2705,24 @@ int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     if (ftdi == NULL || ftdi->usb_dev == NULL)
         ftdi_error_return(-2, "USB device unavailable");
 
-    for (i = 0; i < ftdi->eeprom->size/2; i++)
+    for (i = 0; i < FTDI_MAX_EEPROM_SIZE/2; i++)
     {
         if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
             ftdi_error_return(-1, "reading eeprom failed");
     }
 
+    if (ftdi->type == TYPE_R)
+        ftdi->eeprom->size = 0xa0;
+    /*    Guesses size of eeprom by comparing halves 
+          - will not work with blank eeprom */
+    else if (strrchr((const char *)eeprom, 0xff) == ((const char *)eeprom +FTDI_MAX_EEPROM_SIZE -1))
+        ftdi->eeprom->size = -1;
+    else if(memcmp(eeprom,&eeprom[0x80],0x80) == 0)
+        ftdi->eeprom->size = 0x80;
+    else if(memcmp(eeprom,&eeprom[0x40],0x40) == 0)
+        ftdi->eeprom->size = 0x40;
+    else
+        ftdi->eeprom->size = 0x100;
     return 0;
 }
 
@@ -2763,43 +2775,6 @@ int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
     }
 
     ftdi_error_return(-1, "read of FTDIChip-ID failed");
-}
-
-/**
-    Guesses size of eeprom by reading eeprom and comparing halves - will not work with blank eeprom
-    Call this function then do a write then call again to see if size changes, if so write again.
-
-    \param ftdi pointer to ftdi_context
-    \param eeprom Pointer to store eeprom into
-    \param maxsize the size of the buffer to read into
-
-    \retval -1: eeprom read failed
-    \retval -2: USB device unavailable
-    \retval >=0: size of eeprom
-*/
-int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, int maxsize)
-{
-    int i=0,j,minsize=32;
-    int size=minsize;
-
-    if (ftdi == NULL || ftdi->usb_dev == NULL)
-        ftdi_error_return(-2, "USB device unavailable");
-
-    do
-    {
-        for (j = 0; i < maxsize/2 && j<size; j++)
-        {
-            if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE,
-                                        SIO_READ_EEPROM_REQUEST, 0, i,
-                                        eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
-                ftdi_error_return(-1, "eeprom read failed");
-            i++;
-        }
-        size*=2;
-    }
-    while (size<=maxsize && memcmp(eeprom,&eeprom[size/2],size/2)!=0);
-
-    return size/2;
 }
 
 /**
