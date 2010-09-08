@@ -2574,19 +2574,58 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
     // Addr 0E: Offset of the manufacturer string + 0x80, calculated later
     // Addr 0F: Length of manufacturer string
     manufacturer_size = buf[0x0F]/2;
-    if (manufacturer_size > 0) eeprom->manufacturer = malloc(manufacturer_size);
+    if (manufacturer_size > 0) 
+    {
+        eeprom->manufacturer = malloc(manufacturer_size);
+        if (eeprom->manufacturer)
+        {
+            // Decode manufacturer
+            i = buf[0x0E]; // offset
+            for (j=0;j<manufacturer_size-1;j++)
+            {
+                eeprom->manufacturer[j] = buf[2*j+i+2];
+            }
+            eeprom->manufacturer[j] = '\0';
+        }
+    }
     else eeprom->manufacturer = NULL;
 
     // Addr 10: Offset of the product string + 0x80, calculated later
     // Addr 11: Length of product string
     product_size = buf[0x11]/2;
-    if (product_size > 0) eeprom->product = malloc(product_size);
+    if (product_size > 0)
+    {
+        eeprom->product = malloc(product_size);
+        if(eeprom->product)
+        {
+            // Decode product name
+            i = buf[0x10]; // offset
+            for (j=0;j<product_size-1;j++)
+            {
+                eeprom->product[j] = buf[2*j+i+2];
+            }
+            eeprom->product[j] = '\0';
+        }
+    }
     else eeprom->product = NULL;
 
     // Addr 12: Offset of the serial string + 0x80, calculated later
     // Addr 13: Length of serial string
     serial_size = buf[0x13]/2;
-    if (serial_size > 0) eeprom->serial = malloc(serial_size);
+    if (serial_size > 0)
+    {
+        eeprom->serial = malloc(serial_size);
+        if(eeprom->serial)
+        {
+            // Decode serial
+            i = buf[0x12]; // offset
+            for (j=0;j<serial_size-1;j++)
+            {
+                eeprom->serial[j] = buf[2*j+i+2];
+            }
+            eeprom->serial[j] = '\0';
+        }
+    }
     else eeprom->serial = NULL;
 
     // Addr 14: CBUS function: CBUS0, CBUS1
@@ -2601,30 +2640,6 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
     } else {
         for (j=0; j<5; j++) eeprom->cbus_function[j] = 0;
     }
-
-    // Decode manufacturer
-    i = buf[0x0E] & 0x7f; // offset
-    for (j=0;j<manufacturer_size-1;j++)
-    {
-        eeprom->manufacturer[j] = buf[2*j+i+2];
-    }
-    eeprom->manufacturer[j] = '\0';
-
-    // Decode product name
-    i = buf[0x10] & 0x7f; // offset
-    for (j=0;j<product_size-1;j++)
-    {
-        eeprom->product[j] = buf[2*j+i+2];
-    }
-    eeprom->product[j] = '\0';
-
-    // Decode serial
-    i = buf[0x12] & 0x7f; // offset
-    for (j=0;j<serial_size-1;j++)
-    {
-        eeprom->serial[j] = buf[2*j+i+2];
-    }
-    eeprom->serial[j] = '\0';
 
     // verify checksum
     checksum = 0xAAAA;
