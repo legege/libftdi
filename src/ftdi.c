@@ -101,7 +101,7 @@ int ftdi_init(struct ftdi_context *ftdi)
 
     ftdi->error_str = NULL;
 
-    ftdi->eeprom_size = FTDI_DEFAULT_EEPROM_SIZE;
+    ftdi->eeprom = NULL;
 
     /* All fine. Now allocate the readbuffer */
     return ftdi_read_data_set_chunksize(ftdi, 4096);
@@ -2165,8 +2165,8 @@ void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, 
     if (ftdi == NULL)
         return;
 
-    ftdi->eeprom_size=size;
-    eeprom->size=size;
+    ftdi->eeprom = eeprom;
+    ftdi->eeprom->size=size;
 }
 
 /**
@@ -2174,12 +2174,18 @@ void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, 
 
     \param eeprom Pointer to ftdi_eeprom
 */
-void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom)
+void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
 {
     int i;
+    struct ftdi_eeprom *eeprom;
 
-    if (eeprom == NULL)
+    if (ftdi == NULL)
         return;
+
+    if (ftdi->eeprom == NULL)
+        return;
+
+    eeprom = ftdi->eeprom;
 
     eeprom->vendor_id = 0x0403;
     eeprom->product_id = 0x6001;
@@ -2215,8 +2221,16 @@ void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom)
 
     \param eeprom Pointer to ftdi_eeprom
 */
-void ftdi_eeprom_free(struct ftdi_eeprom *eeprom)
+void ftdi_eeprom_free(struct ftdi_context *ftdi)
 {
+    struct ftdi_eeprom *eeprom;
+    if (!ftdi)
+        return;
+    if (ftdi->eeprom)
+        return;
+
+    eeprom = ftdi->eeprom;
+
     if (eeprom->manufacturer != 0) {
         free(eeprom->manufacturer);
         eeprom->manufacturer = 0;
@@ -2246,16 +2260,21 @@ void ftdi_eeprom_free(struct ftdi_eeprom *eeprom)
     \retval -4: Chip doesn't support invert
     \retval -5: Chip doesn't support high current drive
 */
-int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
+int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
 {
     unsigned char i, j;
     unsigned short checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
     int size_check;
     const int cbus_max[5] = {13, 13, 13, 13, 9};
+    struct ftdi_eeprom *eeprom;
 
-    if (eeprom == NULL)
+    if (ftdi == NULL)
         return -2;
+    if (ftdi->eeprom == NULL)
+        return -2;
+
+    eeprom= ftdi->eeprom;
 
     if (eeprom->manufacturer != NULL)
         manufacturer_size = strlen(eeprom->manufacturer);
@@ -2470,15 +2489,20 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
    FIXME: How to pass size? How to handle size field in ftdi_eeprom?
    FIXME: Strings are malloc'ed here and should be freed somewhere
 */
-int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
+int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
     unsigned char i, j;
     unsigned short checksum, eeprom_checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
     int eeprom_size = 128;
+    struct ftdi_eeprom *eeprom;
 
-    if (eeprom == NULL)
+    if (ftdi == NULL)
         return -1;
+    if (ftdi->eeprom == NULL)
+        return -1;
+
+    eeprom = ftdi->eeprom;
 #if 0
     size_check = eeprom->size;
     size_check -= 28; // 28 are always in use (fixed)
@@ -2682,7 +2706,7 @@ int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     if (ftdi == NULL || ftdi->usb_dev == NULL)
         ftdi_error_return(-2, "USB device unavailable");
 
-    for (i = 0; i < ftdi->eeprom_size/2; i++)
+    for (i = 0; i < ftdi->eeprom->size/2; i++)
     {
         if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
             ftdi_error_return(-1, "reading eeprom failed");
@@ -2829,7 +2853,7 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     if ((ret = ftdi_set_latency_timer(ftdi, 0x77)) != 0)
         return ret;
 
-    for (i = 0; i < ftdi->eeprom_size/2; i++)
+    for (i = 0; i < ftdi->eeprom->size/2; i++)
     {
         usb_val = eeprom[i*2];
         usb_val += eeprom[(i*2)+1] << 8;

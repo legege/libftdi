@@ -395,7 +395,7 @@ Eeprom::~Eeprom()
 
 void Eeprom::init_defaults()
 {
-    return ftdi_eeprom_initdefaults(&d->eeprom);
+    return ftdi_eeprom_initdefaults(d->context);
 }
 
 void Eeprom::set_size(int size)
@@ -415,7 +415,7 @@ int Eeprom::chip_id(unsigned int *chipid)
 
 int Eeprom::build(unsigned char *output)
 {
-    return ftdi_eeprom_build(&d->eeprom, output);
+    return ftdi_eeprom_build(d->context, output);
 }
 
 int Eeprom::read(unsigned char *eeprom)
