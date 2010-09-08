@@ -2505,23 +2505,6 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
     if(ftdi->type == TYPE_R)
         eeprom_size = 0x80;
     eeprom = ftdi->eeprom;
-#if 0
-    size_check = eeprom->size;
-    size_check -= 28; // 28 are always in use (fixed)
-
-    // Top half of a 256byte eeprom is used just for strings and checksum
-    // it seems that the FTDI chip will not read these strings from the lower half
-    // Each string starts with two bytes; offset and type (0x03 for string)
-    // the checksum needs two bytes, so without the string data that 8 bytes from the top half
-    if (eeprom->size>=256)size_check = 120;
-    size_check -= manufacturer_size*2;
-    size_check -= product_size*2;
-    size_check -= serial_size*2;
-
-    // eeprom size exceeded?
-    if (size_check < 0)
-        ftdi_error_return(-1,"Size check failed");
-#endif
 
     // empty eeprom struct
     memset(eeprom, 0, sizeof(struct ftdi_eeprom));
