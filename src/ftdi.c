@@ -2223,25 +2223,24 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
 */
 void ftdi_eeprom_free(struct ftdi_context *ftdi)
 {
-    struct ftdi_eeprom *eeprom;
     if (!ftdi)
         return;
     if (ftdi->eeprom)
-        return;
+    {
+        struct ftdi_eeprom *eeprom = ftdi->eeprom;
 
-    eeprom = ftdi->eeprom;
-
-    if (eeprom->manufacturer != 0) {
-        free(eeprom->manufacturer);
-        eeprom->manufacturer = 0;
-    }
-    if (eeprom->product != 0) {
-        free(eeprom->product);
-        eeprom->product = 0;
-    }
-    if (eeprom->serial != 0) {
-        free(eeprom->serial);
-        eeprom->serial = 0;
+        if (eeprom->manufacturer != 0) {
+            free(eeprom->manufacturer);
+            eeprom->manufacturer = 0;
+        }
+        if (eeprom->product != 0) {
+            free(eeprom->product);
+            eeprom->product = 0;
+        }
+        if (eeprom->serial != 0) {
+            free(eeprom->serial);
+            eeprom->serial = 0;
+        }
     }
 }
 
