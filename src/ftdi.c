@@ -2561,7 +2561,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         if (eeprom->manufacturer)
         {
             // Decode manufacturer
-            i = buf[0x0E]; // offset
+            i = buf[0x0E] & (eeprom_size -1); // offset
             for (j=0;j<manufacturer_size-1;j++)
             {
                 eeprom->manufacturer[j] = buf[2*j+i+2];
@@ -2580,7 +2580,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         if(eeprom->product)
         {
             // Decode product name
-            i = buf[0x10]; // offset
+            i = buf[0x10] & (eeprom_size -1); // offset
             for (j=0;j<product_size-1;j++)
             {
                 eeprom->product[j] = buf[2*j+i+2];
@@ -2599,7 +2599,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         if(eeprom->serial)
         {
             // Decode serial
-            i = buf[0x12]; // offset
+            i = buf[0x12] & (eeprom_size -1); // offset
             for (j=0;j<serial_size-1;j++)
             {
                 eeprom->serial[j] = buf[2*j+i+2];
