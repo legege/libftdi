@@ -2213,7 +2213,7 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
     eeprom->high_current = 0;
     eeprom->invert = 0;
 
-    eeprom->size = FTDI_DEFAULT_EEPROM_SIZE;
+    eeprom->size = FTDI_MAX_EEPROM_SIZE;
 }
 
 /**

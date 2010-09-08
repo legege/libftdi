@@ -19,7 +19,8 @@
 
 #include <libusb.h>
 
-#define FTDI_DEFAULT_EEPROM_SIZE 128
+/* Evne on 93xx66 at max 256 bytes are used (AN_121)*/
+#define FTDI_MAX_EEPROM_SIZE 256
 
 /** FTDI chip type */
 enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2, TYPE_R=3, TYPE_2232H=4, TYPE_4232H=5 };
