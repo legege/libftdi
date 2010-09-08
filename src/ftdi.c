@@ -2535,12 +2535,11 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     // Bit 1: 1 - Out EndPoint is Isochronous
     // Bit 0: 1 - In EndPoint is Isochronous
     //
-    j = buf[0x0A];
-    if (j&0x01) eeprom->in_is_isochronous = 1;
-    if (j&0x02) eeprom->out_is_isochronous = 1;
-    if (j&0x04) eeprom->suspend_pull_downs = 1;
-    if (j&0x08) eeprom->use_serial = 1;
-    if (j&0x10) eeprom->change_usb_version = 1;
+    eeprom->in_is_isochronous  = buf[0x0A]&0x01;
+    eeprom->out_is_isochronous = buf[0x0A]&0x02;
+    eeprom->suspend_pull_downs = buf[0x0A]&0x04;
+    eeprom->use_serial         = buf[0x0A]&0x08;
+    eeprom->change_usb_version = buf[0x0A]&0x10;
 
     // Addr 0B: Invert data lines
     eeprom->invert = buf[0x0B];
