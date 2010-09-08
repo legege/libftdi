@@ -2632,7 +2632,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     {
         eeprom->chip = buf[14];
     }
-    if(ftdi->type == TYPE_2)
+    if(ftdi->type == TYPE_2232C)
     {
     }
     if(ftdi->type == TYPE_R)
