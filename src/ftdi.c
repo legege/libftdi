@@ -2675,7 +2675,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
             fprintf(stdout, "Product:      %s\n",eeprom->product);
         if(eeprom->serial)
             fprintf(stdout, "Serial:       %s\n",eeprom->serial);
-        fprintf(stderr,     "Checksum      : %04x %04x\n", checksum);
+        fprintf(stderr,     "Checksum      : %04x\n", checksum);
 
     }
 
