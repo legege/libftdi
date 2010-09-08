@@ -2635,6 +2635,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     }
     if(ftdi->type == TYPE_2)
     {
+    }
     if(ftdi->type == TYPE_R)
     {
         // Addr 14: CBUS function: CBUS0, CBUS1
