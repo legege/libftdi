@@ -403,11 +403,6 @@ void Eeprom::set_size(int size)
     return ftdi_eeprom_setsize(d->context, &d->eeprom, size);
 }
 
-int Eeprom::size(unsigned char *eeprom, int maxsize)
-{
-    return ftdi_read_eeprom_getsize(d->context, eeprom, maxsize);
-}
-
 int Eeprom::chip_id(unsigned int *chipid)
 {
     return ftdi_read_chipid(d->context, chipid);
