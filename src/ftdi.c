@@ -2270,9 +2270,9 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     struct ftdi_eeprom *eeprom;
 
     if (ftdi == NULL)
-        return -2;
+        ftdi_error_return(-2,"No context");
     if (ftdi->eeprom == NULL)
-        return -2;
+        ftdi_error_return(-2,"No eeprom structure");
 
     eeprom= ftdi->eeprom;
 
@@ -2498,9 +2498,9 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
     struct ftdi_eeprom *eeprom;
 
     if (ftdi == NULL)
-        return -1;
+        ftdi_error_return(-1,"No context");
     if (ftdi->eeprom == NULL)
-        return -1;
+        ftdi_error_return(-1,"No eeprom");
 
     eeprom = ftdi->eeprom;
 #if 0
@@ -2518,7 +2518,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
 
     // eeprom size exceeded?
     if (size_check < 0)
-        return (-1);
+        ftdi_error_return(-1,"Size check failed");
 #endif
 
     // empty eeprom struct
@@ -2661,7 +2661,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
     if (eeprom_checksum != checksum)
     {
         fprintf(stderr, "Checksum Error: %04x %04x\n", checksum, eeprom_checksum);
-        return -1;
+        ftdi_error_return(-1,"EEPROM checksum error");
     }
 
     return 0;
