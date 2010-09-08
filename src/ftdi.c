@@ -2493,14 +2493,17 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
     unsigned char i, j;
     unsigned short checksum, eeprom_checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
-    int eeprom_size = 128;
+    int eeprom_size;
     struct ftdi_eeprom *eeprom;
 
     if (ftdi == NULL)
         ftdi_error_return(-1,"No context");
     if (ftdi->eeprom == NULL)
         ftdi_error_return(-1,"No eeprom");
-
+ 
+    eeprom_size = ftdi->eeprom->size;
+    if(ftdi->type == TYPE_R)
+        eeprom_size = 0x80;
     eeprom = ftdi->eeprom;
 #if 0
     size_check = eeprom->size;
