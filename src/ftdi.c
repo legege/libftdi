@@ -2192,7 +2192,7 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
 
     eeprom->self_powered = 1;
     eeprom->remote_wakeup = 1;
-    eeprom->chip_type = TYPE_BM;
+    eeprom->release = 0;
 
     eeprom->in_is_isochronous = 0;
     eeprom->out_is_isochronous = 0;
@@ -2286,9 +2286,9 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     for (i = 0; i < 5; i++)
     {
         if ((eeprom->cbus_function[i] > cbus_max[i]) ||
-            (eeprom->cbus_function[i] && eeprom->chip_type != TYPE_R)) return -3;
+            (eeprom->cbus_function[i] && ftdi->type != TYPE_R)) return -3;
     }
-    if (eeprom->chip_type != TYPE_R)
+    if (ftdi->type != TYPE_R)
     {
         if (eeprom->invert) return -4;
         if (eeprom->high_current) return -5;
@@ -2316,7 +2316,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     // Addr 00: High current IO
     output[0x00] = eeprom->high_current ? HIGH_CURRENT_DRIVE : 0;
     // Addr 01: IN endpoint size (for R type devices, different for FT2232)
-    if (eeprom->chip_type == TYPE_R) {
+    if (ftdi->type == TYPE_R) {
         output[0x01] = 0x40;
     }
     // Addr 02: Vendor ID
@@ -2329,7 +2329,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
 
     // Addr 06: Device release number (0400h for BM features)
     output[0x06] = 0x00;
-    switch (eeprom->chip_type) {
+    switch (eeprom->release) {
         case TYPE_AM:
             output[0x07] = 0x02;
             break;
@@ -2419,7 +2419,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     // Dynamic content
     // In images produced by FTDI's FT_Prog for FT232R strings start at 0x18
     // Space till 0x18 should be considered as reserved.
-    if (eeprom->chip_type >= TYPE_R) {
+    if (ftdi->type >= TYPE_R) {
         i = 0x18;
     } else {
         i = 0x14;
@@ -2512,22 +2512,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
     // Addr 04: Product ID
     eeprom->product_id = buf[0x04] + (buf[0x05] << 8);
 
-    value = buf[0x06] + (buf[0x07]<<8);
-    switch (value)
-    {
-        case 0x0600:
-            eeprom->chip_type = TYPE_R;
-            break;
-        case 0x0400:
-            eeprom->chip_type = TYPE_BM;
-            break;
-        case 0x0200:
-            eeprom->chip_type = TYPE_AM;
-            break;
-        default: // Unknown device
-            eeprom->chip_type = 0;
-            break;
-    }
+    eeprom->release = buf[0x06] + (buf[0x07]<<8);
 
     // Addr 08: Config descriptor
     // Bit 7: always 1
@@ -2628,7 +2613,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size)
     // Addr 14: CBUS function: CBUS0, CBUS1
     // Addr 15: CBUS function: CBUS2, CBUS3
     // Addr 16: CBUS function: CBUS5
-    if (eeprom->chip_type == TYPE_R) {
+    if (ftdi->type == TYPE_R) {
         eeprom->cbus_function[0] = buf[0x14] & 0x0f;
         eeprom->cbus_function[1] = (buf[0x14] >> 4) & 0x0f;
         eeprom->cbus_function[2] = buf[0x15] & 0x0f;

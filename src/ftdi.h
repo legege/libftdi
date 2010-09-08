@@ -182,8 +182,8 @@ struct ftdi_eeprom
     int self_powered;
     /** remote wakeup */
     int remote_wakeup;
-    /** chip type */
-    int chip_type;
+    /** release */
+    int release;
 
     /** input in isochronous transfer mode */
     int in_is_isochronous;
