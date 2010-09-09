@@ -216,6 +216,7 @@ struct ftdi_eeprom
     /*  Driver Type, 1 = VCP */
     int channel_a_driver;
     int channel_b_driver;
+
     /* Special function of FT232R devices (and possibly others as well) */
     /** CBUS pin function. See CBUS_xxx defines. */
     int cbus_function[5];
@@ -225,6 +226,25 @@ struct ftdi_eeprom
     int high_current_b;
     /** Select inversion of data lines (bitmask). */
     int invert;
+
+    /*2232H/4432H Group specific values */
+    /* Group0 is AL on 2322H and A on 4232H
+       Group1 is AH on 2232H and B on 4232H
+       Group2 is BL on 2322H and C on 4232H
+       Group3 is BH on 2232H and C on 4232H*/
+    int group0_drive;
+    int group0_schmitt;
+    int group0_slew;
+    int group1_drive;
+    int group1_schmitt;
+    int group1_slew;
+    int group2_drive;
+    int group2_schmitt;
+    int group2_slew;
+    int group3_drive;
+    int group3_schmitt;
+    int group3_slew;
+    
 
     /** eeprom size in bytes. This doesn't get stored in the eeprom
         but is the only way to pass it to ftdi_eeprom_build. */
@@ -351,6 +371,13 @@ struct ftdi_device_list
 #define CHANNEL_IS_245  0x1
 #define CHANNEL_IS_CPU  0x2
 #define CHANNEL_IS_OPTO 0x4
+
+#define DRIVE_4MA  0
+#define DRIVE_8MA  1
+#define DRIVE_12MA 2
+#define DRIVE_16MA 3
+#define SLOW_SLEW  4
+#define IS_SCHMITT 8
 
 /** Driver Type. */
 #define DRIVER_VCP 0x08

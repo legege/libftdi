@@ -2661,11 +2661,20 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         eeprom->cbus_function[3] = (buf[0x15] >> 4) & 0x0f;
         eeprom->cbus_function[4] = buf[0x16] & 0x0f;
     }
-    else if (ftdi->type == TYPE_2232H)
+    else if ((ftdi->type == TYPE_2232H) ||(ftdi->type == TYPE_4232H)) 
     {
-    }
-    else if (ftdi->type == TYPE_4232H)
-    {
+        eeprom->group0_drive   =  buf[0x0c]       & DRIVE_16MA;
+        eeprom->group0_schmitt =  buf[0x0c]       & IS_SCHMITT;
+        eeprom->group0_slew    =  buf[0x0c]       & SLOW_SLEW;
+        eeprom->group1_drive   = (buf[0x0c] >> 4) & 0x3;
+        eeprom->group1_schmitt = (buf[0x0c] >> 4) & IS_SCHMITT;
+        eeprom->group1_slew    = (buf[0x0c] >> 4) & SLOW_SLEW;
+        eeprom->group2_drive   =  buf[0x0d]       & DRIVE_16MA;
+        eeprom->group2_schmitt =  buf[0x0d]       & IS_SCHMITT;
+        eeprom->group2_slew    =  buf[0x0d]       & SLOW_SLEW;
+        eeprom->group3_drive   = (buf[0x0d] >> 4) & DRIVE_16MA;
+        eeprom->group3_schmitt = (buf[0x0d] >> 4) & IS_SCHMITT;
+        eeprom->group3_slew    = (buf[0x0d] >> 4) & SLOW_SLEW;
     }
     
     if(verbose)
@@ -2687,7 +2696,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         if(eeprom->serial)
             fprintf(stdout, "Serial:       %s\n",eeprom->serial);
         fprintf(stdout,     "Checksum      : %04x\n", checksum);
-        if ((ftdi->type = TYPE_2232C) || (ftdi->type = TYPE_R))
+        if (ftdi->type >= TYPE_2232C)
             fprintf(stdout,"Channel A has Mode %s%s%s\n", 
                     channel_mode[eeprom->channel_a_type],
                     (eeprom->channel_a_driver)?" VCP":"",
@@ -2697,6 +2706,29 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
                     channel_mode[eeprom->channel_b_type],
                     (eeprom->channel_b_driver)?" VCP":"",
                     (eeprom->high_current_b)?" High Currenr IO":"");
+        if ((ftdi->type == TYPE_2232H) || (ftdi->type == TYPE_4232H)) 
+        {
+            fprintf(stdout,"%s has %d mA drive%s%s\n",
+                    (ftdi->type == TYPE_2232H)?"AL":"A",
+                    (eeprom->group0_drive+1) *4,
+                    (eeprom->group0_schmitt)?" Schmitt Input":"",
+                    (eeprom->group0_slew)?" Slow Slew":"");
+            fprintf(stdout,"%s has %d mA drive%s%s\n",
+                    (ftdi->type == TYPE_2232H)?"AH":"B",
+                    (eeprom->group1_drive+1) *4,
+                    (eeprom->group1_schmitt)?" Schmitt Input":"",
+                    (eeprom->group1_slew)?" Slow Slew":"");
+            fprintf(stdout,"%s has %d mA drive%s%s\n",
+                    (ftdi->type == TYPE_2232H)?"BL":"C",
+                    (eeprom->group2_drive+1) *4,
+                    (eeprom->group2_schmitt)?" Schmitt Input":"",
+                    (eeprom->group2_slew)?" Slow Slew":"");
+            fprintf(stdout,"%s has %d mA drive%s%s\n",
+                    (ftdi->type == TYPE_2232H)?"BH":"D",
+                    (eeprom->group3_drive+1) *4,
+                    (eeprom->group3_schmitt)?" Schmitt Input":"",
+                    (eeprom->group3_slew)?" Slow Slew":"");
+        }
 
     }
 
