@@ -2530,6 +2530,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     // Bit 6: 0 - reserved
     // Bit 5: 0 - reserved
     // Bit 4: 1 - Change USB version
+    //            Not seen on FT2232(D)
     // Bit 3: 1 - Use the serial number string
     // Bit 2: 1 - Enable suspend pull downs for lower power
     // Bit 1: 1 - Out EndPoint is Isochronous
@@ -2544,7 +2545,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
 
     // Addr 0C: USB version low byte when 0x0A bit 4 is set
     // Addr 0D: USB version high byte when 0x0A bit 4 is set
-    if (eeprom->change_usb_version == 1)
+    if ((eeprom->change_usb_version == 1) || ftdi->type == TYPE_2232C)
     {
         eeprom->usb_version = buf[0x0C] + (buf[0x0D] << 8);
     }
