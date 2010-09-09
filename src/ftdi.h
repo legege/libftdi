@@ -208,6 +208,14 @@ struct ftdi_eeprom
     /** serial number */
     char *serial;
 
+    /* 2232D/H(/FT4432H?) specific */
+    /* Hardware type, 0 = RS232 Uart, 1 = 245 FIFO, 2 = CPU FIFO, 
+       3 = OPTO Isolate */
+    int channel_a_type;
+    int channel_b_type;
+    /*  Driver Type, 1 = VCP */
+    int channel_a_driver;
+    int channel_b_driver;
     /* Special function of FT232R devices (and possibly others as well) */
     /** CBUS pin function. See CBUS_xxx defines. */
     int cbus_function[5];
@@ -337,6 +345,15 @@ struct ftdi_device_list
 #define INVERT_DCD 0x40
 /** Invert RI# */
 #define INVERT_RI  0x80
+
+/** Interface Mode. */
+#define CHANNEL_IS_UART 0x0
+#define CHANNEL_IS_245  0x1
+#define CHANNEL_IS_CPU  0x2
+#define CHANNEL_IS_OPTO 0x3
+
+/** Driver Type. */
+#define DRIVER_VCP 0x04
 
 /** High current drive. */
 #define HIGH_CURRENT_DRIVE 0x10

@@ -2506,9 +2506,17 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         eeprom_size = 0x80;
     eeprom = ftdi->eeprom;
 
-    eeprom->high_current_a = buf[0x00] & HIGH_CURRENT_DRIVE;
-    eeprom->high_current_b = buf[0x01] & HIGH_CURRENT_DRIVE;
+    // Addr 00: Channel A setting
 
+    eeprom->channel_a_type   = buf[0x00] & CHANNEL_IS_OPTO;
+    eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
+    eeprom->high_current_a   = buf[0x00] & HIGH_CURRENT_DRIVE;
+
+    // Addr 01: Channel B setting
+
+    eeprom->channel_b_type   = buf[0x01] & CHANNEL_IS_OPTO;
+    eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
+    eeprom->high_current_b   = buf[0x01] & HIGH_CURRENT_DRIVE;
 
     // Addr 02: Vendor ID
     eeprom->vendor_id = buf[0x02] + (buf[0x03] << 8);
