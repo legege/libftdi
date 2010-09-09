@@ -2638,15 +2638,15 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     {
         // Addr 0B: Invert data lines
         // Works only on FT232R, not FT245R, but no way to distinguish
-        if (ftdi->type == TYPE_R) {
-            eeprom->cbus_function[0] = buf[0x14] & 0x0f;
-            eeprom->cbus_function[1] = (buf[0x14] >> 4) & 0x0f;
-            eeprom->cbus_function[2] = buf[0x15] & 0x0f;
-            eeprom->cbus_function[3] = (buf[0x15] >> 4) & 0x0f;
-            eeprom->cbus_function[4] = buf[0x16] & 0x0f;
-        } else {
-        for (j=0; j<5; j++) eeprom->cbus_function[j] = 0;
-        }
+        eeprom->invert = buf[0x0B];
+        // Addr 14: CBUS function: CBUS0, CBUS1
+        // Addr 15: CBUS function: CBUS2, CBUS3
+        // Addr 16: CBUS function: CBUS5
+        eeprom->cbus_function[0] = buf[0x14] & 0x0f;
+        eeprom->cbus_function[1] = (buf[0x14] >> 4) & 0x0f;
+        eeprom->cbus_function[2] = buf[0x15] & 0x0f;
+        eeprom->cbus_function[3] = (buf[0x15] >> 4) & 0x0f;
+        eeprom->cbus_function[4] = buf[0x16] & 0x0f;
     }
     else if (ftdi->type == TYPE_2232H)
     {
