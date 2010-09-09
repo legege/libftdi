@@ -185,6 +185,9 @@ struct ftdi_eeprom
     /** release */
     int release;
 
+    /* Suspend on DBUS7 Low */
+    int suspend_dbus7;
+
     /** input in isochronous transfer mode */
     int in_is_isochronous;
     /** output in isochronous transfer mode */
@@ -381,6 +384,8 @@ struct ftdi_device_list
 
 /** Driver Type. */
 #define DRIVER_VCP 0x08
+
+#define SUSPEND_DBUS7 0x80
 
 /** High current drive. */
 #define HIGH_CURRENT_DRIVE 0x10

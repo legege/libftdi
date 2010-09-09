@@ -2518,6 +2518,8 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
     eeprom->high_current_b   = buf[0x01] & HIGH_CURRENT_DRIVE;
 
+    eeprom->suspend_dbus7    = buf[0x01] & SUSPEND_DBUS7;
+
     // Addr 02: Vendor ID
     eeprom->vendor_id = buf[0x02] + (buf[0x03] << 8);
 
