@@ -324,6 +324,8 @@ struct ftdi_device_list
     struct libusb_device *dev;
 };
 
+#define USE_SERIAL_NUM 0x08
+
 /** TXDEN */
 #define CBUS_TXDEN 0
 /** PWREN# */

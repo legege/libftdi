@@ -2186,34 +2186,33 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
         return;
 
     eeprom = ftdi->eeprom;
+    memset(eeprom, 0, sizeof(struct ftdi_eeprom));
 
     eeprom->vendor_id = 0x0403;
-    eeprom->product_id = 0x6001;
-
-    eeprom->self_powered = 1;
-    eeprom->remote_wakeup = 1;
-    eeprom->release = 0;
-
-    eeprom->in_is_isochronous = 0;
-    eeprom->out_is_isochronous = 0;
-    eeprom->suspend_pull_downs = 0;
-
-    eeprom->use_serial = 0;
-    eeprom->change_usb_version = 0;
+    eeprom->use_serial = USE_SERIAL_NUM;
+    if((ftdi->type= TYPE_AM) || (ftdi->type= TYPE_BM) ||(ftdi->type= TYPE_R))
+        eeprom->product_id = 0x6001;
+    else
+        eeprom->product_id = 0x6010;
+    switch (ftdi->type)
+    {
+    case TYPE_2232H:
+        eeprom->release = 0x200;
+        break;
+    default:
+        eeprom->release = 0;
+    }
     eeprom->usb_version = 0x0200;
-    eeprom->max_power = 0;
+    eeprom->max_power = 100;
 
     eeprom->manufacturer = NULL;
     eeprom->product = NULL;
     eeprom->serial = NULL;
-    for (i=0; i < 5; i++)
-    {
-        eeprom->cbus_function[i] = 0;
-    }
-    eeprom->high_current_a = 0;
-    eeprom->invert = 0;
 
-    eeprom->size = FTDI_MAX_EEPROM_SIZE;
+    if(ftdi->type == TYPE_R)
+        eeprom->size = 0x80;
+    else
+        eeprom->size = -1;
 }
 
 /**
@@ -2553,7 +2552,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     eeprom->in_is_isochronous  = buf[0x0A]&0x01;
     eeprom->out_is_isochronous = buf[0x0A]&0x02;
     eeprom->suspend_pull_downs = buf[0x0A]&0x04;
-    eeprom->use_serial         = buf[0x0A]&0x08;
+    eeprom->use_serial         = buf[0x0A] & USE_SERIAL_NUM;
     eeprom->change_usb_version = buf[0x0A]&0x10;
 
 
