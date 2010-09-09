@@ -2508,13 +2508,13 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
 
     // Addr 00: Channel A setting
 
-    eeprom->channel_a_type   = buf[0x00] & CHANNEL_IS_OPTO;
+    eeprom->channel_a_type   = buf[0x00] & 0x7;
     eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
     eeprom->high_current_a   = buf[0x00] & HIGH_CURRENT_DRIVE;
 
     // Addr 01: Channel B setting
 
-    eeprom->channel_b_type   = buf[0x01] & CHANNEL_IS_OPTO;
+    eeprom->channel_b_type   = buf[0x01] & 0x7;
     eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
     eeprom->high_current_b   = buf[0x01] & HIGH_CURRENT_DRIVE;
 
@@ -2670,6 +2670,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     
     if(verbose)
     {
+        char *channel_mode[] = {"UART","245","CPU", "unknown", "OPTO"};
         fprintf(stdout, "VID:     0x%04x\n",eeprom->vendor_id);
         fprintf(stdout, "PID:     0x%04x\n",eeprom->product_id);
         fprintf(stdout, "Release: 0x%04x\n",eeprom->release);
@@ -2685,7 +2686,17 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
             fprintf(stdout, "Product:      %s\n",eeprom->product);
         if(eeprom->serial)
             fprintf(stdout, "Serial:       %s\n",eeprom->serial);
-        fprintf(stderr,     "Checksum      : %04x\n", checksum);
+        fprintf(stdout,     "Checksum      : %04x\n", checksum);
+        if ((ftdi->type = TYPE_2232C) || (ftdi->type = TYPE_R))
+            fprintf(stdout,"Channel A has Mode %s%s%s\n", 
+                    channel_mode[eeprom->channel_a_type],
+                    (eeprom->channel_a_driver)?" VCP":"",
+                    (eeprom->high_current_a)?" High Currenr IO":"");
+        if (ftdi->type == TYPE_2232C)
+            fprintf(stdout,"Channel B has Mode %s%s%s\n", 
+                    channel_mode[eeprom->channel_b_type],
+                    (eeprom->channel_b_driver)?" VCP":"",
+                    (eeprom->high_current_b)?" High Currenr IO":"");
 
     }
 
