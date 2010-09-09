@@ -212,7 +212,9 @@ struct ftdi_eeprom
     /** CBUS pin function. See CBUS_xxx defines. */
     int cbus_function[5];
     /** Select hight current drive. */
-    int high_current;
+    int high_current_a;
+    /** Select hight current drive on B port (2232C). */
+    int high_current_b;
     /** Select inversion of data lines (bitmask). */
     int invert;
 
@@ -337,7 +339,7 @@ struct ftdi_device_list
 #define INVERT_RI  0x80
 
 /** High current drive. */
-#define HIGH_CURRENT_DRIVE 0x04
+#define HIGH_CURRENT_DRIVE 0x10
 
 /**
     \brief Progress Info for streaming read

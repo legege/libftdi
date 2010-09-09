@@ -2314,7 +2314,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     memset (output, 0, eeprom->size);
 
     // Addr 00: High current IO
-    output[0x00] = eeprom->high_current ? HIGH_CURRENT_DRIVE : 0;
+    output[0x00] = eeprom->high_current_a ? HIGH_CURRENT_DRIVE : 0;
     // Addr 01: IN endpoint size (for R type devices, different for FT2232)
     if (ftdi->type == TYPE_R) {
         output[0x01] = 0x40;
@@ -2505,6 +2505,10 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     if(ftdi->type == TYPE_R)
         eeprom_size = 0x80;
     eeprom = ftdi->eeprom;
+
+    eeprom_high_current_a = buf[0x00] & HIGH_CURRENT_DRIVE;
+    eeprom_high_current_b = buf[0x01] & HIGH_CURRENT_DRIVE;
+
 
     // Addr 02: Vendor ID
     eeprom->vendor_id = buf[0x02] + (buf[0x03] << 8);
