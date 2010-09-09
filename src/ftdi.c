@@ -2210,7 +2210,7 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
     {
         eeprom->cbus_function[i] = 0;
     }
-    eeprom->high_current = 0;
+    eeprom->high_current_a = 0;
     eeprom->invert = 0;
 
     eeprom->size = FTDI_MAX_EEPROM_SIZE;
@@ -2291,7 +2291,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     if (ftdi->type != TYPE_R)
     {
         if (eeprom->invert) return -4;
-        if (eeprom->high_current) return -5;
+        if (eeprom->high_current_a) return -5;
     }
 
     size_check = eeprom->size;
@@ -2506,8 +2506,8 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         eeprom_size = 0x80;
     eeprom = ftdi->eeprom;
 
-    eeprom_high_current_a = buf[0x00] & HIGH_CURRENT_DRIVE;
-    eeprom_high_current_b = buf[0x01] & HIGH_CURRENT_DRIVE;
+    eeprom->high_current_a = buf[0x00] & HIGH_CURRENT_DRIVE;
+    eeprom->high_current_b = buf[0x01] & HIGH_CURRENT_DRIVE;
 
 
     // Addr 02: Vendor ID
