@@ -2698,6 +2698,12 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         if(eeprom->serial)
             fprintf(stdout, "Serial:       %s\n",eeprom->serial);
         fprintf(stdout,     "Checksum      : %04x\n", checksum);
+        if(eeprom->suspend_dbus7)
+            fprintf(stdout, "Suspend on DBUS7\n");            
+        if(eeprom->suspend_pull_downs)
+            fprintf(stdout, "Pull IO pins low during suspend\n");
+        if(eeprom->remote_wakeup)
+            fprintf(stdout, "Enable Remote Wake Up\n");
         if (ftdi->type >= TYPE_2232C)
             fprintf(stdout,"Channel A has Mode %s%s%s\n", 
                     channel_mode[eeprom->channel_a_type],
