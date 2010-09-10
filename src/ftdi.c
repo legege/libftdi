@@ -2190,7 +2190,8 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
 
     eeprom->vendor_id = 0x0403;
     eeprom->use_serial = USE_SERIAL_NUM;
-    if((ftdi->type= TYPE_AM) || (ftdi->type= TYPE_BM) ||(ftdi->type= TYPE_R))
+    if((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM) ||
+       (ftdi->type == TYPE_R))
         eeprom->product_id = 0x6001;
     else
         eeprom->product_id = 0x6010;
