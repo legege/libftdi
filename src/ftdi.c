@@ -2641,6 +2641,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
     int eeprom_size;
     struct ftdi_eeprom *eeprom;
+    int release;
 
     if (ftdi == NULL)
         ftdi_error_return(-1,"No context");
@@ -2658,7 +2659,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     // Addr 04: Product ID
     eeprom->product_id = buf[0x04] + (buf[0x05] << 8);
 
-    eeprom->release = buf[0x06] + (buf[0x07]<<8);
+    release = buf[0x06] + (buf[0x07]<<8);
 
     // Addr 08: Config descriptor
     // Bit 7: always 1
@@ -2843,7 +2844,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         char *channel_mode[] = {"UART","245","CPU", "unknown", "OPTO"};
         fprintf(stdout, "VID:     0x%04x\n",eeprom->vendor_id);
         fprintf(stdout, "PID:     0x%04x\n",eeprom->product_id);
-        fprintf(stdout, "Release: 0x%04x\n",eeprom->release);
+        fprintf(stdout, "Release: 0x%04x\n",release);
 
         if(eeprom->self_powered)
             fprintf(stdout, "Self-Powered%s", (eeprom->remote_wakeup)?", USB Remote Wake Up\n":"\n");

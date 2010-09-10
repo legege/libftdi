@@ -182,8 +182,6 @@ struct ftdi_eeprom
     int self_powered;
     /** remote wakeup */
     int remote_wakeup;
-    /** release */
-    int release;
 
     /* Suspend on DBUS7 Low */
     int suspend_dbus7;
