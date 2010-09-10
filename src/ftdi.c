@@ -2524,6 +2524,11 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
 
     eeprom->suspend_dbus7    = buf[0x01] & SUSPEND_DBUS7;
 
+    if((ftdi->type == TYPE_R) && (buf[0x01]&0x40))
+        fprintf(stderr,
+                "TYPE_R EEPROM byte[0x01] Bit 6 unexpected Endpoint size. If this happened with the\n"
+                " EEPROM programmed by FTDI tools, please report to libftdi@developer.intra2net.com\n");
+
     // Addr 02: Vendor ID
     eeprom->vendor_id = buf[0x02] + (buf[0x03] << 8);
 
