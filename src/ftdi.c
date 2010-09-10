@@ -2207,7 +2207,7 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
         eeprom->release = 0;
     }
     eeprom->usb_version = 0x0200;
-    eeprom->max_power = 100;
+    eeprom->max_power = 50;
 
     eeprom->manufacturer = NULL;
     eeprom->product = NULL;
