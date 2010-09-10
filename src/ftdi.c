@@ -2257,7 +2257,7 @@ void ftdi_eeprom_free(struct ftdi_context *ftdi)
 */
 int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
 {
-    unsigned char i, j;
+    unsigned char i, j, k;
     unsigned short checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
     int size_check;
@@ -2314,12 +2314,8 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     // empty eeprom
     memset (output, 0, eeprom->size);
 
-    // Addr 00: High current IO
-    output[0x00] = eeprom->high_current_a ? HIGH_CURRENT_DRIVE : 0;
-    // Addr 01: IN endpoint size (for R type devices, different for FT2232)
-    if (ftdi->type == TYPE_R) {
-        output[0x01] = 0x40;
-    }
+    // Bytes and Bits set for all Types
+
     // Addr 02: Vendor ID
     output[0x02] = eeprom->vendor_id;
     output[0x03] = eeprom->vendor_id >> 8;
@@ -2368,98 +2364,84 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     // Addr 09: Max power consumption: max power = value * 2 mA
     output[0x09] = eeprom->max_power;
 
-    // Addr 0A: Chip configuration
-    // Bit 7: 0 - reserved
-    // Bit 6: 0 - reserved
-    // Bit 5: 0 - reserved
-    // Bit 4: 1 - Change USB version 
-    //            not seen on FT2232C)
-    // Bit 3: 1 - Use the serial number string
-    // Bit 2: 1 - Enable suspend pull downs for lower power
-    // Bit 1: 1 - Out EndPoint is Isochronous
-    // Bit 0: 1 - In EndPoint is Isochronous
-    //
-    j = 0;
-    if (eeprom->in_is_isochronous == 1)
-        j = j | 1;
-    if (eeprom->out_is_isochronous == 1)
-        j = j | 2;
-    if (eeprom->suspend_pull_downs == 1)
-        j = j | 4;
-    if (eeprom->use_serial == 1)
-        j = j | 8;
-    output[0x0A] = j;
+    if(ftdi->type != TYPE_AM)
+    {
+        // Addr 0A: Chip configuration
+        // Bit 7: 0 - reserved
+        // Bit 6: 0 - reserved
+        // Bit 5: 0 - reserved
+        // Bit 4: 1 - Change USB version 
+        // Bit 3: 1 - Use the serial number string
+        // Bit 2: 1 - Enable suspend pull downs for lower power
+        // Bit 1: 1 - Out EndPoint is Isochronous
+        // Bit 0: 1 - In EndPoint is Isochronous
+        //
+        j = 0;
+        if (eeprom->in_is_isochronous == 1)
+            j = j | 1;
+        if (eeprom->out_is_isochronous == 1)
+            j = j | 2;
+        output[0x0A] = j;
+    }
 
-    // Addr 0B: Invert data lines
-    output[0x0B] = eeprom->invert & 0xff;
-
-    // Addr 0C: USB version low byte
-    // Addr 0D: USB version high byte
-    output[0x0C] = eeprom->usb_version;
-    output[0x0D] = eeprom->usb_version >> 8;
-
+    // Dynamic content
+    // Strings start at 0x94 (TYPE_AM, TYPE_BM)
+    // 0x96 (TYPE_2232C), 0x98 (TYPE_R) and 0x9a (TYPE_x232H)
+    i = 0;
+    switch(ftdi->type)
+    {
+    case TYPE_2232H:
+    case TYPE_4232H:
+        i += 2;
+    case TYPE_R:
+        i += 2;
+    case TYPE_2232C:
+        i += 2;
+    case TYPE_AM:
+    case TYPE_BM:
+        i += 0x94;
+    }
+    /* Wrap around 0x80 for 128 byte EEPROMS (Internale and 93x46) */
+    k = eeprom->size -1;
 
     // Addr 0E: Offset of the manufacturer string + 0x80, calculated later
     // Addr 0F: Length of manufacturer string
+    // Output manufacturer
+    output[0x0E] = i;  // calculate offset
+    output[i++ & k] = manufacturer_size*2 + 2;
+    output[i++ & k] = 0x03; // type: string
+    for (j = 0; j < manufacturer_size; j++)
+    {
+        output[i & k] = eeprom->manufacturer[j], i++;
+        output[i & k] = 0x00, i++;
+    }
     output[0x0F] = manufacturer_size*2 + 2;
 
     // Addr 10: Offset of the product string + 0x80, calculated later
     // Addr 11: Length of product string
-    output[0x11] = product_size*2 + 2;
-
-    // Addr 12: Offset of the serial string + 0x80, calculated later
-    // Addr 13: Length of serial string
-    output[0x13] = serial_size*2 + 2;
-
-    // Addr 14: CBUS function: CBUS0, CBUS1
-    // Addr 15: CBUS function: CBUS2, CBUS3
-    // Addr 16: CBUS function: CBUS5
-    output[0x14] = eeprom->cbus_function[0] | (eeprom->cbus_function[1] << 4);
-    output[0x15] = eeprom->cbus_function[2] | (eeprom->cbus_function[3] << 4);
-    output[0x16] = eeprom->cbus_function[4];
-    // Addr 17: Unknown
-
-    // Dynamic content
-    // In images produced by FTDI's FT_Prog for FT232R strings start at 0x18
-    // Space till 0x18 should be considered as reserved.
-    if (ftdi->type >= TYPE_R) {
-        i = 0x18;
-    } else {
-        i = 0x14;
-    }
-    if (eeprom->size >= 256) i = 0x80;
-
-
-    // Output manufacturer
-    output[0x0E] = i | 0x80;  // calculate offset
-    output[i++] = manufacturer_size*2 + 2;
-    output[i++] = 0x03; // type: string
-    for (j = 0; j < manufacturer_size; j++)
-    {
-        output[i] = eeprom->manufacturer[j], i++;
-        output[i] = 0x00, i++;
-    }
-
-    // Output product name
     output[0x10] = i | 0x80;  // calculate offset
-    output[i] = product_size*2 + 2, i++;
-    output[i] = 0x03, i++;
+    output[i & k] = product_size*2 + 2, i++;
+    output[i & k] = 0x03, i++;
     for (j = 0; j < product_size; j++)
     {
-        output[i] = eeprom->product[j], i++;
-        output[i] = 0x00, i++;
+        output[i & k] = eeprom->product[j], i++;
+        output[i & k] = 0x00, i++;
     }
-
-    // Output serial
+    output[0x11] = product_size*2 + 2;
+    
+    // Addr 12: Offset of the serial string + 0x80, calculated later
+    // Addr 13: Length of serial string
     output[0x12] = i | 0x80; // calculate offset
-    output[i] = serial_size*2 + 2, i++;
-    output[i] = 0x03, i++;
+    output[i & k] = serial_size*2 + 2, i++;
+    output[i & k] = 0x03, i++;
     for (j = 0; j < serial_size; j++)
     {
-        output[i] = eeprom->serial[j], i++;
-        output[i] = 0x00, i++;
+        output[i & k] = eeprom->serial[j], i++;
+        output[i & k] = 0x00, i++;
     }
+    output[0x13] = serial_size*2 + 2;
 
+    /* Fixme: ftd2xx seems to append 0x02, 0x03 and 0x01 for PnP = 0 or 0x00 else */
     // calculate checksum
     checksum = 0xAAAA;
 
