@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     char const *desc    = 0;
     char const *serial  = 0;
     int erase = 0;
-    int use_defaults;
+    int use_defaults = 0;
     int large_chip = 0;
 
     while ((i = getopt(argc, argv, "d::ev:p:P:S:")) != -1)
