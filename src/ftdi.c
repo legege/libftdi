@@ -2206,7 +2206,15 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
     eeprom->serial = NULL;
 
     if(ftdi->type == TYPE_R)
+    {
+        eeprom->max_power = 45;
         eeprom->size = 0x80;
+        eeprom->cbus_function[0] = CBUS_TXLED;
+        eeprom->cbus_function[1] = CBUS_RXLED;
+        eeprom->cbus_function[2] = CBUS_TXDEN;
+        eeprom->cbus_function[3] = CBUS_PWREN;
+        eeprom->cbus_function[4] = CBUS_SLEEP;
+    }
     else
         eeprom->size = -1;
 }
@@ -2521,29 +2529,29 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
         output[0x0D] = (eeprom->usb_version>>8) & 0xff;
         
         if(eeprom->cbus_function[0] > CBUS_BB)
-            output[0x14] = CBUS_BB;
+            output[0x14] = CBUS_TXLED;
         else
             output[0x14] = eeprom->cbus_function[0];
         
         if(eeprom->cbus_function[1] > CBUS_BB)
-            output[0x14] |= CBUS_BB<<4;
+            output[0x14] |= CBUS_RXLED<<4;
         else
-            output[0x14] |= eeprom->cbus_function[1];
+            output[0x14] |= eeprom->cbus_function[1]<<4;
         
         if(eeprom->cbus_function[2] > CBUS_BB)
-            output[0x15] |= CBUS_BB<<4;
+            output[0x15] = CBUS_TXDEN;
         else
-            output[0x15] |= eeprom->cbus_function[2];
+            output[0x15] = eeprom->cbus_function[2];
         
         if(eeprom->cbus_function[3] > CBUS_BB)
-            output[0x15] |= CBUS_BB<<4;
+            output[0x15] |= CBUS_PWREN<<4;
         else
-            output[0x15] |= eeprom->cbus_function[3];
+            output[0x15] |= eeprom->cbus_function[3]<<4;
         
-        if(eeprom->cbus_function[5] > CBUS_BB)
-            output[0x16] = CBUS_BB;
+        if(eeprom->cbus_function[4] > CBUS_CLK6)
+            output[0x16] = CBUS_SLEEP;
         else
-            output[0x16] = eeprom->cbus_function[0];
+            output[0x16] = eeprom->cbus_function[4];
         break;
     case TYPE_2232H:
         output[0x00] = (eeprom->channel_a_type);
@@ -2901,9 +2909,34 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
                     (eeprom->group3_schmitt)?" Schmitt Input":"",
                     (eeprom->group3_slew)?" Slow Slew":"");
         }
-
+        if (ftdi->type == TYPE_R)
+        {
+            char *cbus_mux[] = {"TXDEN","PWREN","RXLED", "TXLED","TX+RXLED",
+                                "SLEEP","CLK48","CLK24R","CLK122","CLK6",
+                                "IOMODE","BB_WR","BB_RD"};
+            char *cbus_BB[] = {"RXF","TXE","WR", "RD"};
+            int i;
+            
+            if(eeprom->invert)
+            { 
+                char *r_bits[] = {"TXD","RXD","RTS", "CTS","DTR","DSR","DCD","RI"};
+                fprintf(stdout,"Inverted bits:");
+                for (i=0; i<8; i++)
+                    if((eeprom->invert & (1<<i)) == (1<<i))
+                        fprintf(stdout," %s",r_bits[i]);
+                fprintf(stdout,"\n");
+            }
+            for(i=0; i<5; i++)
+            {
+                if(eeprom->cbus_function[i]<CBUS_BB)
+                    fprintf(stdout,"C%d Function: %s\n", i,
+                            cbus_mux[eeprom->cbus_function[i]]);
+                else
+                    fprintf(stdout,"C%d BB Function: %s\n", i,
+                            cbus_BB[i]);
+            }
+        }
     }
-
     return 0;
 }
 
