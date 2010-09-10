@@ -2718,7 +2718,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
                     channel_mode[eeprom->channel_a_type],
                     (eeprom->channel_a_driver)?" VCP":"",
                     (eeprom->high_current_a)?" High Currenr IO":"");
-        if (ftdi->type == TYPE_2232C)
+        if (ftdi->type >= TYPE_2232C)
             fprintf(stdout,"Channel B has Mode %s%s%s\n", 
                     channel_mode[eeprom->channel_b_type],
                     (eeprom->channel_b_driver)?" VCP":"",
