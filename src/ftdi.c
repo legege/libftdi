@@ -2912,9 +2912,9 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         if (ftdi->type == TYPE_R)
         {
             char *cbus_mux[] = {"TXDEN","PWREN","RXLED", "TXLED","TX+RXLED",
-                                "SLEEP","CLK48","CLK24R","CLK122","CLK6",
+                                "SLEEP","CLK48","CLK24","CLK12","CLK6",
                                 "IOMODE","BB_WR","BB_RD"};
-            char *cbus_BB[] = {"RXF","TXE","WR", "RD"};
+            char *cbus_BB[] = {"RXF","TXE","RD", "WR"};
             int i;
             
             if(eeprom->invert)
