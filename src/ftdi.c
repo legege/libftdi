@@ -2197,6 +2197,9 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
         eeprom->product_id = 0x6010;
     switch (ftdi->type)
     {
+    case TYPE_2232C:
+        eeprom->release = 0x500;
+        break;
     case TYPE_2232H:
         eeprom->release = 0x200;
         break;
