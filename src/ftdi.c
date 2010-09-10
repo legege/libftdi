@@ -2269,7 +2269,6 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     unsigned short checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
     int size_check;
-    const int cbus_max[5] = {13, 13, 13, 13, 9};
     struct ftdi_eeprom *eeprom;
 
     if (ftdi == NULL)
@@ -2288,18 +2287,6 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
         product_size = strlen(eeprom->product);
     if (eeprom->serial != NULL)
         serial_size = strlen(eeprom->serial);
-
-    // highest allowed cbus value
-    for (i = 0; i < 5; i++)
-    {
-        if ((eeprom->cbus_function[i] > cbus_max[i]) ||
-            (eeprom->cbus_function[i] && ftdi->type != TYPE_R)) return -3;
-    }
-    if (ftdi->type != TYPE_R)
-    {
-        if (eeprom->invert) return -4;
-        if (eeprom->high_current_a) return -5;
-    }
 
     size_check = 0x80;
     switch(ftdi->type)
