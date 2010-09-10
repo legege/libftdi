@@ -2293,17 +2293,27 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
         if (eeprom->high_current_a) return -5;
     }
 
-    size_check = eeprom->size;
-    size_check -= 28; // 28 are always in use (fixed)
+    size_check = 0x80;
+    switch(ftdi->type)
+    {
+    case TYPE_2232H:
+    case TYPE_4232H:
+        size_check -= 4;
+    case TYPE_R:
+        size_check -= 4;
+    case TYPE_2232C:
+        size_check -= 4;
+    case TYPE_AM:
+    case TYPE_BM:
+        size_check -= 0x14*2;
+    }
 
-    // Top half of a 256byte eeprom is used just for strings and checksum
-    // it seems that the FTDI chip will not read these strings from the lower half
-    // Each string starts with two bytes; offset and type (0x03 for string)
-    // the checksum needs two bytes, so without the string data that 8 bytes from the top half
-    if (eeprom->size>=256) size_check = 120;
     size_check -= manufacturer_size*2;
     size_check -= product_size*2;
     size_check -= serial_size*2;
+
+    /* Space for the string type and pointer bytes */
+    size_check -= -6;
 
     // eeprom size exceeded?
     if (size_check < 0)
