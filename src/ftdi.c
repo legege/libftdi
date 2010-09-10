@@ -2946,15 +2946,61 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     \retval  0: all fine
     \retval -1: erase failed
     \retval -2: USB device unavailable
+    \retval -3: Writing magic failed
+    \retval -4: Read EEPROM failed
+    \retval -5: Unexpected EEPROM value
 */
+#define MAGIC 0x55aa
 int ftdi_erase_eeprom(struct ftdi_context *ftdi)
 {
+    unsigned short eeprom_value;
     if (ftdi == NULL || ftdi->usb_dev == NULL)
         ftdi_error_return(-2, "USB device unavailable");
 
-    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_ERASE_EEPROM_REQUEST, 0, 0, NULL, 0, ftdi->usb_write_timeout) < 0)
+    if(ftdi->type == TYPE_R)
+    {
+        ftdi->eeprom->chip = 0;
+        return 0;
+    }
+
+    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_ERASE_EEPROM_REQUEST, 
+                                0, 0, NULL, 0, ftdi->usb_write_timeout) < 0)
         ftdi_error_return(-1, "unable to erase eeprom");
 
+    
+    /* detect chip type by writing 0x55AA as magic at word position 0xc0
+       Chip is 93x46 if magic is read at word position 0x00, as wraparound happens around 0x40
+       Chip is 93x56 if magic is read at word position 0x40, as wraparound happens around 0x80
+       Chip is 93x66 if magic is only read at word position 0xc0*/
+    if( ftdi_write_eeprom_location(ftdi, 0xc0, MAGIC))
+        ftdi_error_return(-3, "Writing magic failed");
+    if (ftdi_read_eeprom_location( ftdi, 0x00, &eeprom_value)) 
+        ftdi_error_return(-4, "Reading failed failed");
+    if(eeprom_value == MAGIC)
+    {
+        ftdi->eeprom->chip = 0x46;
+    }
+    else 
+    {
+        if (ftdi_read_eeprom_location( ftdi, 0x40, &eeprom_value)) 
+            ftdi_error_return(-4, "Reading failed failed");
+        if(eeprom_value == MAGIC)
+            ftdi->eeprom->chip = 0x56;
+        else 
+        {
+            if (ftdi_read_eeprom_location( ftdi, 0xc0, &eeprom_value)) 
+                ftdi_error_return(-4, "Reading failed failed");
+            if(eeprom_value == MAGIC)
+                ftdi->eeprom->chip = 0x66;
+            else
+            {
+                ftdi->eeprom->chip = -1;
+            }
+        }
+    }
+    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_ERASE_EEPROM_REQUEST, 
+                                0, 0, NULL, 0, ftdi->usb_write_timeout) < 0)
+        ftdi_error_return(-1, "unable to erase eeprom");
     return 0;
 }
 
