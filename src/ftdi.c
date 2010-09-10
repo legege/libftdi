@@ -2512,7 +2512,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     if (ftdi == NULL)
         ftdi_error_return(-1,"No context");
     if (ftdi->eeprom == NULL)
-        ftdi_error_return(-1,"No eeprom");
+        ftdi_error_return(-1,"No eeprom structure");
  
     eeprom_size = ftdi->eeprom->size;
     if(ftdi->type == TYPE_R)
@@ -2656,14 +2656,15 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
 
     else if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM))
     {
-        eeprom->chip = buf[14];
+        eeprom->chip = -1;
     }
     else if(ftdi->type == TYPE_2232C)
     {
-        eeprom->chip = buf[14];
+        eeprom->chip = buf[0x14];
     }
     else if(ftdi->type == TYPE_R)
     {
+        eeprom->chip = buf[0x16];
         // Addr 0B: Invert data lines
         // Works only on FT232R, not FT245R, but no way to distinguish
         eeprom->invert = buf[0x0B];
@@ -2678,6 +2679,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     }
     else if ((ftdi->type == TYPE_2232H) ||(ftdi->type == TYPE_4232H)) 
     {
+        eeprom->chip = buf[0x18];
         eeprom->group0_drive   =  buf[0x0c]       & DRIVE_16MA;
         eeprom->group0_schmitt =  buf[0x0c]       & IS_SCHMITT;
         eeprom->group0_slew    =  buf[0x0c]       & SLOW_SLEW;
@@ -2711,6 +2713,10 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         if(eeprom->serial)
             fprintf(stdout, "Serial:       %s\n",eeprom->serial);
         fprintf(stdout,     "Checksum      : %04x\n", checksum);
+        if (ftdi->type == TYPE_R)
+            fprintf(stdout,     "Internal EEPROM\n");
+        else if (eeprom->chip >= 0x46)
+            fprintf(stdout,     "Attached EEPROM: 93x%02x\n", eeprom->chip);
         if(eeprom->suspend_dbus7)
             fprintf(stdout, "Suspend on DBUS7\n");            
         if(eeprom->suspend_pull_downs)
