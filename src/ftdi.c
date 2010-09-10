@@ -2509,26 +2509,6 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         eeprom_size = 0x80;
     eeprom = ftdi->eeprom;
 
-    // Addr 00: Channel A setting
-
-    eeprom->channel_a_type   = buf[0x00] & 0x7;
-    eeprom->high_current     = buf[0x00] & HIGH_CURRENT_DRIVE_R;
-    eeprom->channel_a_driver = buf[0x00] & DRIVER_D2XX;
-    eeprom->high_current_a   = buf[0x00] & HIGH_CURRENT_DRIVE;
-
-    // Addr 01: Channel B setting
-
-    eeprom->channel_b_type   = buf[0x01] & 0x7;
-    eeprom->channel_b_driver = buf[0x01] & DRIVER_D2XX;
-    eeprom->high_current_b   = buf[0x01] & HIGH_CURRENT_DRIVE;
-
-    eeprom->suspend_dbus7    = buf[0x01] & SUSPEND_DBUS7;
-
-    if((ftdi->type == TYPE_R) && ((buf[0x01]&0x40) != 0x40))
-        fprintf(stderr,
-                "TYPE_R EEPROM byte[0x01] Bit 6 unexpected Endpoint size. If this happened with the\n"
-                " EEPROM programmed by FTDI tools, please report to libftdi@developer.intra2net.com\n");
-
     // Addr 02: Vendor ID
     eeprom->vendor_id = buf[0x02] + (buf[0x03] << 8);
 
@@ -2656,10 +2636,27 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     }
     else if(ftdi->type == TYPE_2232C)
     {
+        eeprom->channel_a_type   = buf[0x00] & 0x7;
+        eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
+        eeprom->high_current_a   = buf[0x00] & HIGH_CURRENT_DRIVE;
+        eeprom->channel_b_type   = buf[0x01] & 0x7;
+        eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
+        eeprom->high_current_b   = buf[0x01] & HIGH_CURRENT_DRIVE;
         eeprom->chip = buf[0x14];
     }
     else if(ftdi->type == TYPE_R)
     {
+        eeprom->channel_a_type   = 0;
+        /* TYPE_R flags D2XX, not VCP as all others*/
+        eeprom->channel_a_driver = (~buf[0x00]) & DRIVER_VCP;
+        eeprom->high_current     = buf[0x00] & HIGH_CURRENT_DRIVE_R;
+        if( (buf[0x01]&0x40) != 0x40)
+        fprintf(stderr,
+                "TYPE_R EEPROM byte[0x01] Bit 6 unexpected Endpoint size."
+                " If this happened with the\n"
+                " EEPROM programmed by FTDI tools, please report "
+                "to libftdi@developer.intra2net.com\n");
+
         eeprom->chip = buf[0x16];
         // Addr 0B: Invert data lines
         // Works only on FT232R, not FT245R, but no way to distinguish
@@ -2675,6 +2672,14 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     }
     else if ((ftdi->type == TYPE_2232H) ||(ftdi->type == TYPE_4232H)) 
     {
+        eeprom->high_current     = buf[0x00] & HIGH_CURRENT_DRIVE_R;
+        eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
+        eeprom->channel_b_type   = buf[0x01] & 0x7;
+        eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
+
+        if(ftdi->type == TYPE_2232H)
+            eeprom->suspend_dbus7    = buf[0x01] & SUSPEND_DBUS7;
+
         eeprom->chip = buf[0x18];
         eeprom->group0_drive   =  buf[0x0c]       & DRIVE_16MA;
         eeprom->group0_schmitt =  buf[0x0c]       & IS_SCHMITT;
@@ -2722,13 +2727,13 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         if (ftdi->type >= TYPE_2232C)
             fprintf(stdout,"Channel A has Mode %s%s%s\n", 
                     channel_mode[eeprom->channel_a_type],
-                    (eeprom->channel_a_driver)?" D2XX":"",
-                    (eeprom->high_current_a)?" High Currenr IO":"");
-        if (ftdi->type >= TYPE_2232C)
+                    (eeprom->channel_a_driver)?" VCP":"",
+                    (eeprom->high_current_a)?" High Current IO":"");
+        if ((ftdi->type >= TYPE_2232C) && (ftdi->type != TYPE_R)) 
             fprintf(stdout,"Channel B has Mode %s%s%s\n", 
                     channel_mode[eeprom->channel_b_type],
-                    (eeprom->channel_b_driver)?" D2XX":"",
-                    (eeprom->high_current_b)?" High Currenr IO":"");
+                    (eeprom->channel_b_driver)?" VCP":"",
+                    (eeprom->high_current_b)?" High Current IO":"");
         if ((ftdi->type == TYPE_2232H) || (ftdi->type == TYPE_4232H)) 
         {
             fprintf(stdout,"%s has %d mA drive%s%s\n",
