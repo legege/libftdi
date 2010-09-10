@@ -328,7 +328,7 @@ struct ftdi_device_list
 enum ftdi_cbus_func {/* FIXME: Recheck value, especially the last */
     CBUS_TXDEN = 0, CBUS_PWREN = 1, CBUS_RXLED = 2, CBUS_TXLED = 3, CBUS_TXRXLED = 4,
     CBUS_SLEEP = 5, CBUS_CLK48 = 6, CBUS_CLK24 = 7, CBUS_CLK12 = 8, CBUS_CLK6 =  9,
-    CBUS_IOMODE = 10, CBUS_BB_WR = 11, CBUS_BB_RD = 12, CBUS_BB_RXF = 13, CBUS_BB_TXE = 14};
+    CBUS_IOMODE = 0xa, CBUS_BB_WR = 0xb, CBUS_BB_RD = 0xc, CBUS_BB   = 0xd};
 
 /** Invert TXD# */
 #define INVERT_TXD 0x01
