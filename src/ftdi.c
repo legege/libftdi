@@ -2603,6 +2603,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
         break;
     }
 
+    // calculate checksum
     checksum = 0xAAAA;
 
     for (i = 0; i < eeprom->size/2-1; i++)
