@@ -325,34 +325,10 @@ struct ftdi_device_list
 };
 
 #define USE_SERIAL_NUM 0x08
-
-/** TXDEN */
-#define CBUS_TXDEN 0
-/** PWREN# */
-#define CBUS_PWREN 1
-/** RXLED# */
-#define CBUS_RXLED 2
-/** TXLED#*/
-#define CBUS_TXLED 3
-/** RXLED# & TXLED# */
-#define CBUS_TXRXLED 4
-/** SLEEP# */
-#define CBUS_SLEEP 5
-/** 48 MHz clock */
-#define CBUS_CLK48 6
-/** 24 MHz clock */
-#define CBUS_CLK24 7
-/** 12 MHz clock */
-#define CBUS_CLK12 8
-/** 6 MHz clock */
-#define CBUS_CLK6 9
-/** Bitbang IO Mode*/
-#define CBUS_IOMODE 10
-/** Bitbang IO WR#*/
-#define CBUS_BB_WR 11
-/** Bitbang IO RD#*/
-#define CBUS_BB_RD 12
-
+enum ftdi_cbus_func {/* FIXME: Recheck value, especially the last */
+    CBUS_TXDEN = 0, CBUS_PWREN = 1, CBUS_RXLED = 2, CBUS_TXLED = 3, CBUS_TXRXLED = 4,
+    CBUS_SLEEP = 5, CBUS_CLK48 = 6, CBUS_CLK24 = 7, CBUS_CLK12 = 8, CBUS_CLK6 =  9,
+    CBUS_IOMODE = 10, CBUS_BB_WR = 11, CBUS_BB_RD = 12, CBUS_BB_RXF = 13, CBUS_BB_TXE = 14};
 
 /** Invert TXD# */
 #define INVERT_TXD 0x01
