@@ -2206,7 +2206,10 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
     default:
         eeprom->release = 0;
     }
-    eeprom->usb_version = 0x0200;
+    if (ftdi->type == TYPE_AM)
+        eeprom->usb_version = 0x0101;
+    else
+        eeprom->usb_version = 0x0200;
     eeprom->max_power = 50;
 
     eeprom->manufacturer = NULL;
@@ -2369,7 +2372,8 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     // Bit 7: 0 - reserved
     // Bit 6: 0 - reserved
     // Bit 5: 0 - reserved
-    // Bit 4: 1 - Change USB version
+    // Bit 4: 1 - Change USB version 
+    //            not seen on FT2232C)
     // Bit 3: 1 - Use the serial number string
     // Bit 2: 1 - Enable suspend pull downs for lower power
     // Bit 1: 1 - Out EndPoint is Isochronous
@@ -2384,20 +2388,15 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
         j = j | 4;
     if (eeprom->use_serial == 1)
         j = j | 8;
-    if (eeprom->change_usb_version == 1)
-        j = j | 16;
     output[0x0A] = j;
 
     // Addr 0B: Invert data lines
     output[0x0B] = eeprom->invert & 0xff;
 
-    // Addr 0C: USB version low byte when 0x0A bit 4 is set
-    // Addr 0D: USB version high byte when 0x0A bit 4 is set
-    if (eeprom->change_usb_version == 1)
-    {
-        output[0x0C] = eeprom->usb_version;
-        output[0x0D] = eeprom->usb_version >> 8;
-    }
+    // Addr 0C: USB version low byte
+    // Addr 0D: USB version high byte
+    output[0x0C] = eeprom->usb_version;
+    output[0x0D] = eeprom->usb_version >> 8;
 
 
     // Addr 0E: Offset of the manufacturer string + 0x80, calculated later
@@ -2558,15 +2557,15 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     eeprom->out_is_isochronous = buf[0x0A]&0x02;
     eeprom->suspend_pull_downs = buf[0x0A]&0x04;
     eeprom->use_serial         = buf[0x0A] & USE_SERIAL_NUM;
-    eeprom->change_usb_version = buf[0x0A]&0x10;
+    if((buf[0x0A]&0x10) != 0x10)
+        fprintf(stderr,
+                "EEPROM byte[0x0a] Bit 4 unexpected set. If this happened with the EEPROM\n"
+                "programmed by FTDI tools, please report to libftdi@developer.intra2net.com\n");
 
 
-    // Addr 0C: USB version low byte when 0x0A bit 4 is set
-    // Addr 0D: USB version high byte when 0x0A bit 4 is set
-    if ((eeprom->change_usb_version == 1) || ftdi->type == TYPE_2232C)
-    {
-        eeprom->usb_version = buf[0x0C] + (buf[0x0D] << 8);
-    }
+    // Addr 0C: USB version low byte when 0x0A
+    // Addr 0D: USB version high byte when 0x0A 
+    eeprom->usb_version = buf[0x0C] + (buf[0x0D] << 8);
 
     // Addr 0E: Offset of the manufacturer string + 0x80, calculated later
     // Addr 0F: Length of manufacturer string

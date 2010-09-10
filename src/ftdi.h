@@ -197,8 +197,6 @@ struct ftdi_eeprom
 
     /** use serial */
     int use_serial;
-    /** fake usb version */
-    int change_usb_version;
     /** usb version */
     int usb_version;
     /** maximum power */
