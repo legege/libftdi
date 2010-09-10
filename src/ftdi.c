@@ -2443,6 +2443,166 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
 
     /* Fixme: ftd2xx seems to append 0x02, 0x03 and 0x01 for PnP = 0 or 0x00 else */
     // calculate checksum
+
+    /* Bytes and Bits specific to (some) types
+       Write linear, as this allows easier fixing*/
+    switch(ftdi->type)
+    {
+    case TYPE_AM:
+        break;
+    case TYPE_BM:
+        output[0x0C] = eeprom->usb_version & 0xff;
+        output[0x0D] = (eeprom->usb_version>>8) & 0xff;
+        if (eeprom->use_serial == 1)
+            output[0x0A] |= 0x8;
+        else
+            output[0x0A] &= ~0x8;
+        output[0x14] = eeprom->chip;
+        break;
+    case TYPE_2232C:
+
+        output[0x00] = (eeprom->channel_a_type);
+        if ( eeprom->channel_a_driver == DRIVER_VCP)
+            output[0x00] |= DRIVER_VCP;
+        else
+            output[0x00] &= ~DRIVER_VCP;
+            
+        if ( eeprom->high_current_a == HIGH_CURRENT_DRIVE)
+            output[0x00] |= HIGH_CURRENT_DRIVE;
+        else
+            output[0x00] &= ~HIGH_CURRENT_DRIVE;
+
+        output[0x01] = (eeprom->channel_b_type);
+        if ( eeprom->channel_b_driver == DRIVER_VCP)
+            output[0x01] |= DRIVER_VCP;
+        else
+            output[0x01] &= ~DRIVER_VCP;
+            
+        if ( eeprom->high_current_b == HIGH_CURRENT_DRIVE)
+            output[0x01] |= HIGH_CURRENT_DRIVE;
+        else
+            output[0x01] &= ~HIGH_CURRENT_DRIVE;
+
+        if (eeprom->in_is_isochronous == 1)
+            output[0x0A] |= 0x1;
+        else
+            output[0x0A] &= ~0x1;
+        if (eeprom->out_is_isochronous == 1)
+            output[0x0A] |= 0x2;
+        else
+            output[0x0A] &= ~0x2;
+        if (eeprom->suspend_pull_downs == 1)
+            output[0x0A] |= 0x4;
+        else
+            output[0x0A] &= ~0x4;
+        if (eeprom->use_serial == USE_SERIAL_NUM )
+            output[0x0A] |= USE_SERIAL_NUM;
+        else
+            output[0x0A] &= ~0x8;
+        output[0x0C] = eeprom->usb_version & 0xff;
+        output[0x0D] = (eeprom->usb_version>>8) & 0xff;
+        output[0x14] = eeprom->chip;
+        break;
+    case TYPE_R:
+        if(eeprom->high_current == HIGH_CURRENT_DRIVE_R)
+            output[0x00] |= HIGH_CURRENT_DRIVE_R;
+        output[0x01] = 0x40; /* Hard coded Endpoint Size*/
+        
+        if (eeprom->suspend_pull_downs == 1)
+            output[0x0A] |= 0x4;
+        else
+            output[0x0A] &= ~0x4;
+        if (eeprom->use_serial == USE_SERIAL_NUM)
+            output[0x0A] |= USE_SERIAL_NUM;
+        else
+            output[0x0A] &= ~0x8;
+        output[0x0B] = eeprom->invert;
+        output[0x0C] = eeprom->usb_version & 0xff;
+        output[0x0D] = (eeprom->usb_version>>8) & 0xff;
+        
+        if(eeprom->cbus_function[0] > CBUS_BB)
+            output[0x14] = CBUS_BB;
+        else
+            output[0x14] = eeprom->cbus_function[0];
+        
+        if(eeprom->cbus_function[1] > CBUS_BB)
+            output[0x14] |= CBUS_BB<<4;
+        else
+            output[0x14] |= eeprom->cbus_function[1];
+        
+        if(eeprom->cbus_function[2] > CBUS_BB)
+            output[0x15] |= CBUS_BB<<4;
+        else
+            output[0x15] |= eeprom->cbus_function[2];
+        
+        if(eeprom->cbus_function[3] > CBUS_BB)
+            output[0x15] |= CBUS_BB<<4;
+        else
+            output[0x15] |= eeprom->cbus_function[3];
+        
+        if(eeprom->cbus_function[5] > CBUS_BB)
+            output[0x16] = CBUS_BB;
+        else
+            output[0x16] = eeprom->cbus_function[0];
+        break;
+    case TYPE_2232H:
+        output[0x00] = (eeprom->channel_a_type);
+        if ( eeprom->channel_a_driver == DRIVER_VCP)
+            output[0x00] |= DRIVER_VCP;
+        else
+            output[0x00] &= ~DRIVER_VCP;
+        
+        output[0x01] = (eeprom->channel_b_type);
+        if ( eeprom->channel_b_driver == DRIVER_VCP)
+            output[0x01] |= DRIVER_VCP;
+        else
+            output[0x01] &= ~DRIVER_VCP;
+        if(eeprom->suspend_dbus7 == SUSPEND_DBUS7)
+            output[0x01] |= SUSPEND_DBUS7;
+        else
+            output[0x01] &= ~SUSPEND_DBUS7;
+        
+        if(eeprom->group0_drive > DRIVE_16MA)
+            output[0x0c] |= DRIVE_16MA;
+        else
+            output[0x0c] |= eeprom->group0_drive;
+        if (eeprom->group0_schmitt == IS_SCHMITT)
+            output[0x0c] |= IS_SCHMITT;
+        if (eeprom->group0_slew == SLOW_SLEW)
+            output[0x0c] |= SLOW_SLEW;
+
+        if(eeprom->group1_drive > DRIVE_16MA)
+            output[0x0c] |= DRIVE_16MA<<4;
+        else
+            output[0x0c] |= eeprom->group1_drive<<4;
+        if (eeprom->group1_schmitt == IS_SCHMITT)
+            output[0x0c] |= IS_SCHMITT<<4;
+        if (eeprom->group1_slew == SLOW_SLEW)
+            output[0x0c] |= SLOW_SLEW<<4;
+        
+        if(eeprom->group2_drive > DRIVE_16MA)
+            output[0x0d] |= DRIVE_16MA;
+        else
+            output[0x0d] |= eeprom->group2_drive;
+        if (eeprom->group2_schmitt == IS_SCHMITT)
+            output[0x0d] |= IS_SCHMITT;
+        if (eeprom->group2_slew == SLOW_SLEW)
+            output[0x0d] |= SLOW_SLEW;
+
+        if(eeprom->group3_drive > DRIVE_16MA)
+            output[0x0d] |= DRIVE_16MA<<4;
+        else
+            output[0x0d] |= eeprom->group3_drive<<4;
+        if (eeprom->group3_schmitt == IS_SCHMITT)
+            output[0x0d] |= IS_SCHMITT<<4;
+        if (eeprom->group3_slew == SLOW_SLEW)
+            output[0x0d] |= SLOW_SLEW<<4;
+
+        output[0x18] = eeprom->chip;
+
+        break;
+    }
+
     checksum = 0xAAAA;
 
     for (i = 0; i < eeprom->size/2-1; i++)
