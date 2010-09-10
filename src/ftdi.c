@@ -2513,13 +2513,13 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
 
     eeprom->channel_a_type   = buf[0x00] & 0x7;
     eeprom->high_current     = buf[0x00] & HIGH_CURRENT_DRIVE_R;
-    eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
+    eeprom->channel_a_driver = buf[0x00] & DRIVER_D2XX;
     eeprom->high_current_a   = buf[0x00] & HIGH_CURRENT_DRIVE;
 
     // Addr 01: Channel B setting
 
     eeprom->channel_b_type   = buf[0x01] & 0x7;
-    eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
+    eeprom->channel_b_driver = buf[0x01] & DRIVER_D2XX;
     eeprom->high_current_b   = buf[0x01] & HIGH_CURRENT_DRIVE;
 
     eeprom->suspend_dbus7    = buf[0x01] & SUSPEND_DBUS7;
@@ -2722,12 +2722,12 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         if (ftdi->type >= TYPE_2232C)
             fprintf(stdout,"Channel A has Mode %s%s%s\n", 
                     channel_mode[eeprom->channel_a_type],
-                    (eeprom->channel_a_driver)?" VCP":"",
+                    (eeprom->channel_a_driver)?" D2XX":"",
                     (eeprom->high_current_a)?" High Currenr IO":"");
         if (ftdi->type >= TYPE_2232C)
             fprintf(stdout,"Channel B has Mode %s%s%s\n", 
                     channel_mode[eeprom->channel_b_type],
-                    (eeprom->channel_b_driver)?" VCP":"",
+                    (eeprom->channel_b_driver)?" D2XX":"",
                     (eeprom->high_current_b)?" High Currenr IO":"");
         if ((ftdi->type == TYPE_2232H) || (ftdi->type == TYPE_4232H)) 
         {

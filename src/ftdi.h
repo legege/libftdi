@@ -361,12 +361,12 @@ enum ftdi_cbus_func {/* FIXME: Recheck value, especially the last */
 #define IS_SCHMITT 8
 
 /** Driver Type. */
-#define DRIVER_VCP 0x08
+#define DRIVER_D2XX 0x08
 
 #define SUSPEND_DBUS7 0x80
 
 /** High current drive. */
-#define HIGH_CURRENT_DRIVE 0x10
+#define HIGH_CURRENT_DRIVE   0x10
 #define HIGH_CURRENT_DRIVE_R 0x04
 
 /**
