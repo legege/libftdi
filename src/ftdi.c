@@ -2195,17 +2195,6 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
         eeprom->product_id = 0x6001;
     else
         eeprom->product_id = 0x6010;
-    switch (ftdi->type)
-    {
-    case TYPE_2232C:
-        eeprom->release = 0x500;
-        break;
-    case TYPE_2232H:
-        eeprom->release = 0x200;
-        break;
-    default:
-        eeprom->release = 0;
-    }
     if (ftdi->type == TYPE_AM)
         eeprom->usb_version = 0x0101;
     else
@@ -2336,7 +2325,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
 
     // Addr 06: Device release number (0400h for BM features)
     output[0x06] = 0x00;
-    switch (eeprom->release) {
+    switch (ftdi->type) {
         case TYPE_AM:
             output[0x07] = 0x02;
             break;
@@ -2348,6 +2337,12 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
             break;
         case TYPE_R:
             output[0x07] = 0x06;
+            break;
+         case TYPE_2232H:
+            output[0x07] = 0x07;
+            break;
+         case TYPE_4232H:
+            output[0x07] = 0x08;
             break;
         default:
             output[0x07] = 0x00;
