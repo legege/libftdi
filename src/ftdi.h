@@ -221,9 +221,11 @@ struct ftdi_eeprom
     /* Special function of FT232R devices (and possibly others as well) */
     /** CBUS pin function. See CBUS_xxx defines. */
     int cbus_function[5];
-    /** Select hight current drive. */
+    /** Select hight current drive on R devices. */
+    int high_current;
+    /** Select hight current drive on A channel (2232C */
     int high_current_a;
-    /** Select hight current drive on B port (2232C). */
+    /** Select hight current drive on B channel (2232C). */
     int high_current_b;
     /** Select inversion of data lines (bitmask). */
     int invert;
@@ -365,6 +367,7 @@ enum ftdi_cbus_func {/* FIXME: Recheck value, especially the last */
 
 /** High current drive. */
 #define HIGH_CURRENT_DRIVE 0x10
+#define HIGH_CURRENT_DRIVE_R 0x04
 
 /**
     \brief Progress Info for streaming read

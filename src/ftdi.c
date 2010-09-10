@@ -2512,6 +2512,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     // Addr 00: Channel A setting
 
     eeprom->channel_a_type   = buf[0x00] & 0x7;
+    eeprom->high_current     = buf[0x00] & HIGH_CURRENT_DRIVE_R;
     eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
     eeprom->high_current_a   = buf[0x00] & HIGH_CURRENT_DRIVE;
 
@@ -2557,7 +2558,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     eeprom->out_is_isochronous = buf[0x0A]&0x02;
     eeprom->suspend_pull_downs = buf[0x0A]&0x04;
     eeprom->use_serial         = buf[0x0A] & USE_SERIAL_NUM;
-    if((buf[0x0A]&0x10) != 0x10)
+    if(buf[0x0A]&0x10)
         fprintf(stderr,
                 "EEPROM byte[0x0a] Bit 4 unexpected set. If this happened with the EEPROM\n"
                 "programmed by FTDI tools, please report to libftdi@developer.intra2net.com\n");
