@@ -2630,6 +2630,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         ftdi_error_return(-1,"EEPROM checksum error");
     }
 
+    eeprom->channel_a_type   = 0;
     if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM))
     {
         eeprom->chip = -1;
@@ -2646,7 +2647,6 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     }
     else if(ftdi->type == TYPE_R)
     {
-        eeprom->channel_a_type   = 0;
         /* TYPE_R flags D2XX, not VCP as all others*/
         eeprom->channel_a_driver = (~buf[0x00]) & DRIVER_VCP;
         eeprom->high_current     = buf[0x00] & HIGH_CURRENT_DRIVE_R;
