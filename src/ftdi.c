@@ -2702,7 +2702,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         if(eeprom->self_powered)
             fprintf(stdout, "Self-Powered%s", (eeprom->remote_wakeup)?", USB Remote Wake Up\n":"\n");
         else
-            fprintf(stdout, "Bus Powered: %3d mA%s", eeprom->max_power*2,
+            fprintf(stdout, "Bus Powered: %3d mA%s", eeprom->max_power * 2,
                     (eeprom->remote_wakeup)?" USB Remote Wake Up\n":"\n");
         if(eeprom->manufacturer)
             fprintf(stdout, "Manufacturer: %s\n",eeprom->manufacturer);
