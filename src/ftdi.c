@@ -2273,6 +2273,11 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
     if(eeprom->chip == -1)
         ftdi_error_return(-5,"No connected EEPROM or EEPROM Type unknown");
 
+    if ((eeprom->chip == 0x56) || (eeprom->chip == 0x66))
+        eeprom->size = 0x100;
+    else
+        eeprom->size = 0x80;
+
     if (eeprom->manufacturer != NULL)
         manufacturer_size = strlen(eeprom->manufacturer);
     if (eeprom->product != NULL)
