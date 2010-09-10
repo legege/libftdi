@@ -2630,7 +2630,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
         ftdi_error_return(-1,"EEPROM checksum error");
     }
 
-    else if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM))
+    if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM))
     {
         eeprom->chip = -1;
     }
