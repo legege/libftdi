@@ -2261,6 +2261,7 @@ void ftdi_eeprom_free(struct ftdi_context *ftdi)
     \retval -3: Invalid cbus function setting
     \retval -4: Chip doesn't support invert
     \retval -5: Chip doesn't support high current drive
+    \retval -6: No connected EEPROM or EEPROM Type unknown
 */
 int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
 {
@@ -2277,6 +2278,9 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
         ftdi_error_return(-2,"No eeprom structure");
 
     eeprom= ftdi->eeprom;
+
+    if(eeprom->chip == -1)
+        ftdi_error_return(-5,"No connected EEPROM or EEPROM Type unknown");
 
     if (eeprom->manufacturer != NULL)
         manufacturer_size = strlen(eeprom->manufacturer);
