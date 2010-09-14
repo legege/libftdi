@@ -2384,7 +2384,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     output[0x08] = j;
 
     // Addr 09: Max power consumption: max power = value * 2 mA
-    output[0x09] = eeprom->max_power;
+    output[0x09] = eeprom->max_power>>1;
 
     if(ftdi->type != TYPE_AM)
     {
