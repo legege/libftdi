@@ -470,8 +470,9 @@ extern "C"
     int ftdi_set_error_char(struct ftdi_context *ftdi, unsigned char errorch, unsigned char enable);
 
     /* init and build eeprom from ftdi_eeprom structure */
-    void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi);
-    void ftdi_eeprom_free(struct ftdi_context *ftdi);
+    void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, 
+                                  char * manufacturer, char *product, 
+                                  char * serial);
     int ftdi_eeprom_build(struct ftdi_context *ftdi);
     int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose);
 

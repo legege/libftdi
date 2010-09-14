@@ -111,10 +111,7 @@ int main(int argc, char **argv)
 
     if(use_defaults)
     {
-        ftdi_eeprom_initdefaults(ftdi);
-        ftdi->eeprom->manufacturer="IKDA";
-        ftdi->eeprom->product="CPS-CONN";
-        ftdi->eeprom->serial="0001";
+        ftdi_eeprom_initdefaults(ftdi, "IKDA", "CPS-CONN", "0001");
         ftdi->eeprom->chip= (large_chip)?0x66:0;
         f=(ftdi_eeprom_build(ftdi));
         if (f < 0)

@@ -199,6 +199,21 @@ void ftdi_deinit(struct ftdi_context *ftdi)
 
     if (ftdi->eeprom != NULL)
     {
+        if (ftdi->eeprom->manufacturer != 0)
+        {
+            free(ftdi->eeprom->manufacturer);
+            ftdi->eeprom->manufacturer = 0;
+        }
+        if (ftdi->eeprom->product != 0)
+        {
+            free(ftdi->eeprom->product);
+            ftdi->eeprom->product = 0;
+        }
+        if (ftdi->eeprom->serial != 0)
+        {
+            free(ftdi->eeprom->serial);
+            ftdi->eeprom->serial = 0;
+        }
         free(ftdi->eeprom);
         ftdi->eeprom = NULL;
     }
@@ -2167,7 +2182,8 @@ int ftdi_set_error_char(struct ftdi_context *ftdi,
     \param ftdi pointer to ftdi_context
 
 */
-void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
+void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
+                              char * product, char * serial)
 {
     struct ftdi_eeprom *eeprom;
 
@@ -2193,9 +2209,35 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
         eeprom->usb_version = 0x0200;
     eeprom->max_power = 50;
 
+    if (eeprom->manufacturer)
+        free (eeprom->manufacturer);
     eeprom->manufacturer = NULL;
+    if (manufacturer)
+    {
+        eeprom->manufacturer = malloc(strlen(manufacturer)+1);
+        if (eeprom->manufacturer)
+            strcpy(eeprom->manufacturer, manufacturer);
+    }
+
+    if (eeprom->product)
+        free (eeprom->product);
     eeprom->product = NULL;
+    {
+        eeprom->product = malloc(strlen(product)+1);
+        if (eeprom->product)
+            strcpy(eeprom->product, product);
+    }
+
+    if (eeprom->serial)
+        free (eeprom->serial);
     eeprom->serial = NULL;
+    if (serial)
+    {
+        eeprom->serial = malloc(strlen(serial)+1);
+        if (eeprom->serial)
+            strcpy(eeprom->serial, serial);
+    }
+
 
     if(ftdi->type == TYPE_R)
     {
@@ -2209,34 +2251,6 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
     }
     else
         eeprom->size = -1;
-}
-
-/**
-    Frees allocated memory in eeprom.
-
-    \param ftdi pointer to ftdi_context
-*/
-void ftdi_eeprom_free(struct ftdi_context *ftdi)
-{
-    if (!ftdi)
-        return;
-    if (ftdi->eeprom)
-    {
-        struct ftdi_eeprom *eeprom = ftdi->eeprom;
-
-        if (eeprom->manufacturer != 0) {
-            free(eeprom->manufacturer);
-            eeprom->manufacturer = 0;
-        }
-        if (eeprom->product != 0) {
-            free(eeprom->product);
-            eeprom->product = 0;
-        }
-        if (eeprom->serial != 0) {
-            free(eeprom->serial);
-            eeprom->serial = 0;
-        }
-    }
 }
 
 /**
@@ -2698,6 +2712,8 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     // Addr 0E: Offset of the manufacturer string + 0x80, calculated later
     // Addr 0F: Length of manufacturer string
     manufacturer_size = buf[0x0F]/2;
+    if(eeprom->manufacturer)
+        free(eeprom->manufacturer);
     if (manufacturer_size > 0) 
     {
         eeprom->manufacturer = malloc(manufacturer_size);
@@ -2716,6 +2732,8 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
 
     // Addr 10: Offset of the product string + 0x80, calculated later
     // Addr 11: Length of product string
+    if(eeprom->product)
+        free(eeprom->product);
     product_size = buf[0x11]/2;
     if (product_size > 0)
     {
@@ -2735,6 +2753,8 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
 
     // Addr 12: Offset of the serial string + 0x80, calculated later
     // Addr 13: Length of serial string
+    if(eeprom->serial)
+        free(eeprom->serial);
     serial_size = buf[0x13]/2;
     if (serial_size > 0)
     {

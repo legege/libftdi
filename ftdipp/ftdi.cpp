@@ -393,9 +393,9 @@ Eeprom::~Eeprom()
 {
 }
 
-void Eeprom::init_defaults()
+void Eeprom::init_defaults(char* manufacturer, char *product, char * serial)
 {
-    return ftdi_eeprom_initdefaults(d->context);
+    return ftdi_eeprom_initdefaults(d->context, manufacturer, product, serial);
 }
 
 int Eeprom::chip_id(unsigned int *chipid)
