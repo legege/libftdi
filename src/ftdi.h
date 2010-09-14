@@ -183,6 +183,8 @@ struct ftdi_eeprom
     /** remote wakeup */
     int remote_wakeup;
 
+    int is_not_pnp;
+
     /* Suspend on DBUS7 Low */
     int suspend_dbus7;
 

@@ -2327,7 +2327,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     size_check -= serial_size*2;
 
     /* Space for the string type and pointer bytes */
-    size_check -= -6;
+    size_check -= -9;
 
     // eeprom size exceeded?
     if (size_check < 0)
@@ -2461,6 +2461,13 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         output[i & k] = eeprom->serial[j], i++;
         output[i & k] = 0x00, i++;
     }
+    output[i & k] = 0x02; /* as seen when written with FTD2XX */
+    i++;
+    output[i & k] = 0x03; /* as seen when written with FTD2XX */
+    i++;
+    output[i & k] = eeprom->is_not_pnp; /* as seen when written with FTD2XX */
+    i++;
+
     output[0x13] = serial_size*2 + 2;
 
     /* Fixme: ftd2xx seems to append 0x02, 0x03 and 0x01 for PnP = 0 or 0x00 else */
@@ -2894,6 +2901,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
             fprintf(stdout, "Pull IO pins low during suspend\n");
         if(eeprom->remote_wakeup)
             fprintf(stdout, "Enable Remote Wake Up\n");
+        fprintf(stdout, "PNP: %d\n",(eeprom->is_not_pnp)?0:1);
         if (ftdi->type >= TYPE_2232C)
             fprintf(stdout,"Channel A has Mode %s%s%s\n", 
                     channel_mode[eeprom->channel_a_type],
