@@ -73,11 +73,13 @@ static void ftdi_usb_close_internal (struct ftdi_context *ftdi)
 
     \retval  0: all fine
     \retval -1: couldn't allocate read buffer
+    \retval -2: couldn't allocate struct  buffer
 
     \remark This should be called before all functions
 */
 int ftdi_init(struct ftdi_context *ftdi)
 {
+    struct ftdi_eeprom* eeprom = (struct ftdi_eeprom *)malloc(sizeof(struct ftdi_eeprom));
     ftdi->usb_ctx = NULL;
     ftdi->usb_dev = NULL;
     ftdi->usb_read_timeout = 5000;
@@ -101,7 +103,9 @@ int ftdi_init(struct ftdi_context *ftdi)
 
     ftdi->error_str = NULL;
 
-    ftdi->eeprom = NULL;
+    if (eeprom == 0)
+        ftdi_error_return(-2, "Can't malloc struct ftdi_eeprom");
+    ftdi->eeprom = eeprom;
 
     /* All fine. Now allocate the readbuffer */
     return ftdi_read_data_set_chunksize(ftdi, 4096);
@@ -191,6 +195,12 @@ void ftdi_deinit(struct ftdi_context *ftdi)
     {
         free(ftdi->readbuffer);
         ftdi->readbuffer = NULL;
+    }
+
+    if (ftdi->eeprom != NULL)
+    {
+        free(ftdi->eeprom);
+        ftdi->eeprom = NULL;
     }
     libusb_exit(ftdi->usb_ctx);
 }
@@ -2153,30 +2163,12 @@ int ftdi_set_error_char(struct ftdi_context *ftdi,
 }
 
 /**
-   Set the eeprom size
-
-   \param ftdi pointer to ftdi_context
-   \param eeprom Pointer to ftdi_eeprom
-   \param size
-
-*/
-void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, int size)
-{
-    if (ftdi == NULL)
-        return;
-
-    ftdi->eeprom = eeprom;
-    ftdi->eeprom->size=size;
-}
-
-/**
     Init eeprom with default values.
+    \param ftdi pointer to ftdi_context
 
-    \param eeprom Pointer to ftdi_eeprom
 */
 void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
 {
-    int i;
     struct ftdi_eeprom *eeprom;
 
     if (ftdi == NULL)
@@ -2222,7 +2214,7 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi)
 /**
     Frees allocated memory in eeprom.
 
-    \param eeprom Pointer to ftdi_eeprom
+    \param ftdi pointer to ftdi_context
 */
 void ftdi_eeprom_free(struct ftdi_context *ftdi)
 {
@@ -2248,12 +2240,10 @@ void ftdi_eeprom_free(struct ftdi_context *ftdi)
 }
 
 /**
-    Build binary output from ftdi_eeprom structure.
+    Build binary buffer from ftdi_eeprom structure.
     Output is suitable for ftdi_write_eeprom().
 
-    \note This function doesn't handle FT2232x devices. Only FT232x.
-    \param eeprom Pointer to ftdi_eeprom
-    \param output Buffer of 128 bytes to store eeprom image to
+    \param ftdi pointer to ftdi_context
 
     \retval >0: free eeprom size
     \retval -1: eeprom size (128 bytes) exceeded by custom strings
@@ -2263,13 +2253,14 @@ void ftdi_eeprom_free(struct ftdi_context *ftdi)
     \retval -5: Chip doesn't support high current drive
     \retval -6: No connected EEPROM or EEPROM Type unknown
 */
-int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
+int ftdi_eeprom_build(struct ftdi_context *ftdi)
 {
     unsigned char i, j, k;
     unsigned short checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
     int size_check;
     struct ftdi_eeprom *eeprom;
+    unsigned char * output;
 
     if (ftdi == NULL)
         ftdi_error_return(-2,"No context");
@@ -2277,6 +2268,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
         ftdi_error_return(-2,"No eeprom structure");
 
     eeprom= ftdi->eeprom;
+    output = eeprom->buf;
 
     if(eeprom->chip == -1)
         ftdi_error_return(-5,"No connected EEPROM or EEPROM Type unknown");
@@ -2320,7 +2312,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
         return (-1);
 
     // empty eeprom
-    memset (output, 0, eeprom->size);
+    memset (ftdi->eeprom->buf, 0, FTDI_MAX_EEPROM_SIZE);
 
     // Bytes and Bits set for all Types
 
@@ -2632,23 +2624,23 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi, unsigned char *output)
 /**
    Decode binary EEPROM image into an ftdi_eeprom structure.
 
-   \param eeprom Pointer to ftdi_eeprom which will be filled in.
-   \param buf Buffer of \a size bytes of raw eeprom data
-   \param size size size of eeprom data in bytes
-
+   \param ftdi pointer to ftdi_context
+   \param verbose Decode EEPROM on stdout
+   
    \retval 0: all fine
    \retval -1: something went wrong
 
    FIXME: How to pass size? How to handle size field in ftdi_eeprom?
    FIXME: Strings are malloc'ed here and should be freed somewhere
 */
-int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, int verbose)
+int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
 {
     unsigned char i, j;
     unsigned short checksum, eeprom_checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
     int eeprom_size;
     struct ftdi_eeprom *eeprom;
+    unsigned char *buf = ftdi->eeprom->buf;
     int release;
 
     if (ftdi == NULL)
@@ -2656,10 +2648,8 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, unsigned char *buf, int size, 
     if (ftdi->eeprom == NULL)
         ftdi_error_return(-1,"No eeprom structure");
  
-    eeprom_size = ftdi->eeprom->size;
-    if(ftdi->type == TYPE_R)
-        eeprom_size = 0x80;
     eeprom = ftdi->eeprom;
+    eeprom_size = eeprom->size;
 
     // Addr 02: Vendor ID
     eeprom->vendor_id = buf[0x02] + (buf[0x03] << 8);
@@ -2966,34 +2956,37 @@ int ftdi_read_eeprom_location (struct ftdi_context *ftdi, int eeprom_addr, unsig
     Read eeprom
 
     \param ftdi pointer to ftdi_context
-    \param eeprom Pointer to store eeprom into
 
     \retval  0: all fine
     \retval -1: read failed
     \retval -2: USB device unavailable
 */
-int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
+int ftdi_read_eeprom(struct ftdi_context *ftdi)
 {
     int i;
+    unsigned char *buf;
 
     if (ftdi == NULL || ftdi->usb_dev == NULL)
         ftdi_error_return(-2, "USB device unavailable");
+    buf = ftdi->eeprom->buf;
 
     for (i = 0; i < FTDI_MAX_EEPROM_SIZE/2; i++)
     {
-        if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
+        if (libusb_control_transfer(
+                ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE,SIO_READ_EEPROM_REQUEST, 0, i,
+                buf+(i*2), 2, ftdi->usb_read_timeout) != 2)
             ftdi_error_return(-1, "reading eeprom failed");
     }
 
     if (ftdi->type == TYPE_R)
-        ftdi->eeprom->size = 0xa0;
+        ftdi->eeprom->size = 0x80;
     /*    Guesses size of eeprom by comparing halves 
           - will not work with blank eeprom */
-    else if (strrchr((const char *)eeprom, 0xff) == ((const char *)eeprom +FTDI_MAX_EEPROM_SIZE -1))
+    else if (strrchr((const char *)buf, 0xff) == ((const char *)buf +FTDI_MAX_EEPROM_SIZE -1))
         ftdi->eeprom->size = -1;
-    else if(memcmp(eeprom,&eeprom[0x80],0x80) == 0)
+    else if(memcmp(buf,&buf[0x80],0x80) == 0)
         ftdi->eeprom->size = 0x80;
-    else if(memcmp(eeprom,&eeprom[0x40],0x40) == 0)
+    else if(memcmp(buf,&buf[0x40],0x40) == 0)
         ftdi->eeprom->size = 0x40;
     else
         ftdi->eeprom->size = 0x100;
@@ -3079,19 +3072,20 @@ int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr, unsig
     Write eeprom
 
     \param ftdi pointer to ftdi_context
-    \param eeprom Pointer to read eeprom from
-
+ 
     \retval  0: all fine
     \retval -1: read failed
     \retval -2: USB device unavailable
 */
-int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
+int ftdi_write_eeprom(struct ftdi_context *ftdi)
 {
     unsigned short usb_val, status;
     int i, ret;
+    unsigned char *eeprom;
 
     if (ftdi == NULL || ftdi->usb_dev == NULL)
         ftdi_error_return(-2, "USB device unavailable");
+    eeprom = ftdi->eeprom->buf;
 
     /* These commands were traced while running MProg */
     if ((ret = ftdi_usb_reset(ftdi)) != 0)

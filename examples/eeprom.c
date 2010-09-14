@@ -14,9 +14,7 @@
 int main(int argc, char **argv)
 {
     struct ftdi_context *ftdi;
-    struct ftdi_eeprom eeprom;
-    unsigned char buf[2048];
-    int size;
+    unsigned char *buf;
     int f, i, j;
     int vid = 0x0403;
     int pid = 0x6010;
@@ -25,10 +23,12 @@ int main(int argc, char **argv)
     int erase = 0;
     int use_defaults = 0;
     int large_chip = 0;
+    int size;
 
     if ((ftdi = ftdi_new()) == 0)
     {
-        fprintf(stderr,"Failed to allocate ftdi structure\n");
+       fprintf(stderr, "Failed to allocate ftdi structure :%s \n", 
+		   ftdi_get_error_string(ftdi));
         return EXIT_FAILURE;
     }
 
@@ -72,13 +72,6 @@ int main(int argc, char **argv)
         }
     }
 
-    // Init
-    if (ftdi_init(ftdi) < 0)
-    {
-        fprintf(stderr, "ftdi_init failed\n");
-        return EXIT_FAILURE;
-    }
-
     // Select first interface
     ftdi_set_interface(ftdi, INTERFACE_ANY);
 
@@ -100,7 +93,6 @@ int main(int argc, char **argv)
 
     if (erase)
     {
-        ftdi_eeprom_setsize(ftdi, &eeprom, 2048);
         f = ftdi_erase_eeprom(ftdi);
         if (f < 0)
         {
@@ -117,22 +109,14 @@ int main(int argc, char **argv)
         return 0;
     }        
 
-    size = 2048;
-    memset(buf,0, size);
-    ftdi->eeprom = &eeprom;
     if(use_defaults)
     {
         ftdi_eeprom_initdefaults(ftdi);
         ftdi->eeprom->manufacturer="IKDA";
         ftdi->eeprom->product="CPS-CONN";
         ftdi->eeprom->serial="0001";
-        ftdi->eeprom->chip= large_chip;
-        ftdi->eeprom->cbus_function[0]= CBUS_BB_RD;
-        ftdi->eeprom->cbus_function[1]= CBUS_CLK48;
-        ftdi->eeprom->cbus_function[2]= CBUS_IOMODE;
-        ftdi->eeprom->cbus_function[3]= CBUS_BB;
-        ftdi->eeprom->cbus_function[4]= CBUS_CLK6;
-        f=(ftdi_eeprom_build(ftdi, buf));
+        ftdi->eeprom->chip= (large_chip)?0x66:0;
+        f=(ftdi_eeprom_build(ftdi));
         if (f < 0)
         {
             fprintf(stderr, "ftdi_eeprom_build: %d (%s)\n", 
@@ -142,7 +126,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        f = ftdi_read_eeprom(ftdi, buf);
+        f = ftdi_read_eeprom(ftdi);
         if (f < 0)
         {
             fprintf(stderr, "ftdi_read_eeprom: %d (%s)\n", 
@@ -151,7 +135,12 @@ int main(int argc, char **argv)
         }
     }
     fprintf(stderr, "Chip type %d ftdi_eeprom_size: %d\n", ftdi->type, ftdi->eeprom->size);
-    for(i=0; i < ftdi->eeprom->size; i += 16)
+    buf = ftdi->eeprom->buf;
+    if (ftdi->type == TYPE_R)
+        size = 0xa0;
+    else
+        size = ftdi->eeprom->size;
+    for(i=0; i < size; i += 16)
     {
 	fprintf(stdout,"0x%03x:", i);
 	
@@ -169,7 +158,7 @@ int main(int argc, char **argv)
 	fprintf(stdout,"\n");
     }
 
-    f = ftdi_eeprom_decode(ftdi,buf, size, 1);
+    f = ftdi_eeprom_decode(ftdi, 1);
     {
         fprintf(stderr, "ftdi_eeprom_decode: %d (%s)\n", 
 		f, ftdi_get_error_string(ftdi));
