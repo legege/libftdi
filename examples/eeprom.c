@@ -23,7 +23,9 @@ int main(int argc, char **argv)
     int erase = 0;
     int use_defaults = 0;
     int large_chip = 0;
+    int do_write = 0;
     int size;
+    unsigned short value;
 
     if ((ftdi = ftdi_new()) == 0)
     {
@@ -32,7 +34,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    while ((i = getopt(argc, argv, "d::ev:p:P:S:")) != -1)
+    while ((i = getopt(argc, argv, "d::ev:p:l:P:S:w")) != -1)
     {
         switch (i)
         {
@@ -55,6 +57,9 @@ int main(int argc, char **argv)
 		break;
 	case 'S':
 		serial = optarg;
+		break;
+	case 'w':
+		do_write  = 1;
 		break;
 	default:
 		fprintf(stderr, "usage: %s [options]\n", *argv);
@@ -111,8 +116,8 @@ int main(int argc, char **argv)
 
     if(use_defaults)
     {
-        ftdi_eeprom_initdefaults(ftdi, "IKDA", "CPS-CONN", "0001");
-        ftdi->eeprom->chip= (large_chip)?0x66:0;
+        ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAF", "0001");
+        ftdi->eeprom->max_power = 500;
         f=(ftdi_eeprom_build(ftdi));
         if (f < 0)
         {
@@ -121,6 +126,38 @@ int main(int argc, char **argv)
             exit(-1);
         }
     }
+    else if(do_write)
+    {
+        ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAG", "0001");
+        ftdi->eeprom->max_power = 500;
+        f = ftdi_erase_eeprom(ftdi);
+        if (ftdi->eeprom->chip == -1)
+            fprintf(stderr, "No EEPROM\n");
+        else if (ftdi->eeprom->chip == 0)
+            fprintf(stderr, "Internal EEPROM\n");
+        else
+            fprintf(stderr, "Found 93x%02x\n",ftdi->eeprom->chip);
+        f=(ftdi_eeprom_build(ftdi));
+        if (f < 0)
+        {
+            fprintf(stderr, "Erase failed: %s", 
+                    ftdi_get_error_string(ftdi));
+            return -2;
+        }
+        f = ftdi_write_eeprom(ftdi);
+        {
+            fprintf(stderr, "ftdi_eeprom_decode: %d (%s)\n", 
+                    f, ftdi_get_error_string(ftdi));
+            exit(-1);
+        }
+        f = ftdi_read_eeprom(ftdi);
+        if (f < 0)
+        {
+            fprintf(stderr, "ftdi_read_eeprom: %d (%s)\n", 
+                    f, ftdi_get_error_string(ftdi));
+            exit(-1);
+        }
+     }
     else
     {
         f = ftdi_read_eeprom(ftdi);
@@ -131,6 +168,8 @@ int main(int argc, char **argv)
             exit(-1);
         }
     }
+
+
     fprintf(stderr, "Chip type %d ftdi_eeprom_size: %d\n", ftdi->type, ftdi->eeprom->size);
     buf = ftdi->eeprom->buf;
     if (ftdi->type == TYPE_R)
@@ -156,13 +195,14 @@ int main(int argc, char **argv)
     }
 
     f = ftdi_eeprom_decode(ftdi, 1);
+    if (f < 0)
     {
         fprintf(stderr, "ftdi_eeprom_decode: %d (%s)\n", 
 		f, ftdi_get_error_string(ftdi));
         exit(-1);
     }
-	
 
     ftdi_usb_close(ftdi);
     ftdi_free(ftdi);
+    return 0;
 }
