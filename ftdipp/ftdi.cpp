@@ -393,7 +393,7 @@ Eeprom::~Eeprom()
 {
 }
 
-void Eeprom::init_defaults(char* manufacturer, char *product, char * serial)
+int Eeprom::init_defaults(char* manufacturer, char *product, char * serial)
 {
     return ftdi_eeprom_initdefaults(d->context, manufacturer, product, serial);
 }

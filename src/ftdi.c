@@ -2180,18 +2180,25 @@ int ftdi_set_error_char(struct ftdi_context *ftdi,
 /**
     Init eeprom with default values.
     \param ftdi pointer to ftdi_context
-
+    \param manufacturer String to use as Manufacturer
+    \param product String to use as Product description
+    \param serial String to use as Serial number description
+    
+    \retval  0: all fine
+    \retval -1: No struct ftdi_context
+    \retval -2: No struct ftdi_eeprom
 */
-void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
+int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
                               char * product, char * serial)
 {
     struct ftdi_eeprom *eeprom;
 
     if (ftdi == NULL)
-        return;
+        ftdi_error_return(-1, "No struct ftdi_context");
+        
 
     if (ftdi->eeprom == NULL)
-        return;
+        ftdi_error_return(-2,"No struct ftdi_eeprom"); 
 
     eeprom = ftdi->eeprom;
     memset(eeprom, 0, sizeof(struct ftdi_eeprom));
@@ -2251,6 +2258,7 @@ void ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
     }
     else
         eeprom->size = -1;
+    return 0;
 }
 
 /**

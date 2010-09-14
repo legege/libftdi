@@ -152,9 +152,7 @@ public:
     Eeprom(Context* parent);
     ~Eeprom();
 
-    void init_defaults(char *manufacturer, char* product, char * serial);
-    void set_size(int size);
-    int size(unsigned char *eeprom, int maxsize);
+    int init_defaults(char *manufacturer, char* product, char * serial);
     int chip_id(unsigned int *chipid);
     int build(unsigned char *output);
 
