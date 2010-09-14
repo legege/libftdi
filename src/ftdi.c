@@ -2470,6 +2470,13 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
 
     output[0x13] = serial_size*2 + 2;
 
+    if(ftdi->type > TYPE_AM) /*use_serial not used in AM devices*/
+    {
+        if (eeprom->use_serial == USE_SERIAL_NUM )
+            output[0x0A] |= USE_SERIAL_NUM;
+        else
+            output[0x0A] &= ~USE_SERIAL_NUM;
+    }
     /* Fixme: ftd2xx seems to append 0x02, 0x03 and 0x01 for PnP = 0 or 0x00 else */
     // calculate checksum
 
@@ -2482,10 +2489,6 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     case TYPE_BM:
         output[0x0C] = eeprom->usb_version & 0xff;
         output[0x0D] = (eeprom->usb_version>>8) & 0xff;
-        if (eeprom->use_serial == 1)
-            output[0x0A] |= 0x8;
-        else
-            output[0x0A] &= ~0x8;
         output[0x14] = eeprom->chip;
         break;
     case TYPE_2232C:
@@ -2524,10 +2527,6 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             output[0x0A] |= 0x4;
         else
             output[0x0A] &= ~0x4;
-        if (eeprom->use_serial == USE_SERIAL_NUM )
-            output[0x0A] |= USE_SERIAL_NUM;
-        else
-            output[0x0A] &= ~0x8;
         output[0x0C] = eeprom->usb_version & 0xff;
         output[0x0D] = (eeprom->usb_version>>8) & 0xff;
         output[0x14] = eeprom->chip;
@@ -2541,10 +2540,6 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             output[0x0A] |= 0x4;
         else
             output[0x0A] &= ~0x4;
-        if (eeprom->use_serial == USE_SERIAL_NUM)
-            output[0x0A] |= USE_SERIAL_NUM;
-        else
-            output[0x0A] &= ~0x8;
         output[0x0B] = eeprom->invert;
         output[0x0C] = eeprom->usb_version & 0xff;
         output[0x0D] = (eeprom->usb_version>>8) & 0xff;
