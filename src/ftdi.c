@@ -3083,13 +3083,46 @@ int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
     \param eeprom_val Value to be written
 
     \retval  0: all fine
-    \retval -1: read failed
+    \retval -1: write failed
     \retval -2: USB device unavailable
+    \retval -3: Invalid access to checksum protected area below 0x80
+    \retval -4: Device can't access unprotected area
+    \retval -5: Reading chip type failed
 */
-int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr, unsigned short eeprom_val)
+int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr, 
+                               unsigned short eeprom_val)
 {
+    int chip_type_location;
+    unsigned short chip_type;
+
     if (ftdi == NULL || ftdi->usb_dev == NULL)
         ftdi_error_return(-2, "USB device unavailable");
+
+    if(eeprom_addr <0x80)
+        ftdi_error_return(-2, "Invalid access to checksum protected area  below 0x80");
+
+
+    switch (ftdi->type)
+    {
+    case TYPE_BM:
+    case  TYPE_2232C:
+        chip_type_location = 0x14;
+        break;
+    case TYPE_2232H:
+    case TYPE_4232H:
+        chip_type_location = 0x18;
+        break;
+    default:
+        ftdi_error_return(-4, "Device can't access unprotected area");
+    }
+
+    if (ftdi_read_eeprom_location( ftdi, chip_type_location>>1, &chip_type)) 
+        ftdi_error_return(-5, "Reading failed failed");
+    fprintf(stderr," loc 0x%04x val 0x%04x\n", chip_type_location,chip_type); 
+    if((chip_type & 0xff) != 0x66)
+    {
+        ftdi_error_return(-6, "EEPROM is not of 93x66");
+    }
 
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
                                     SIO_WRITE_EEPROM_REQUEST, eeprom_val, eeprom_addr,
