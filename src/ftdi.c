@@ -105,7 +105,7 @@ int ftdi_init(struct ftdi_context *ftdi)
 
     if (eeprom == 0)
         ftdi_error_return(-2, "Can't malloc struct ftdi_eeprom");
-    memset(eeprom, 0, sizeof(struct ftdi_eeprom);
+    memset(eeprom, 0, sizeof(struct ftdi_eeprom));
     ftdi->eeprom = eeprom;
 
     /* All fine. Now allocate the readbuffer */
