@@ -2586,6 +2586,11 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         else
             output[0x01] &= ~SUSPEND_DBUS7;
         
+        if (eeprom->suspend_pull_downs == 1)
+            output[0x0A] |= 0x4;
+        else
+            output[0x0A] &= ~0x4;
+
         if(eeprom->group0_drive > DRIVE_16MA)
             output[0x0c] |= DRIVE_16MA;
         else
