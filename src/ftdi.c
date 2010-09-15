@@ -2214,7 +2214,7 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
         eeprom->usb_version = 0x0101;
     else
         eeprom->usb_version = 0x0200;
-    eeprom->max_power = 50;
+    eeprom->max_power = 100;
 
     if (eeprom->manufacturer)
         free (eeprom->manufacturer);
@@ -2248,7 +2248,7 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
 
     if(ftdi->type == TYPE_R)
     {
-        eeprom->max_power = 45;
+        eeprom->max_power = 90;
         eeprom->size = 0x80;
         eeprom->cbus_function[0] = CBUS_TXLED;
         eeprom->cbus_function[1] = CBUS_RXLED;
