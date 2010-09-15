@@ -2844,7 +2844,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     }
     else if ((ftdi->type == TYPE_2232H) ||(ftdi->type == TYPE_4232H)) 
     {
-        eeprom->high_current     = buf[0x00] & HIGH_CURRENT_DRIVE_R;
+        eeprom->channel_a_type   = buf[0x00] & 0x7;
         eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
         eeprom->channel_b_type   = buf[0x01] & 0x7;
         eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
