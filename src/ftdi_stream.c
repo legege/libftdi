@@ -198,7 +198,7 @@ ftdi_readstream(struct ftdi_context *ftdi,
      */
     if (ftdi_set_bitmode(ftdi,  0xff, BITMODE_SYNCFF) < 0)
     {
-        fprintf(stderr,"Can't set synchronous fifo mode\n",
+        fprintf(stderr,"Can't set synchronous fifo mode: %s\n",
                 ftdi_get_error_string(ftdi));
         goto cleanup;
     }

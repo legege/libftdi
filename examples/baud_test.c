@@ -52,8 +52,8 @@ int main(int argc, char **argv)
 {
     struct ftdi_context ftdic;
     int i, t;
-    char *txbuf;
-    char *rxbuf;
+    unsigned char *txbuf;
+    unsigned char *rxbuf;
     double start, duration, plan;
 
     // default values

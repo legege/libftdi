@@ -14,7 +14,7 @@
 int main(int argc, char **argv)
 {
     struct ftdi_context ftdic;
-    char buf[1024];
+    unsigned char buf[1024];
     int f, i;
     int vid = 0x0403;
     int pid = 0x6001;
@@ -79,4 +79,6 @@ int main(int argc, char **argv)
 
     ftdi_usb_close(&ftdic);
     ftdi_deinit(&ftdic);
+
+    return 0;
 }
