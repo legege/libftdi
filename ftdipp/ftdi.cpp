@@ -36,7 +36,7 @@ class Context::Private
 {
 public:
     Private()
-            :  ftdi(0), dev(0), open(false)
+            : open(false), ftdi(0), dev(0)
     {
         ftdi = ftdi_new();
     }
