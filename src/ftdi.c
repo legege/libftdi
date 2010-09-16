@@ -2631,6 +2631,8 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         output[0x18] = eeprom->chip;
 
         break;
+    case TYPE_4232H:
+        fprintf(stderr,"FIXME: Build FT4232H specific EEPROM settings\n");
     }
 
     // calculate checksum
