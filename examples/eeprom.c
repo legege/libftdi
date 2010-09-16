@@ -25,7 +25,6 @@ int main(int argc, char **argv)
     int large_chip = 0;
     int do_write = 0;
     int size;
-    unsigned short value;
 
     if ((ftdi = ftdi_new()) == 0)
     {
