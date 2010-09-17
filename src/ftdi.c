@@ -3216,7 +3216,9 @@ int ftdi_erase_eeprom(struct ftdi_context *ftdi)
        Chip is 93x46 if magic is read at word position 0x00, as wraparound happens around 0x40
        Chip is 93x56 if magic is read at word position 0x40, as wraparound happens around 0x80
        Chip is 93x66 if magic is only read at word position 0xc0*/
-    if( ftdi_write_eeprom_location(ftdi, 0xc0, MAGIC))
+    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
+                                    SIO_WRITE_EEPROM_REQUEST, MAGIC, 0xc0,
+                                    NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-3, "Writing magic failed");
     if (ftdi_read_eeprom_location( ftdi, 0x00, &eeprom_value)) 
         ftdi_error_return(-4, "Reading failed failed");
