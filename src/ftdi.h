@@ -19,7 +19,7 @@
 
 #include <libusb.h>
 
-/* Evne on 93xx66 at max 256 bytes are used (AN_121)*/
+/* Even on 93xx66 at max 256 bytes are used (AN_121)*/
 #define FTDI_MAX_EEPROM_SIZE 256
 
 /** FTDI chip type */
@@ -247,7 +247,6 @@ struct ftdi_eeprom
     int group3_drive;
     int group3_schmitt;
     int group3_slew;
-    
 
     /** eeprom size in bytes. This doesn't get stored in the eeprom
         but is the only way to pass it to ftdi_eeprom_build. */
