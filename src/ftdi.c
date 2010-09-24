@@ -2468,7 +2468,6 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     case TYPE_BM:
         output[0x0C] = eeprom->usb_version & 0xff;
         output[0x0D] = (eeprom->usb_version>>8) & 0xff;
-        output[0x14] = eeprom->chip;
         break;
     case TYPE_2232C:
 
