@@ -3,18 +3,17 @@ Here we try to document what we know about the EEPROM Structure.
 Even with a 93xx66 EEPROM, at maximum 256 Bytes are used
 
 All important things happen in the first
-0x14(FT232/245), 0x16(FT2232CD), 0x18(FT232/245R) or 0x1a (FT2232H/4432H)
-bytes
+0x14(FT232/245), 0x16(FT2232CD), 0x18(FT232/245R) or 0x1a (FT2232H/4432H) bytes
 
 Type   |  Use extra EEPROM space
 FT2XXB |  No
 
 Byte.BIT| TYPE_AM TYPE_BM   TYPE_2232C       TYPE_R          TYPE_2232H       TYPE_4232H
-00.0    |      0       0   channel_a_type                    channel_a_type   channel_a_type 
+00.0    |      0       0   channel_a_type                    channel_a_type   channel_a_type
 00.1    |      0       0   channel_a_type                    channel_a_type   channel_a_type
 00.2    |      0       0   channel_a_type   high_current     channel_a_type   channel_a_type
 00.3    |      0       0   channel_a_driver channel_a_driver channel_a_driver channel_a_driver
-00.4    |      0       0   high_current_a   0                0                0 
+00.4    |      0       0   high_current_a   0                0                0
 00.5    |      0       0   0                0                0                0
 00.6    |      0       0   0                0                0                0
 00.7    |      0       0   0                0                SUSPEND_DBUS7    0
@@ -25,12 +24,12 @@ On TYPE_R 00.3 set mean D2XX, on other devices VCP
 01.1    |      0       0   channel_b_type                    channel_b_type   channel_b_type
 01.2    |      0       0   channel_b_type   0                channel_b_type   channel_b_type
 01.3    |      0       0   channel_b_driver 0                channel_b_driver channel_b_driver
-01.4    |      0       0   high_current_b   0                0                0 
+01.4    |      0       0   high_current_b   0                0                0
 01.5    |      0       0   0                0                0                0
-01.6    |      0       0   0                                0                0
+01.6    |      0       0   0                                 0                0
 01.7    |      0       0   0                0                0                0
 
-Fixme: Missing 4232H validation and channel_c_driver, channel_d_driver, channel_a|b|c|d_rs484enable 
+Fixme: Missing 4232H validation and channel_c_driver, channel_d_driver, channel_a|b|c|d_rs484enable
 
 02     | Vendor ID (VID) LSB (all)
 03     | Vendor ID (VID) MSB (all)
@@ -47,13 +46,13 @@ Fixme: Missing 4232H validation and channel_c_driver, channel_d_driver, channel_
 09     | Max power (mA/2)
        |
 Byte.BIT| TYPE_AM TYPE_BM            TYPE_2232C        TYPE_R       TYPE_2232H       TYPE_4232H
-0a.0    | 0       IsoIn
-0a.1    | 0       IsoOut
+0a.0    | 0       IsoIn              IsoIn part A      0            0                0
+0a.1    | 0       IsoOut             IsoOut part A     0            0                0
 0a.2    | 0       suspend_pull_down suspend_pull_down               suspend_pull_down
 0a.3    | 0       use_serial                                        use_serial
 0a.4    | 0       change_usb_version change_usb_version
-0a.5    | 0 - reserved
-0a.6    | 0 - reserved
+0a.5    | 0       0                  IsoIn part B      0            0                0
+0a.6    | 0       0                  IsoOut part B     0            0                0
 0a.7    | 0 - reserved
 
        |
@@ -81,12 +80,17 @@ Byte.BIT| TYPE_AM TYPE_BM   TYPE_2232C   TYPE_R       TYPE_2232H       TYPE_4232
 15.7:0  | UA      UA        0            CBUS[3]      BH               D
 16.3:0  | UA      UA        UA           CBUS[4]      0                0
 16.7:0  | UA      UA        UA           0            0                0
- 
+
+CHIP values:
+0x46: EEPROM is a 93xx46
+0x56: EEPROM is a 93xx56
+0x66: EEPROM is a 93xx66
+
 17        UA      UA        UA           0            0                0
 18        UA      UA        UA           VENDOR       CHIP             CHIP
 19        UA      UA        UA           VENDOR       0                0
 
-1a        UA(all)
+1a        UA (all)
 
 Mprog doesn's seem to write this:
 After last string
