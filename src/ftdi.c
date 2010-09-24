@@ -2694,7 +2694,6 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     // Bit 7: always 1
     // Bit 6: 1 if this device is self powered, 0 if bus powered
     // Bit 5: 1 if this device uses remote wakeup
-    // Bit 4: 1 if this device is battery powered
     eeprom->self_powered = buf[0x08] & 0x40;
     eeprom->remote_wakeup = buf[0x08] & 0x20;;
 
