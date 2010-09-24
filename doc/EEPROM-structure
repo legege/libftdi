@@ -6,7 +6,7 @@ All important things happen in the first
 0x14(FT232/245), 0x16(FT2232CD), 0x18(FT232/245R) or 0x1a (FT2232H/4432H)
 bytes
 
-Type   |  Use Extra EEPROM Space
+Type   |  Use extra EEPROM space
 FT2XXB |  No
 
 Byte.BIT| TYPE_AM TYPE_BM   TYPE_2232C       TYPE_R          TYPE_2232H       TYPE_4232H
@@ -32,34 +32,38 @@ On TYPE_R 00.3 set mean D2XX, on other devices VCP
 
 Fixme: Missing 4232H validation and channel_c_driver, channel_d_driver, channel_a|b|c|d_rs484enable 
 
-02     | VID-LSB(all)
-03     | VID-MSB(all)
-04     | PID-LSB(all)
-05     | PID-MSB(all)
-06     | REL-LSB (not tested on TYPE_AM, TYPE_BM and TYPE_4232H)
-07     | REL-MSB (not tested on TYPE_AM, TYPE_BM and TYPE_4232H)
+02     | Vendor ID (VID) LSB (all)
+03     | Vendor ID (VID) MSB (all)
+04     | Product ID (PID) LSB (all)
+05     | Product ID (PID) MSB (all)
+06     | Device release number LSB (not tested on TYPE_4232H)
+07     | Device release number MSB (not tested on TYPE_4232H)
        |
-08.4   | Self-Wakeup
-08.5   | Remote-Wakeup
-08.6   | Self-Powered
+08.4   | Battery powered
+08.5   | Remote wakeup
+08.6   | Self powered: 1, bus powered: 0
 08.7   | Always 1
        |
-09     | MaxPower(maA/2)
+09     | Max power (mA/2)
        |
 Byte.BIT| TYPE_AM TYPE_BM            TYPE_2232C        TYPE_R       TYPE_2232H       TYPE_4232H
 0a.0    | 0       IsoIn
 0a.1    | 0       IsoOut
 0a.2    | 0       suspend_pull_down suspend_pull_down               suspend_pull_down
 0a.3    | 0       use_serial                                        use_serial
-0a.4    | 0       change_usb_version change_usb_version  
+0a.4    | 0       change_usb_version change_usb_version
+0a.5    | 0 - reserved
+0a.6    | 0 - reserved
+0a.7    | 0 - reserved
+
        |
 0b     | TYPE_R Bitmask Invert, 0 else
 
 Byte   | TYPE_AM TYPE_BM     TYPE_2232C   TYPE_R       TYPE_2232H       TYPE_4232H
-0c     | ?       USB-VER-LSB USB-VER-LSB  0            ?                ?
-0d     | ?       USB-VER-MSB USB-VER-MSB  0            ?                ?
-On several FT2232H different values were observed
-
+0c     | 0       USB-VER-LSB USB-VER-LSB  0            ?                ?
+0d     | 0       USB-VER-MSB USB-VER-MSB  0            ?                ?
+(On several FT2232H different values were observed -> The value is unused
+ if change USB version is not set, so it might contain garbage)
 
 0e     | OFFSET Vendor
 0f     | Len    VENDOR
@@ -71,16 +75,16 @@ On several FT2232H different values were observed
 13     | Length Serial
 
 Byte.BIT| TYPE_AM TYPE_BM   TYPE_2232C   TYPE_R       TYPE_2232H       TYPE_4232H
-14.3:0  | UA      UA        CHIP         CBUS[0]      AL               A   
-14.7:0  | UA      UA        CHIP         CBUS[1]      AH               B   
-15.3:0  | UA      UA        0            CBUS[2]      BL               C   
-15.7:0  | UA      UA        0            CBUS[3]      BH               D   
-16.3:0  | UA      UA        UA           CBUS[4]      0                0   
-16.7:0  | UA      UA        UA           0            0                0   
+14.3:0  | UA      UA        CHIP         CBUS[0]      AL               A
+14.7:0  | UA      UA        CHIP         CBUS[1]      AH               B
+15.3:0  | UA      UA        0            CBUS[2]      BL               C
+15.7:0  | UA      UA        0            CBUS[3]      BH               D
+16.3:0  | UA      UA        UA           CBUS[4]      0                0
+16.7:0  | UA      UA        UA           0            0                0
  
 17        UA      UA        UA           0            0                0
-18        UA      UA        UA           VENDOR       CHIP             CHIP                
-19        UA      UA        UA           VENDOR       0                0                
+18        UA      UA        UA           VENDOR       CHIP             CHIP
+19        UA      UA        UA           VENDOR       0                0
 
 1a        UA(all)
 
