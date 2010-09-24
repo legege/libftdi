@@ -2375,7 +2375,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     // Bit 7: always 1
     // Bit 6: 1 if this device is self powered, 0 if bus powered
     // Bit 5: 1 if this device uses remote wakeup
-    // Bit 4: 1 if this device is battery powered
+    // Bit 4-0: reserved - 0
     j = 0x80;
     if (eeprom->self_powered == 1)
         j |= 0x40;
@@ -2450,7 +2450,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         output[i & k] = 0x00, i++;
     }
     output[0x11] = product_size*2 + 2;
-    
+
     // Addr 12: Offset of the serial string + 0x80, calculated later
     // Addr 13: Length of serial string
     output[0x12] = i | 0x80; // calculate offset
