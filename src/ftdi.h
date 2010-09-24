@@ -251,7 +251,7 @@ struct ftdi_eeprom
     /** eeprom size in bytes. This doesn't get stored in the eeprom
         but is the only way to pass it to ftdi_eeprom_build. */
     int size;
-    /* EEPROM Type 46 for 93xx46, 56 for 93xx56 and 66 for 93xx66*/
+    /* EEPROM Type 0x46 for 93xx46, 0x56 for 93xx56 and 0x66 for 93xx66*/
     int chip;
     unsigned char buf[FTDI_MAX_EEPROM_SIZE];
 };
