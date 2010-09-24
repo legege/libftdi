@@ -2267,7 +2267,7 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
 
     \param ftdi pointer to ftdi_context
 
-    \retval >0: free eeprom size
+    \retval >=0: size of eeprom user area in bytes
     \retval -1: eeprom size (128 bytes) exceeded by custom strings
     \retval -2: Invalid eeprom pointer
     \retval -3: Invalid cbus function setting
@@ -2280,7 +2280,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     unsigned char i, j, eeprom_size_mask;
     unsigned short checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
-    int size_check;
+    int user_area_size;
     struct ftdi_eeprom *eeprom;
     unsigned char * output;
 
@@ -2307,31 +2307,10 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     if (eeprom->serial != NULL)
         serial_size = strlen(eeprom->serial);
 
-    size_check = 0x80;
-    switch(ftdi->type)
-    {
-    case TYPE_2232H:
-    case TYPE_4232H:
-        size_check -= 4;
-    case TYPE_R:
-        size_check -= 4;
-    case TYPE_2232C:
-        size_check -= 4;
-    case TYPE_AM:
-    case TYPE_BM:
-        size_check -= 0x14*2;
-    }
-
-    size_check -= manufacturer_size*2;
-    size_check -= product_size*2;
-    size_check -= serial_size*2;
-
-    /* Space for the string type and pointer bytes */
-    size_check -= -9;
-
     // eeprom size exceeded?
-    if (size_check < 0)
-        return (-1);
+    user_area_size = (48 - (manufacturer_size + product_size + serial_size)) * 2;
+    if (user_area_size < 0)
+        ftdi_error_return(-1,"eeprom size exceeded");
 
     // empty eeprom
     memset (ftdi->eeprom->buf, 0, FTDI_MAX_EEPROM_SIZE);
@@ -2649,7 +2628,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     output[eeprom->size-2] = checksum;
     output[eeprom->size-1] = checksum >> 8;
 
-    return size_check;
+    return user_area_size;
 }
 
 /**
