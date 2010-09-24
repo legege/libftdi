@@ -2440,24 +2440,27 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         output[i & eeprom_size_mask] = eeprom->serial[j], i++;
         output[i & eeprom_size_mask] = 0x00, i++;
     }
-    output[i & eeprom_size_mask] = 0x02; /* as seen when written with FTD2XX */
-    i++;
-    output[i & eeprom_size_mask] = 0x03; /* as seen when written with FTD2XX */
-    i++;
-    output[i & eeprom_size_mask] = eeprom->is_not_pnp; /* as seen when written with FTD2XX */
-    i++;
+
+    // Legacy port name and PnP fields for FT2232 and newer chips
+    if (ftdi->type > TYPE_BM)
+    {
+        output[i & eeprom_size_mask] = 0x02; /* as seen when written with FTD2XX */
+        i++;
+        output[i & eeprom_size_mask] = 0x03; /* as seen when written with FTD2XX */
+        i++;
+        output[i & eeprom_size_mask] = eeprom->is_not_pnp; /* as seen when written with FTD2XX */
+        i++;
+    }
 
     output[0x13] = serial_size*2 + 2;
 
-    if(ftdi->type > TYPE_AM) /*use_serial not used in AM devices*/
+    if(ftdi->type > TYPE_AM) /* use_serial not used in AM devices */
     {
         if (eeprom->use_serial == USE_SERIAL_NUM )
             output[0x0A] |= USE_SERIAL_NUM;
         else
             output[0x0A] &= ~USE_SERIAL_NUM;
     }
-    /* Fixme: ftd2xx seems to append 0x02, 0x03 and 0x01 for PnP = 0 or 0x00 else */
-    // calculate checksum
 
     /* Bytes and Bits specific to (some) types
        Write linear, as this allows easier fixing*/
