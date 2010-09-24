@@ -2308,7 +2308,24 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         serial_size = strlen(eeprom->serial);
 
     // eeprom size exceeded?
-    user_area_size = (48 - (manufacturer_size + product_size + serial_size)) * 2;
+
+    switch (ftdi->type) {
+    case TYPE_AM:
+    case TYPE_BM:
+       user_area_size = 96;
+       break;
+    case TYPE_2232C:
+       user_area_size = 94;
+       break;
+    case TYPE_R:
+       user_area_size = 92;
+       break;
+    case TYPE_2232H:
+    case TYPE_4232H:
+       user_area_size = 90;
+       break;
+    }
+    user_area_size  -= (manufacturer_size + product_size + serial_size) * 2;
     if (user_area_size < 0)
         ftdi_error_return(-1,"eeprom size exceeded");
 
