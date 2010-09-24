@@ -2307,25 +2307,26 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     if (eeprom->serial != NULL)
         serial_size = strlen(eeprom->serial);
 
-    // eeprom size exceeded?
-
-    switch (ftdi->type) {
-    case TYPE_AM:
-    case TYPE_BM:
-       user_area_size = 96;
-       break;
-    case TYPE_2232C:
-       user_area_size = 94;
-       break;
-    case TYPE_R:
-       user_area_size = 92;
-       break;
-    case TYPE_2232H:
-    case TYPE_4232H:
-       user_area_size = 90;
-       break;
+    // eeprom size check
+    switch (ftdi->type)
+    {
+        case TYPE_AM:
+        case TYPE_BM:
+            user_area_size = 96;    // base size for strings (total of 48 characters)
+            break;
+        case TYPE_2232C:
+           user_area_size = 90;     // two extra config bytes and 4 bytes PnP stuff
+           break;
+        case TYPE_R:
+           user_area_size = 88;     // four extra config bytes + 4 bytes PnP stuff
+           break;
+        case TYPE_2232H:            // six extra config bytes + 4 bytes PnP stuff
+        case TYPE_4232H:
+           user_area_size = 86;
+           break;
     }
     user_area_size  -= (manufacturer_size + product_size + serial_size) * 2;
+
     if (user_area_size < 0)
         ftdi_error_return(-1,"eeprom size exceeded");
 
@@ -2344,7 +2345,8 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
 
     // Addr 06: Device release number (0400h for BM features)
     output[0x06] = 0x00;
-    switch (ftdi->type) {
+    switch (ftdi->type)
+    {
         case TYPE_AM:
             output[0x07] = 0x02;
             break;
@@ -2693,7 +2695,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     // Bit 6: 1 if this device is self powered, 0 if bus powered
     // Bit 5: 1 if this device uses remote wakeup
     eeprom->self_powered = buf[0x08] & 0x40;
-    eeprom->remote_wakeup = buf[0x08] & 0x20;;
+    eeprom->remote_wakeup = buf[0x08] & 0x20;
 
     // Addr 09: Max power consumption: max power = value * 2 mA
     eeprom->max_power = buf[0x09];
