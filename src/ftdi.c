@@ -2277,7 +2277,7 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
 */
 int ftdi_eeprom_build(struct ftdi_context *ftdi)
 {
-    unsigned char i, j, k;
+    unsigned char i, j, eeprom_size_mask;
     unsigned short checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
     int size_check;
@@ -2424,48 +2424,48 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         i += 0x94;
     }
     /* Wrap around 0x80 for 128 byte EEPROMS (Internale and 93x46) */
-    k = eeprom->size -1;
+    eeprom_size_mask = eeprom->size -1;
 
     // Addr 0E: Offset of the manufacturer string + 0x80, calculated later
     // Addr 0F: Length of manufacturer string
     // Output manufacturer
     output[0x0E] = i;  // calculate offset
-    output[i++ & k] = manufacturer_size*2 + 2;
-    output[i++ & k] = 0x03; // type: string
+    output[i & eeprom_size_mask] = manufacturer_size*2 + 2, i++;
+    output[i & eeprom_size_mask] = 0x03, i++; // type: string
     for (j = 0; j < manufacturer_size; j++)
     {
-        output[i & k] = eeprom->manufacturer[j], i++;
-        output[i & k] = 0x00, i++;
+        output[i & eeprom_size_mask] = eeprom->manufacturer[j], i++;
+        output[i & eeprom_size_mask] = 0x00, i++;
     }
     output[0x0F] = manufacturer_size*2 + 2;
 
     // Addr 10: Offset of the product string + 0x80, calculated later
     // Addr 11: Length of product string
     output[0x10] = i | 0x80;  // calculate offset
-    output[i & k] = product_size*2 + 2, i++;
-    output[i & k] = 0x03, i++;
+    output[i & eeprom_size_mask] = product_size*2 + 2, i++;
+    output[i & eeprom_size_mask] = 0x03, i++;
     for (j = 0; j < product_size; j++)
     {
-        output[i & k] = eeprom->product[j], i++;
-        output[i & k] = 0x00, i++;
+        output[i & eeprom_size_mask] = eeprom->product[j], i++;
+        output[i & eeprom_size_mask] = 0x00, i++;
     }
     output[0x11] = product_size*2 + 2;
 
     // Addr 12: Offset of the serial string + 0x80, calculated later
     // Addr 13: Length of serial string
     output[0x12] = i | 0x80; // calculate offset
-    output[i & k] = serial_size*2 + 2, i++;
-    output[i & k] = 0x03, i++;
+    output[i & eeprom_size_mask] = serial_size*2 + 2, i++;
+    output[i & eeprom_size_mask] = 0x03, i++;
     for (j = 0; j < serial_size; j++)
     {
-        output[i & k] = eeprom->serial[j], i++;
-        output[i & k] = 0x00, i++;
+        output[i & eeprom_size_mask] = eeprom->serial[j], i++;
+        output[i & eeprom_size_mask] = 0x00, i++;
     }
-    output[i & k] = 0x02; /* as seen when written with FTD2XX */
+    output[i & eeprom_size_mask] = 0x02; /* as seen when written with FTD2XX */
     i++;
-    output[i & k] = 0x03; /* as seen when written with FTD2XX */
+    output[i & eeprom_size_mask] = 0x03; /* as seen when written with FTD2XX */
     i++;
-    output[i & k] = eeprom->is_not_pnp; /* as seen when written with FTD2XX */
+    output[i & eeprom_size_mask] = eeprom->is_not_pnp; /* as seen when written with FTD2XX */
     i++;
 
     output[0x13] = serial_size*2 + 2;
