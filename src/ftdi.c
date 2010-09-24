@@ -2184,7 +2184,7 @@ int ftdi_set_error_char(struct ftdi_context *ftdi,
     \param manufacturer String to use as Manufacturer
     \param product String to use as Product description
     \param serial String to use as Serial number description
-    
+
     \retval  0: all fine
     \retval -1: No struct ftdi_context
     \retval -2: No struct ftdi_eeprom
@@ -2196,7 +2196,6 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
 
     if (ftdi == NULL)
         ftdi_error_return(-1, "No struct ftdi_context");
-        
 
     if (ftdi->eeprom == NULL)
         ftdi_error_return(-2,"No struct ftdi_eeprom"); 
@@ -2294,7 +2293,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     output = eeprom->buf;
 
     if(eeprom->chip == -1)
-        ftdi_error_return(-5,"No connected EEPROM or EEPROM Type unknown");
+        ftdi_error_return(-5,"No connected EEPROM or EEPROM type unknown");
 
     if ((eeprom->chip == 0x56) || (eeprom->chip == 0x66))
         eeprom->size = 0x100;
@@ -2499,7 +2498,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             output[0x00] |= DRIVER_VCP;
         else
             output[0x00] &= ~DRIVER_VCP;
-            
+
         if ( eeprom->high_current_a == HIGH_CURRENT_DRIVE)
             output[0x00] |= HIGH_CURRENT_DRIVE;
         else
@@ -2510,7 +2509,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             output[0x01] |= DRIVER_VCP;
         else
             output[0x01] &= ~DRIVER_VCP;
-            
+
         if ( eeprom->high_current_b == HIGH_CURRENT_DRIVE)
             output[0x01] |= HIGH_CURRENT_DRIVE;
         else
@@ -2536,7 +2535,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         if(eeprom->high_current == HIGH_CURRENT_DRIVE_R)
             output[0x00] |= HIGH_CURRENT_DRIVE_R;
         output[0x01] = 0x40; /* Hard coded Endpoint Size*/
-        
+
         if (eeprom->suspend_pull_downs == 1)
             output[0x0A] |= 0x4;
         else
@@ -2544,27 +2543,27 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         output[0x0B] = eeprom->invert;
         output[0x0C] = eeprom->usb_version & 0xff;
         output[0x0D] = (eeprom->usb_version>>8) & 0xff;
-        
+
         if(eeprom->cbus_function[0] > CBUS_BB)
             output[0x14] = CBUS_TXLED;
         else
             output[0x14] = eeprom->cbus_function[0];
-        
+
         if(eeprom->cbus_function[1] > CBUS_BB)
             output[0x14] |= CBUS_RXLED<<4;
         else
             output[0x14] |= eeprom->cbus_function[1]<<4;
-        
+
         if(eeprom->cbus_function[2] > CBUS_BB)
             output[0x15] = CBUS_TXDEN;
         else
             output[0x15] = eeprom->cbus_function[2];
-        
+
         if(eeprom->cbus_function[3] > CBUS_BB)
             output[0x15] |= CBUS_PWREN<<4;
         else
             output[0x15] |= eeprom->cbus_function[3]<<4;
-        
+
         if(eeprom->cbus_function[4] > CBUS_CLK6)
             output[0x16] = CBUS_SLEEP;
         else
@@ -2576,7 +2575,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             output[0x00] |= DRIVER_VCP;
         else
             output[0x00] &= ~DRIVER_VCP;
-        
+
         output[0x01] = (eeprom->channel_b_type);
         if ( eeprom->channel_b_driver == DRIVER_VCP)
             output[0x01] |= DRIVER_VCP;
@@ -2586,7 +2585,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             output[0x01] |= SUSPEND_DBUS7;
         else
             output[0x01] &= ~SUSPEND_DBUS7;
-        
+
         if (eeprom->suspend_pull_downs == 1)
             output[0x0A] |= 0x4;
         else
@@ -2609,7 +2608,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             output[0x0c] |= IS_SCHMITT<<4;
         if (eeprom->group1_slew == SLOW_SLEW)
             output[0x0c] |= SLOW_SLEW<<4;
-        
+
         if(eeprom->group2_drive > DRIVE_16MA)
             output[0x0d] |= DRIVE_16MA;
         else
