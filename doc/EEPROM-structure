@@ -94,11 +94,10 @@ CHIP values:
 
 
 Additional fields after the serial string:
-One byte: 0 - reserved for "legacy port name prefix"
-One byte: 0 - reserved for "legacy port name prefix"
-One byte: 0 - reserved for plug and play options
+0x00, 0x00 - reserved for "legacy port name prefix"
+0x00, 0x00 - reserved for plug and play options
 (Observed values with PnP == 0:
-0x02 0x03 0x01)
+0x02 0x03 0x01 0x00)
 
 Note: The additional fields after the serial number string
 collide with the official FTDI formula from AN_121 regarding
