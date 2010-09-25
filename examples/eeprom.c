@@ -64,6 +64,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "usage: %s [options]\n", *argv);
 		fprintf(stderr, "\t-d[num] Work with default valuesfor 128 Byte "
                         "EEPROM or for 256 Byte EEPROm if some [num] is given\n");
+		fprintf(stderr, "\t-w write\n");
 		fprintf(stderr, "\t-e erase\n");
 		fprintf(stderr, "\t-v verbose decoding\n");
 		fprintf(stderr, "\t-p <number> Search for device with PID == number\n");
