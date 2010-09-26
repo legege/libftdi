@@ -83,8 +83,8 @@ readCallback(uint8_t *buffer, int length, FTDIProgressInfo *progress, void *user
                if (start && (num != start +0x4000))
                {
                    uint32_t delta = ((num-start)/0x4000)-1;
-                   fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10ld \n",
-                           delta, start -0x4000, num, blocks);
+                   fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10llu\n",
+                           delta, start -0x4000, num, (unsigned long long)blocks);
                    n_err++;
                    skips += delta;
                }
@@ -98,8 +98,8 @@ readCallback(uint8_t *buffer, int length, FTDIProgressInfo *progress, void *user
                if (start && (num != start +0x4000))
                {
                    uint32_t delta = ((num-start)/0x4000)-1;
-                   fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10ld \n",
-                           delta, start -0x4000, num, blocks);
+                   fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10llu\n",
+                           delta, start -0x4000, num, (unsigned long long) blocks);
                    n_err++;
                    skips += delta;
                }
@@ -239,8 +239,8 @@ int main(int argc, char **argv)
        fclose(outputFile);
    }
    else if (check)
-       fprintf(stderr,"%d errors of %ld blocks (%Le), %d (%Le) blocks skipped\n",
-               n_err, blocks, (long double)n_err/(long double) blocks,
+       fprintf(stderr,"%d errors of %llu blocks (%Le), %d (%Le) blocks skipped\n",
+               n_err, (unsigned long long) blocks, (long double)n_err/(long double) blocks,
                skips, (long double)skips/(long double) blocks);
    exit (0);
 }
@@ -328,8 +328,8 @@ void check_outfile(char *descstring)
             {
                 if(n_shown < 30)
                 {
-                    fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10ld \n",
-                            (nread-start)/0x4000, start -0x4000, nread, blocks);
+                    fprintf(stderr, "Skip %7d blocks from 0x%08x to 0x%08x at blocks %10llu \n",
+                            (nread-start)/0x4000, start -0x4000, nread, (unsigned long long) blocks);
                     n_shown ++;
                 }
                 n_errors++;
@@ -342,9 +342,9 @@ void check_outfile(char *descstring)
             pc = pa;
         }
         if(n_errors)
-            fprintf(stderr, "%d blocks wrong from %ld blocks read\n",
-                    n_errors, blocks);
+            fprintf(stderr, "%d blocks wrong from %llu blocks read\n",
+                    n_errors, (unsigned long long) blocks);
         else
-            fprintf(stderr, "%ld blocks all fine\n",blocks);
+            fprintf(stderr, "%llu blocks all fine\n", (unsigned long long) blocks);
     }
 }
