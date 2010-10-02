@@ -2977,6 +2977,292 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
 }
 
 /**
+   Get a value from the decoded EEPROM structure
+
+   \\param ftdi pointer to ftdi_context
+   \\param value_name Enum of the value to query
+   \\param Pointer to store read value
+
+   \\retval 0: all fine
+   \\retval -1: Value doesn't exist
+*/
+int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int* value)
+{
+    switch (value_name)
+    {
+    case VENDOR_ID:
+	*value = ftdi->eeprom->vendor_id;
+	break;
+    case PRODUCT_ID:
+	*value = ftdi->eeprom->product_id;
+	break;
+    case SELF_POWERED:
+	*value = ftdi->eeprom->self_powered;
+	break;
+    case REMOTE_WAKEUP:
+	*value = ftdi->eeprom->remote_wakeup;
+	break;
+    case IS_NOT_PNP:
+	*value = ftdi->eeprom->is_not_pnp;
+	break;
+    case SUSPEND_DBUS7:
+	*value = ftdi->eeprom->suspend_dbus7;
+	break;
+    case IN_IS_ISOCHRONOUS:
+	*value = ftdi->eeprom->in_is_isochronous;
+	break;
+    case SUSPEND_PULL_DOWNS:
+	*value = ftdi->eeprom->suspend_pull_downs;
+	break;
+    case USE_SERIAL:
+	*value = ftdi->eeprom->use_serial;
+	break;
+    case USB_VERSION:
+	*value = ftdi->eeprom->usb_version;
+	break;
+    case MAX_POWER:
+	*value = ftdi->eeprom->max_power;
+	break;
+    case CHANNEL_A_TYPE:
+	*value = ftdi->eeprom->channel_a_type;
+	break;
+    case CHANNEL_B_TYPE:
+	*value = ftdi->eeprom->channel_b_type;
+	break;
+    case CHANNEL_A_DRIVER:
+	*value = ftdi->eeprom->channel_a_driver;
+	break;
+    case CHANNEL_B_DRIVER:
+	*value = ftdi->eeprom->channel_b_driver;
+	break;
+    case CBUS_FUNCTION_0:
+	*value = ftdi->eeprom->cbus_function[0];
+	break;
+    case CBUS_FUNCTION_1:
+	*value = ftdi->eeprom->cbus_function[1];
+	break;
+    case CBUS_FUNCTION_2:
+	*value = ftdi->eeprom->cbus_function[2];
+	break;
+    case CBUS_FUNCTION_3:
+	*value = ftdi->eeprom->cbus_function[3];
+	break;
+    case CBUS_FUNCTION_4:
+	*value = ftdi->eeprom->cbus_function[4];
+	break;
+    case HIGH_CURRENT:
+	*value = ftdi->eeprom->high_current;
+	break;
+    case HIGH_CURRENT_A:
+	*value = ftdi->eeprom->high_current_a;
+	break;
+    case HIGH_CURRENT_B:
+	*value = ftdi->eeprom->high_current_b;
+	break;
+    case INVERT:
+	*value = ftdi->eeprom->invert;
+	break;
+    case GROUP0_DRIVE:
+	*value = ftdi->eeprom->group0_drive;
+	break;
+    case GROUP0_SCHMITT:
+	*value = ftdi->eeprom->group0_schmitt;
+	break;
+    case GROUP0_SLEW:
+	*value = ftdi->eeprom->group0_slew;
+	break;
+    case GROUP1_DRIVE:
+	*value = ftdi->eeprom->group1_drive;
+	break;
+    case GROUP1_SCHMITT:
+	*value = ftdi->eeprom->group1_schmitt;
+	break;
+    case GROUP1_SLEW:
+	*value = ftdi->eeprom->group1_slew;
+	break;
+    case GROUP2_DRIVE:
+	*value = ftdi->eeprom->group2_drive;
+	break;
+    case GROUP2_SCHMITT:
+	*value = ftdi->eeprom->group2_schmitt;
+	break;
+    case GROUP2_SLEW:
+	*value = ftdi->eeprom->group2_slew;
+	break;
+    case GROUP3_DRIVE:
+	*value = ftdi->eeprom->group3_drive;
+	break;
+    case GROUP3_SCHMITT:
+	*value = ftdi->eeprom->group3_schmitt;
+	break;
+    case GROUP3_SLEW:
+	*value = ftdi->eeprom->group3_slew;
+	break;
+    case CHIP_TYPE:
+	*value = ftdi->eeprom->chip;
+	break;
+    case CHIP_SIZE:
+	*value = ftdi->eeprom->size;
+	break;
+    default:
+        ftdi_error_return(-1, "Request for unknown EEPROM value");
+    }
+    return 0;
+}
+
+/**
+   Set a value in the decoded EEPROM Structure
+   No parameter checking is performed
+
+   \\param ftdi pointer to ftdi_context
+   \\param value_name Enum of the value to query
+   \\param Value to set
+
+   \\retval 0: all fine
+   \\retval -1: Value doesn't exist
+   \\retval -2: Value not user settable
+*/
+int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int value)
+{
+    switch (value_name)
+    {
+    case VENDOR_ID:
+	ftdi->eeprom->vendor_id = value;
+	break;
+    case PRODUCT_ID:
+	ftdi->eeprom->product_id = value;
+	break;
+    case SELF_POWERED:
+	ftdi->eeprom->self_powered = value;
+	break;
+    case REMOTE_WAKEUP:
+	ftdi->eeprom->remote_wakeup = value;
+	break;
+    case IS_NOT_PNP:
+	ftdi->eeprom->is_not_pnp = value;
+	break;
+    case SUSPEND_DBUS7:
+	ftdi->eeprom->suspend_dbus7 = value;
+	break;
+    case IN_IS_ISOCHRONOUS:
+	ftdi->eeprom->in_is_isochronous = value;
+	break;
+    case SUSPEND_PULL_DOWNS:
+	ftdi->eeprom->suspend_pull_downs = value;
+	break;
+    case USE_SERIAL:
+	ftdi->eeprom->use_serial = value;
+	break;
+    case USB_VERSION:
+	ftdi->eeprom->usb_version = value;
+	break;
+    case MAX_POWER:
+	ftdi->eeprom->max_power = value;
+	break;
+    case CHANNEL_A_TYPE:
+	ftdi->eeprom->channel_a_type = value;
+	break;
+    case CHANNEL_B_TYPE:
+	ftdi->eeprom->channel_b_type = value;
+	break;
+    case CHANNEL_A_DRIVER:
+	ftdi->eeprom->channel_a_driver = value;
+	break;
+    case CHANNEL_B_DRIVER:
+	ftdi->eeprom->channel_b_driver = value;
+	break;
+    case CBUS_FUNCTION_0:
+	ftdi->eeprom->cbus_function[0] = value;
+	break;
+    case CBUS_FUNCTION_1:
+	ftdi->eeprom->cbus_function[1] = value;
+	break;
+    case CBUS_FUNCTION_2:
+	ftdi->eeprom->cbus_function[2] = value;
+	break;
+    case CBUS_FUNCTION_3:
+	ftdi->eeprom->cbus_function[3] = value;
+	break;
+    case CBUS_FUNCTION_4:
+	ftdi->eeprom->cbus_function[4] = value;
+	break;
+    case HIGH_CURRENT:
+	ftdi->eeprom->high_current = value;
+	break;
+    case HIGH_CURRENT_A:
+	ftdi->eeprom->high_current_a = value;
+	break;
+    case HIGH_CURRENT_B:
+	ftdi->eeprom->high_current_b = value;
+	break;
+    case INVERT:
+	ftdi->eeprom->invert = value;
+	break;
+    case GROUP0_DRIVE:
+	ftdi->eeprom->group0_drive = value;
+	break;
+    case GROUP0_SCHMITT:
+	ftdi->eeprom->group0_schmitt = value;
+	break;
+    case GROUP0_SLEW:
+	ftdi->eeprom->group0_slew = value;
+	break;
+    case GROUP1_DRIVE:
+	ftdi->eeprom->group1_drive = value;
+	break;
+    case GROUP1_SCHMITT:
+	ftdi->eeprom->group1_schmitt = value;
+	break;
+    case GROUP1_SLEW:
+	ftdi->eeprom->group1_slew = value;
+	break;
+    case GROUP2_DRIVE:
+	ftdi->eeprom->group2_drive = value;
+	break;
+    case GROUP2_SCHMITT:
+	ftdi->eeprom->group2_schmitt = value;
+	break;
+    case GROUP2_SLEW:
+	ftdi->eeprom->group2_slew = value;
+	break;
+    case GROUP3_DRIVE:
+	ftdi->eeprom->group3_drive = value;
+	break;
+    case GROUP3_SCHMITT:
+	ftdi->eeprom->group3_schmitt = value;
+	break;
+    case GROUP3_SLEW:
+	ftdi->eeprom->group3_slew = value;
+	break;
+    case CHIP_TYPE:
+	ftdi->eeprom->chip = value;
+	break;
+    case CHIP_SIZE: 
+       ftdi_error_return(-2, "EEPROM Value can't be changed");
+    default : 
+        ftdi_error_return(-1, "Request to unknown EEPROM value");
+    }
+    return 0;
+}
+
+/** Get the read-only buffer to the binary EEPROM content
+
+    \param ftdi pointer to ftdi_context
+    \param ftdi buffer to receive EEPROM content
+    \param size Size of receiving buffer
+
+    \retval 0: All fine
+    \retval -1: struct ftdi_contxt or ftdi_eeprom missing
+*/
+int ftdi_get_eeprom_buf(struct ftdi_context *ftdi, unsigned char * buf, int size) 
+    {
+	if (!ftdi || !(ftdi->eeprom))
+	    ftdi_error_return(-1, "No appropriate structure");
+	memcpy(buf, ftdi->eeprom->buf, size);
+	return 0;
+    }
+
+/**
     Read eeprom location
 
     \param ftdi pointer to ftdi_context

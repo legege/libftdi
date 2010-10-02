@@ -316,6 +316,53 @@ struct ftdi_context
 };
 
 /**
+ List all handled EEPROM values.
+   Append future new values only at the end to provide API/ABI stability*/
+enum ftdi_eeprom_value
+{
+    VENDOR_ID          = 0,
+    PRODUCT_ID         = 1,
+    SELF_POWERED       = 2,
+    REMOTE_WAKEUP      = 3,
+    IS_NOT_PNP         = 4,
+    SUSPEND_DBUS7      = 5,
+    IN_IS_ISOCHRONOUS  = 6,
+    OUT_IS_ISOCHRONOUS = 7,
+    SUSPEND_PULL_DOWNS = 8,
+    USE_SERIAL         = 9,
+    USB_VERSION        = 10,
+    USE_USB_VERSION    = 11,
+    MAX_POWER          = 12,
+    CHANNEL_A_TYPE     = 13,
+    CHANNEL_B_TYPE     = 14,
+    CHANNEL_A_DRIVER   = 15,
+    CHANNEL_B_DRIVER   = 16,
+    CBUS_FUNCTION_0    = 17,
+    CBUS_FUNCTION_1    = 18,
+    CBUS_FUNCTION_2    = 19,
+    CBUS_FUNCTION_3    = 20,
+    CBUS_FUNCTION_4    = 21,
+    HIGH_CURRENT       = 22,
+    HIGH_CURRENT_A     = 23,
+    HIGH_CURRENT_B     = 24,
+    INVERT             = 25,
+    GROUP0_DRIVE       = 26,
+    GROUP0_SCHMITT     = 27,
+    GROUP0_SLEW        = 28,
+    GROUP1_DRIVE       = 29,
+    GROUP1_SCHMITT     = 30,
+    GROUP1_SLEW        = 31,
+    GROUP2_DRIVE       = 32,
+    GROUP2_SCHMITT     = 33,
+    GROUP2_SLEW        = 34,
+    GROUP3_DRIVE       = 35,
+    GROUP3_SCHMITT     = 36,
+    GROUP3_SLEW        = 37,
+    CHIP_SIZE          = 38,
+    CHIP_TYPE          = 39
+};
+
+/**
     \brief list of usb devices created by ftdi_usb_find_all()
 */
 struct ftdi_device_list
@@ -480,6 +527,11 @@ extern "C"
                                   char * serial);
     int ftdi_eeprom_build(struct ftdi_context *ftdi);
     int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose);
+
+    int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int* value);
+    int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int  value);
+
+    int ftdi_get_eeprom_buf(struct ftdi_context *ftdi, unsigned char * buf, int size);
 
     int ftdi_read_eeprom(struct ftdi_context *ftdi);
     int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid);
