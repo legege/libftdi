@@ -2490,6 +2490,11 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     case TYPE_BM:
         output[0x0C] = eeprom->usb_version & 0xff;
         output[0x0D] = (eeprom->usb_version>>8) & 0xff;
+        if (eeprom->use_usb_version == USE_USB_VERSION_BIT)
+            output[0x0A] |= USE_USB_VERSION_BIT;
+        else
+            output[0x0A] &= ~USE_USB_VERSION_BIT;
+
         break;
     case TYPE_2232C:
 
@@ -2527,6 +2532,11 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             output[0x0A] |= 0x4;
         else
             output[0x0A] &= ~0x4;
+        if (eeprom->use_usb_version == USE_USB_VERSION_BIT)
+            output[0x0A] |= USE_USB_VERSION_BIT;
+        else
+            output[0x0A] &= ~USE_USB_VERSION_BIT;
+
         output[0x0C] = eeprom->usb_version & 0xff;
         output[0x0D] = (eeprom->usb_version>>8) & 0xff;
         output[0x14] = eeprom->chip;
@@ -2704,8 +2714,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     // Bit 7: 0 - reserved
     // Bit 6: 0 - reserved
     // Bit 5: 0 - reserved
-    // Bit 4: 1 - Change USB version
-    //            Not seen on FT2232(D)
+    // Bit 4: 1 - Change USB version on BM and 2232C
     // Bit 3: 1 - Use the serial number string
     // Bit 2: 1 - Enable suspend pull downs for lower power
     // Bit 1: 1 - Out EndPoint is Isochronous
@@ -2715,11 +2724,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     eeprom->out_is_isochronous = buf[0x0A]&0x02;
     eeprom->suspend_pull_downs = buf[0x0A]&0x04;
     eeprom->use_serial         = buf[0x0A] & USE_SERIAL_NUM;
-    if(buf[0x0A]&0x10)
-        fprintf(stderr,
-                "EEPROM byte[0x0a] Bit 4 unexpected set. If this happened with the EEPROM\n"
-                "programmed by FTDI tools, please report to libftdi@developer.intra2net.com\n");
-
+    eeprom->use_usb_version    = buf[0x0A] & USE_USB_VERSION_BIT;
 
     // Addr 0C: USB version low byte when 0x0A
     // Addr 0D: USB version high byte when 0x0A 
@@ -2913,6 +2918,10 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
                     channel_mode[eeprom->channel_b_type],
                     (eeprom->channel_b_driver)?" VCP":"",
                     (eeprom->high_current_b)?" High Current IO":"");
+        if (((ftdi->type == TYPE_BM) || (ftdi->type == TYPE_2232C)) &&
+            eeprom->use_usb_version == USE_USB_VERSION_BIT)
+            fprintf(stdout,"Use explicit USB Version %04x\n",eeprom->usb_version);
+
         if ((ftdi->type == TYPE_2232H) || (ftdi->type == TYPE_4232H)) 
         {
             fprintf(stdout,"%s has %d mA drive%s%s\n",

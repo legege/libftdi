@@ -199,7 +199,9 @@ struct ftdi_eeprom
     int use_serial;
     /** usb version */
     int usb_version;
-    /** maximum power */
+    /** Use usb version on FT2232 devices*/
+    int use_usb_version;
+     /** maximum power */
     int max_power;
 
     /** manufacturer name */
@@ -362,6 +364,8 @@ enum ftdi_cbus_func {/* FIXME: Recheck value, especially the last */
 
 /** Driver Type. */
 #define DRIVER_VCP 0x08
+
+#define USE_USB_VERSION_BIT 0x10
 
 #define SUSPEND_DBUS7_BIT 0x80
 
