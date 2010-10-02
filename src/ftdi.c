@@ -2581,10 +2581,10 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             output[0x01] |= DRIVER_VCP;
         else
             output[0x01] &= ~DRIVER_VCP;
-        if(eeprom->suspend_dbus7 == SUSPEND_DBUS7)
-            output[0x01] |= SUSPEND_DBUS7;
+        if(eeprom->suspend_dbus7 == SUSPEND_DBUS7_BIT)
+            output[0x01] |= SUSPEND_DBUS7_BIT;
         else
-            output[0x01] &= ~SUSPEND_DBUS7;
+            output[0x01] &= ~SUSPEND_DBUS7_BIT;
 
         if (eeprom->suspend_pull_downs == 1)
             output[0x0A] |= 0x4;
@@ -2856,7 +2856,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
         eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
 
         if(ftdi->type == TYPE_2232H)
-            eeprom->suspend_dbus7    = buf[0x01] & SUSPEND_DBUS7;
+            eeprom->suspend_dbus7    = buf[0x01] & SUSPEND_DBUS7_BIT;
 
         eeprom->chip = buf[0x18];
         eeprom->group0_drive   =  buf[0x0c]       & DRIVE_16MA;
