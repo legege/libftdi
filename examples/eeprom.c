@@ -14,7 +14,7 @@
 int main(int argc, char **argv)
 {
     struct ftdi_context *ftdi;
-    unsigned char *buf;
+    unsigned char buf[256];
     int f, i, j;
     int vid = 0x0403;
     int pid = 0x6010;
@@ -25,6 +25,7 @@ int main(int argc, char **argv)
     int large_chip = 0;
     int do_write = 0;
     int size;
+    int value;
 
     if ((ftdi = ftdi_new()) == 0)
     {
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
 	default:
 		fprintf(stderr, "usage: %s [options]\n", *argv);
 		fprintf(stderr, "\t-d[num] Work with default valuesfor 128 Byte "
-                        "EEPROM or for 256 Byte EEPROm if some [num] is given\n");
+                        "EEPROM or for 256 Byte EEPROM if some [num] is given\n");
 		fprintf(stderr, "\t-w write\n");
 		fprintf(stderr, "\t-e erase\n");
 		fprintf(stderr, "\t-v verbose decoding\n");
@@ -98,26 +99,42 @@ int main(int argc, char **argv)
 
     if (erase)
     {
-        f = ftdi_erase_eeprom(ftdi);
+        f = ftdi_erase_eeprom(ftdi); /* needed to determine EEPROM chip type */
         if (f < 0)
         {
             fprintf(stderr, "Erase failed: %s", 
                     ftdi_get_error_string(ftdi));
             return -2;
         }
-        if (ftdi->eeprom->chip == -1)
+	if (ftdi_get_eeprom_value(ftdi, CHIP_TYPE, & value) <0)
+	{
+            fprintf(stderr, "ftdi_get_eeprom_value: %d (%s)\n", 
+                    f, ftdi_get_error_string(ftdi));
+	}
+        if (value == -1)
             fprintf(stderr, "No EEPROM\n");
-        else if (ftdi->eeprom->chip == 0)
+        else if (value == 0)
             fprintf(stderr, "Internal EEPROM\n");
         else
-            fprintf(stderr, "Found 93x%02x\n",ftdi->eeprom->chip);
+            fprintf(stderr, "Found 93x%02x\n", value);
         return 0;
     }        
 
     if(use_defaults)
     {
-        ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAF", "0001");
-        ftdi->eeprom->max_power = 500;
+        ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAG", "0001");
+        ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAG", "0001");
+	if (ftdi_set_eeprom_value(ftdi, MAX_POWER, 500) <0)
+	{
+            fprintf(stderr, "ftdi_set_eeprom_value: %d (%s)\n", 
+                    f, ftdi_get_error_string(ftdi));
+	}
+	if (large_chip)
+	    if (ftdi_set_eeprom_value(ftdi, CHIP_TYPE, 0x66) <0)
+	    {
+		fprintf(stderr, "ftdi_set_eeprom_value: %d (%s)\n", 
+			f, ftdi_get_error_string(ftdi));
+	    }
         f=(ftdi_eeprom_build(ftdi));
         if (f < 0)
         {
@@ -129,14 +146,24 @@ int main(int argc, char **argv)
     else if(do_write)
     {
         ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAG", "0001");
-        ftdi->eeprom->max_power = 500;
-        f = ftdi_erase_eeprom(ftdi);
-        if (ftdi->eeprom->chip == -1)
+         f = ftdi_erase_eeprom(ftdi);
+	if (ftdi_set_eeprom_value(ftdi, MAX_POWER, 500) <0)
+	{
+            fprintf(stderr, "ftdi_set_eeprom_value: %d (%s)\n", 
+                    f, ftdi_get_error_string(ftdi));
+	}
+        f = ftdi_erase_eeprom(ftdi);/* needed to determine EEPROM chip type */
+	if (ftdi_get_eeprom_value(ftdi, CHIP_TYPE, & value) <0)
+	{
+            fprintf(stderr, "ftdi_get_eeprom_value: %d (%s)\n", 
+                    f, ftdi_get_error_string(ftdi));
+	}
+        if (value == -1)
             fprintf(stderr, "No EEPROM\n");
-        else if (ftdi->eeprom->chip == 0)
+        else if (value == 0)
             fprintf(stderr, "Internal EEPROM\n");
         else
-            fprintf(stderr, "Found 93x%02x\n",ftdi->eeprom->chip);
+            fprintf(stderr, "Found 93x%02x\n", value);
         f=(ftdi_eeprom_build(ftdi));
         if (f < 0)
         {
@@ -170,12 +197,13 @@ int main(int argc, char **argv)
     }
 
 
-    fprintf(stderr, "Chip type %d ftdi_eeprom_size: %d\n", ftdi->type, ftdi->eeprom->size);
-    buf = ftdi->eeprom->buf;
+    ftdi_get_eeprom_value(ftdi, CHIP_SIZE, & value);
+    fprintf(stderr, "Chip type %d ftdi_eeprom_size: %d\n", ftdi->type, value);
     if (ftdi->type == TYPE_R)
         size = 0xa0;
     else
-        size = ftdi->eeprom->size;
+        size = value;
+    ftdi_get_eeprom_buf(ftdi, buf, size);
     for(i=0; i < size; i += 16)
     {
 	fprintf(stdout,"0x%03x:", i);
