@@ -29,8 +29,8 @@ int main(int argc, char **argv)
 
     if ((ftdi = ftdi_new()) == 0)
     {
-       fprintf(stderr, "Failed to allocate ftdi structure :%s \n", 
-		   ftdi_get_error_string(ftdi));
+        fprintf(stderr, "Failed to allocate ftdi structure :%s \n",
+                ftdi_get_error_string(ftdi));
         return EXIT_FAILURE;
     }
 
@@ -38,43 +38,43 @@ int main(int argc, char **argv)
     {
         switch (i)
         {
-        case 'd':
-            use_defaults = 1;
-            if(optarg)
-                large_chip = 0x66; 
-            break;
-        case 'e':
-            erase = 1;
-            break;
-        case 'v':
-		vid = strtoul(optarg, NULL, 0);
-		break;
-	case 'p':
-		pid = strtoul(optarg, NULL, 0);
-		break;
-	case 'P':
+            case 'd':
+                use_defaults = 1;
+                if (optarg)
+                    large_chip = 0x66;
+                break;
+            case 'e':
+                erase = 1;
+                break;
+            case 'v':
+                vid = strtoul(optarg, NULL, 0);
+                break;
+            case 'p':
+                pid = strtoul(optarg, NULL, 0);
+                break;
+            case 'P':
                 desc = optarg;
-		break;
-	case 'S':
-		serial = optarg;
-		break;
-	case 'w':
-		do_write  = 1;
-		break;
-	default:
-		fprintf(stderr, "usage: %s [options]\n", *argv);
-		fprintf(stderr, "\t-d[num] Work with default valuesfor 128 Byte "
+                break;
+            case 'S':
+                serial = optarg;
+                break;
+            case 'w':
+                do_write  = 1;
+                break;
+            default:
+                fprintf(stderr, "usage: %s [options]\n", *argv);
+                fprintf(stderr, "\t-d[num] Work with default valuesfor 128 Byte "
                         "EEPROM or for 256 Byte EEPROM if some [num] is given\n");
-		fprintf(stderr, "\t-w write\n");
-		fprintf(stderr, "\t-e erase\n");
-		fprintf(stderr, "\t-v verbose decoding\n");
-		fprintf(stderr, "\t-p <number> Search for device with PID == number\n");
-		fprintf(stderr, "\t-v <number> Search for device with VID == number\n");
-		fprintf(stderr, "\t-P <string? Search for device with given "
+                fprintf(stderr, "\t-w write\n");
+                fprintf(stderr, "\t-e erase\n");
+                fprintf(stderr, "\t-v verbose decoding\n");
+                fprintf(stderr, "\t-p <number> Search for device with PID == number\n");
+                fprintf(stderr, "\t-v <number> Search for device with VID == number\n");
+                fprintf(stderr, "\t-P <string? Search for device with given "
                         "product description\n");
-		fprintf(stderr, "\t-S <string? Search for device with given "
+                fprintf(stderr, "\t-S <string? Search for device with given "
                         "serial number\n");
-		exit(-1);
+                exit(-1);
         }
     }
 
@@ -86,13 +86,13 @@ int main(int argc, char **argv)
     if (f < 0)
     {
         fprintf(stderr, "Device VID 0x%04x PID 0x%04x", vid, pid);
-        if(desc)
+        if (desc)
             fprintf(stderr, " Desc %s", desc);
-        if(serial)
+        if (serial)
             fprintf(stderr, " Serial %s", serial);
         fprintf(stderr, "\n");
-        fprintf(stderr, "unable to open ftdi device: %d (%s)\n", 
-		f, ftdi_get_error_string(ftdi));
+        fprintf(stderr, "unable to open ftdi device: %d (%s)\n",
+                f, ftdi_get_error_string(ftdi));
 
         exit(-1);
     }
@@ -102,15 +102,15 @@ int main(int argc, char **argv)
         f = ftdi_erase_eeprom(ftdi); /* needed to determine EEPROM chip type */
         if (f < 0)
         {
-            fprintf(stderr, "Erase failed: %s", 
+            fprintf(stderr, "Erase failed: %s",
                     ftdi_get_error_string(ftdi));
             return -2;
         }
-	if (ftdi_get_eeprom_value(ftdi, CHIP_TYPE, & value) <0)
-	{
-            fprintf(stderr, "ftdi_get_eeprom_value: %d (%s)\n", 
+        if (ftdi_get_eeprom_value(ftdi, CHIP_TYPE, & value) <0)
+        {
+            fprintf(stderr, "ftdi_get_eeprom_value: %d (%s)\n",
                     f, ftdi_get_error_string(ftdi));
-	}
+        }
         if (value == -1)
             fprintf(stderr, "No EEPROM\n");
         else if (value == 0)
@@ -118,46 +118,46 @@ int main(int argc, char **argv)
         else
             fprintf(stderr, "Found 93x%02x\n", value);
         return 0;
-    }        
+    }
 
-    if(use_defaults)
+    if (use_defaults)
     {
         ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAG", "0001");
         ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAG", "0001");
-	if (ftdi_set_eeprom_value(ftdi, MAX_POWER, 500) <0)
-	{
-            fprintf(stderr, "ftdi_set_eeprom_value: %d (%s)\n", 
+        if (ftdi_set_eeprom_value(ftdi, MAX_POWER, 500) <0)
+        {
+            fprintf(stderr, "ftdi_set_eeprom_value: %d (%s)\n",
                     f, ftdi_get_error_string(ftdi));
-	}
-	if (large_chip)
-	    if (ftdi_set_eeprom_value(ftdi, CHIP_TYPE, 0x66) <0)
-	    {
-		fprintf(stderr, "ftdi_set_eeprom_value: %d (%s)\n", 
-			f, ftdi_get_error_string(ftdi));
-	    }
+        }
+        if (large_chip)
+            if (ftdi_set_eeprom_value(ftdi, CHIP_TYPE, 0x66) <0)
+            {
+                fprintf(stderr, "ftdi_set_eeprom_value: %d (%s)\n",
+                        f, ftdi_get_error_string(ftdi));
+            }
         f=(ftdi_eeprom_build(ftdi));
         if (f < 0)
         {
-            fprintf(stderr, "ftdi_eeprom_build: %d (%s)\n", 
+            fprintf(stderr, "ftdi_eeprom_build: %d (%s)\n",
                     f, ftdi_get_error_string(ftdi));
             exit(-1);
         }
     }
-    else if(do_write)
+    else if (do_write)
     {
         ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAG", "0001");
-         f = ftdi_erase_eeprom(ftdi);
-	if (ftdi_set_eeprom_value(ftdi, MAX_POWER, 500) <0)
-	{
-            fprintf(stderr, "ftdi_set_eeprom_value: %d (%s)\n", 
+        f = ftdi_erase_eeprom(ftdi);
+        if (ftdi_set_eeprom_value(ftdi, MAX_POWER, 500) <0)
+        {
+            fprintf(stderr, "ftdi_set_eeprom_value: %d (%s)\n",
                     f, ftdi_get_error_string(ftdi));
-	}
+        }
         f = ftdi_erase_eeprom(ftdi);/* needed to determine EEPROM chip type */
-	if (ftdi_get_eeprom_value(ftdi, CHIP_TYPE, & value) <0)
-	{
-            fprintf(stderr, "ftdi_get_eeprom_value: %d (%s)\n", 
+        if (ftdi_get_eeprom_value(ftdi, CHIP_TYPE, & value) <0)
+        {
+            fprintf(stderr, "ftdi_get_eeprom_value: %d (%s)\n",
                     f, ftdi_get_error_string(ftdi));
-	}
+        }
         if (value == -1)
             fprintf(stderr, "No EEPROM\n");
         else if (value == 0)
@@ -167,30 +167,30 @@ int main(int argc, char **argv)
         f=(ftdi_eeprom_build(ftdi));
         if (f < 0)
         {
-            fprintf(stderr, "Erase failed: %s", 
+            fprintf(stderr, "Erase failed: %s",
                     ftdi_get_error_string(ftdi));
             return -2;
         }
         f = ftdi_write_eeprom(ftdi);
         {
-            fprintf(stderr, "ftdi_eeprom_decode: %d (%s)\n", 
+            fprintf(stderr, "ftdi_eeprom_decode: %d (%s)\n",
                     f, ftdi_get_error_string(ftdi));
             exit(-1);
         }
         f = ftdi_read_eeprom(ftdi);
         if (f < 0)
         {
-            fprintf(stderr, "ftdi_read_eeprom: %d (%s)\n", 
+            fprintf(stderr, "ftdi_read_eeprom: %d (%s)\n",
                     f, ftdi_get_error_string(ftdi));
             exit(-1);
         }
-     }
+    }
     else
     {
         f = ftdi_read_eeprom(ftdi);
         if (f < 0)
         {
-            fprintf(stderr, "ftdi_read_eeprom: %d (%s)\n", 
+            fprintf(stderr, "ftdi_read_eeprom: %d (%s)\n",
                     f, ftdi_get_error_string(ftdi));
             exit(-1);
         }
@@ -204,29 +204,29 @@ int main(int argc, char **argv)
     else
         size = value;
     ftdi_get_eeprom_buf(ftdi, buf, size);
-    for(i=0; i < size; i += 16)
+    for (i=0; i < size; i += 16)
     {
-	fprintf(stdout,"0x%03x:", i);
-	
-	for (j = 0; j< 8; j++)
-	    fprintf(stdout," %02x", buf[i+j]);
-	fprintf(stdout," ");
-	for (; j< 16; j++)
-	    fprintf(stdout," %02x", buf[i+j]);
-	fprintf(stdout," ");
-	for (j = 0; j< 8; j++)
-	    fprintf(stdout,"%c", isprint(buf[i+j])?buf[i+j]:'.');
-	fprintf(stdout," ");
-	for (; j< 16; j++)
-	    fprintf(stdout,"%c", isprint(buf[i+j])?buf[i+j]:'.');
-	fprintf(stdout,"\n");
+        fprintf(stdout,"0x%03x:", i);
+
+        for (j = 0; j< 8; j++)
+            fprintf(stdout," %02x", buf[i+j]);
+        fprintf(stdout," ");
+        for (; j< 16; j++)
+            fprintf(stdout," %02x", buf[i+j]);
+        fprintf(stdout," ");
+        for (j = 0; j< 8; j++)
+            fprintf(stdout,"%c", isprint(buf[i+j])?buf[i+j]:'.');
+        fprintf(stdout," ");
+        for (; j< 16; j++)
+            fprintf(stdout,"%c", isprint(buf[i+j])?buf[i+j]:'.');
+        fprintf(stdout,"\n");
     }
 
     f = ftdi_eeprom_decode(ftdi, 1);
     if (f < 0)
     {
-        fprintf(stderr, "ftdi_eeprom_decode: %d (%s)\n", 
-		f, ftdi_get_error_string(ftdi));
+        fprintf(stderr, "ftdi_eeprom_decode: %d (%s)\n",
+                f, ftdi_get_error_string(ftdi));
         exit(-1);
     }
 
