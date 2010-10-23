@@ -24,6 +24,7 @@
 
 #include <confuse.h>
 #include <ftdi.h>
+#include <ftdi_eeprom_version.h>
 
 int str_to_cbus(char *str, int max_allowed)
 {
@@ -99,7 +100,7 @@ int main(int argc, char *argv[])
     struct ftdi_context ftdi;
     struct ftdi_eeprom eeprom;
 
-    printf("\nFTDI eeprom generator v%s\n", VERSION);
+    printf("\nFTDI eeprom generator v%s\n", EEPROM_VERSION_STRING);
     printf ("(c) Intra2net AG <opensource@intra2net.com>\n");
 
     if (argc != 2 && argc != 3)

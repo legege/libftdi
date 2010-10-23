@@ -9,11 +9,25 @@ if (FTDI_EEPROM)
     LINK_DIRECTORIES(${Confuse_LIBRARY_DIRS})
     SET(libs ${libs} ${Confuse_LIBRARIES})
 
-    if(Confuse_FOUND)
+    if(Confuse_FOUND_DISABLED_FOR_NOW)
         set(FTDI_BUILD_EEPROM True PARENT_SCOPE)
         message(STATUS "Building ftdi_eeprom")
 
-        # TODO: Add real ftdi_eeprom source + binary
+        # Version defines
+        set(EEPROM_MAJOR_VERSION 0)
+        set(EEPROM_MINOR_VERSION 17)
+        set(EEPROM_VERSION_STRING ${EEPROM_MAJOR_VERSION}.${EEPROM_MINOR_VERSION})
+
+        include_directories(${CMAKE_SOURCE_DIR}/src)
+        include_directories(${CMAKE_BINARY_DIR}/ftdi_eeprom)
+
+        configure_file(
+          "ftdi_eeprom_version.h.in"
+          "${CMAKE_BINARY_DIR}/ftdi_eeprom/ftdi_eeprom_version.h"
+        )
+
+        add_executable(ftdi_eeprom main.c)
+        target_link_libraries(ftdi_eeprom ftdi)
 
     else(Confuse_FOUND)
         message(STATUS "libConfuse not found, won't build ftdi_eeprom")
