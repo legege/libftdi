@@ -91,14 +91,14 @@ int main(int argc, char *argv[])
     normal variables
     */
     int _read = 0, _erase = 0, _flash = 0;
-    unsigned char eeprom_buf[128];
+    unsigned char eeprom_buf[128];                  // TODO: Kill this and look for other hardcoded places of 128 bytes
     char *filename;
     int size_check;
     int i, argc_filename;
     FILE *fp;
 
     struct ftdi_context ftdi;
-    struct ftdi_eeprom eeprom;
+    struct ftdi_eeprom *eeprom;
 
     printf("\nFTDI eeprom generator v%s\n", EEPROM_VERSION_STRING);
     printf ("(c) Intra2net AG <opensource@intra2net.com>\n");
@@ -144,40 +144,42 @@ int main(int argc, char *argv[])
         printf("Hint: Self powered devices should have a max_power setting of 0.\n");
 
     ftdi_init(&ftdi);
-    ftdi_eeprom_initdefaults (&eeprom);
-    eeprom.vendor_id = cfg_getint(cfg, "vendor_id");
-    eeprom.product_id = cfg_getint(cfg, "product_id");
+    ftdi_eeprom_initdefaults (&ftdi, "Acme Inc.", "FTDI Chip", NULL);
+    eeprom = ftdi.eeprom;
+
+    eeprom->vendor_id = cfg_getint(cfg, "vendor_id");
+    eeprom->product_id = cfg_getint(cfg, "product_id");
     char *type = cfg_getstr(cfg, "chip_type");
     if (!strcmp(type, "BM")) {
-        eeprom.chip_type = TYPE_BM;
+        ftdi.type = TYPE_BM;
     } else if (!strcmp(type, "R")) {
-        eeprom.chip_type = TYPE_R;
+        ftdi.type = TYPE_R;
     } else {
-        eeprom.chip_type = TYPE_AM;
+        ftdi.type = TYPE_AM;
     }
 
-    eeprom.self_powered = cfg_getbool(cfg, "self_powered");
-    eeprom.remote_wakeup = cfg_getbool(cfg, "remote_wakeup");
-    eeprom.max_power = cfg_getint(cfg, "max_power");
+    eeprom->self_powered = cfg_getbool(cfg, "self_powered");
+    eeprom->remote_wakeup = cfg_getbool(cfg, "remote_wakeup");
+    eeprom->max_power = cfg_getint(cfg, "max_power");
 
-    eeprom.in_is_isochronous = cfg_getbool(cfg, "in_is_isochronous");
-    eeprom.out_is_isochronous = cfg_getbool(cfg, "out_is_isochronous");
-    eeprom.suspend_pull_downs = cfg_getbool(cfg, "suspend_pull_downs");
+    eeprom->in_is_isochronous = cfg_getbool(cfg, "in_is_isochronous");
+    eeprom->out_is_isochronous = cfg_getbool(cfg, "out_is_isochronous");
+    eeprom->suspend_pull_downs = cfg_getbool(cfg, "suspend_pull_downs");
 
-    eeprom.use_serial = cfg_getbool(cfg, "use_serial");
-    eeprom.change_usb_version = cfg_getbool(cfg, "change_usb_version");
-    eeprom.usb_version = cfg_getint(cfg, "usb_version");
+    eeprom->use_serial = cfg_getbool(cfg, "use_serial");
+    eeprom->use_usb_version = cfg_getbool(cfg, "change_usb_version");
+    eeprom->usb_version = cfg_getint(cfg, "usb_version");
 
 
-    eeprom.manufacturer = cfg_getstr(cfg, "manufacturer");
-    eeprom.product = cfg_getstr(cfg, "product");
-    eeprom.serial = cfg_getstr(cfg, "serial");
-    eeprom.high_current = cfg_getbool(cfg, "high_current");
-    eeprom.cbus_function[0] = str_to_cbus(cfg_getstr(cfg, "cbus0"), 13);
-    eeprom.cbus_function[1] = str_to_cbus(cfg_getstr(cfg, "cbus1"), 13);
-    eeprom.cbus_function[2] = str_to_cbus(cfg_getstr(cfg, "cbus2"), 13);
-    eeprom.cbus_function[3] = str_to_cbus(cfg_getstr(cfg, "cbus3"), 13);
-    eeprom.cbus_function[4] = str_to_cbus(cfg_getstr(cfg, "cbus4"), 9);
+    eeprom->manufacturer = cfg_getstr(cfg, "manufacturer");
+    eeprom->product = cfg_getstr(cfg, "product");
+    eeprom->serial = cfg_getstr(cfg, "serial");
+    eeprom->high_current = cfg_getbool(cfg, "high_current");
+    eeprom->cbus_function[0] = str_to_cbus(cfg_getstr(cfg, "cbus0"), 13);
+    eeprom->cbus_function[1] = str_to_cbus(cfg_getstr(cfg, "cbus1"), 13);
+    eeprom->cbus_function[2] = str_to_cbus(cfg_getstr(cfg, "cbus2"), 13);
+    eeprom->cbus_function[3] = str_to_cbus(cfg_getstr(cfg, "cbus3"), 13);
+    eeprom->cbus_function[4] = str_to_cbus(cfg_getstr(cfg, "cbus4"), 9);
     int invert = 0;
     if (cfg_getbool(cfg, "invert_rxd")) invert |= INVERT_RXD;
     if (cfg_getbool(cfg, "invert_txd")) invert |= INVERT_TXD;
@@ -187,19 +189,19 @@ int main(int argc, char *argv[])
     if (cfg_getbool(cfg, "invert_dsr")) invert |= INVERT_DSR;
     if (cfg_getbool(cfg, "invert_dcd")) invert |= INVERT_DCD;
     if (cfg_getbool(cfg, "invert_ri")) invert |= INVERT_RI;
-    eeprom.invert = invert;
+    eeprom->invert = invert;
 
     if (_read > 0 || _erase > 0 || _flash > 0)
     {
-        i = ftdi_usb_open(&ftdi, eeprom.vendor_id, eeprom.product_id);
+        i = ftdi_usb_open(&ftdi, eeprom->vendor_id, eeprom->product_id);
 
         if (i == 0)
         {
-            printf("EEPROM size: %d\n", ftdi.eeprom_size);
+            printf("EEPROM size: %d\n", eeprom->size);
         }
         else
         {
-            printf("Unable to find FTDI devices under given vendor/product id: 0x%X/0x%X\n", eeprom.vendor_id, eeprom.product_id);
+            printf("Unable to find FTDI devices under given vendor/product id: 0x%X/0x%X\n", eeprom->vendor_id, eeprom->product_id);
             printf("Error code: %d (%s)\n", i, ftdi_get_error_string(&ftdi));
             printf("Retrying with default FTDI id.\n");
 
@@ -214,29 +216,29 @@ int main(int argc, char *argv[])
 
     if (_read > 0)
     {
-        printf("FTDI read eeprom: %d\n", ftdi_read_eeprom(&ftdi, eeprom_buf));
+        printf("FTDI read eeprom: %d\n", ftdi_read_eeprom(&ftdi));
 
-        ftdi_eeprom_decode(&eeprom, eeprom_buf, ftdi.eeprom_size);
+        ftdi_eeprom_decode(&ftdi, 0);
         /* Debug output */
         /*
         const char* chip_types[] = {"other", "BM", "R"};
-        printf("vendor_id = \"%04x\"\n", eeprom.vendor_id);
-        printf("product_id = \"%04x\"\n", eeprom.product_id);
+        printf("vendor_id = \"%04x\"\n", eeprom->vendor_id);
+        printf("product_id = \"%04x\"\n", eeprom->product_id);
         printf("chip_type = \"%s\"\n",
-          (eeprom.chip_type > 0x06) || (eeprom.chip_type & 0x01) ? "unknown":
-          chip_types[eeprom.chip_type>>1]);
-        printf("self_powered = \"%s\"\n", eeprom.self_powered?"true":"false");
-        printf("remote_wakeup = \"%s\"\n", eeprom.remote_wakeup?"true":"false");
-        printf("max_power = \"%d\"\n", eeprom.max_power);
-        printf("in_is_isochronous = \"%s\"\n", eeprom.in_is_isochronous?"true":"false");
-        printf("out_is_isochronous = \"%s\"\n", eeprom.out_is_isochronous?"true":"false");
-        printf("suspend_pull_downs = \"%s\"\n", eeprom.suspend_pull_downs?"true":"false");
-        printf("use_serial = \"%s\"\n", eeprom.use_serial?"true":"false");
-        printf("change_usb_version = \"%s\"\n", eeprom.change_usb_version?"true":"false");
-        printf("usb_version = \"%d\"\n", eeprom.usb_version);
-        printf("manufacturer = \"%s\"\n", eeprom.manufacturer);
-        printf("product = \"%s\"\n", eeprom.product);
-        printf("serial = \"%s\"\n", eeprom.serial);
+          (eeprom->chip_type > 0x06) || (eeprom->chip_type & 0x01) ? "unknown":
+          chip_types[eeprom->chip_type>>1]);
+        printf("self_powered = \"%s\"\n", eeprom->self_powered?"true":"false");
+        printf("remote_wakeup = \"%s\"\n", eeprom->remote_wakeup?"true":"false");
+        printf("max_power = \"%d\"\n", eeprom->max_power);
+        printf("in_is_isochronous = \"%s\"\n", eeprom->in_is_isochronous?"true":"false");
+        printf("out_is_isochronous = \"%s\"\n", eeprom->out_is_isochronous?"true":"false");
+        printf("suspend_pull_downs = \"%s\"\n", eeprom->suspend_pull_downs?"true":"false");
+        printf("use_serial = \"%s\"\n", eeprom->use_serial?"true":"false");
+        printf("change_usb_version = \"%s\"\n", eeprom->change_usb_version?"true":"false");
+        printf("usb_version = \"%d\"\n", eeprom->usb_version);
+        printf("manufacturer = \"%s\"\n", eeprom->manufacturer);
+        printf("product = \"%s\"\n", eeprom->product);
+        printf("serial = \"%s\"\n", eeprom->serial);
         */
 
         if (filename != NULL && strlen(filename) > 0)
@@ -258,7 +260,7 @@ int main(int argc, char *argv[])
         printf("FTDI erase eeprom: %d\n", ftdi_erase_eeprom(&ftdi));
     }
 
-    size_check = ftdi_eeprom_build(&eeprom, eeprom_buf);
+    size_check = ftdi_eeprom_build(&ftdi);
 
     if (size_check == -1)
     {
@@ -284,7 +286,7 @@ int main(int argc, char *argv[])
                 fclose(fp);
             }
         }
-        printf ("FTDI write eeprom: %d\n", ftdi_write_eeprom(&ftdi, eeprom_buf));
+        printf ("FTDI write eeprom: %d\n", ftdi_write_eeprom(&ftdi));
     }
 
     // Write to file?

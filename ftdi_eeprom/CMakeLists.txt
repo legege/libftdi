@@ -9,7 +9,7 @@ if (FTDI_EEPROM)
     LINK_DIRECTORIES(${Confuse_LIBRARY_DIRS})
     SET(libs ${libs} ${Confuse_LIBRARIES})
 
-    if(Confuse_FOUND_DISABLED_FOR_NOW)
+    if(Confuse_FOUND)
         set(FTDI_BUILD_EEPROM True PARENT_SCOPE)
         message(STATUS "Building ftdi_eeprom")
 
@@ -28,6 +28,7 @@ if (FTDI_EEPROM)
 
         add_executable(ftdi_eeprom main.c)
         target_link_libraries(ftdi_eeprom ftdi)
+        target_link_libraries(ftdi_eeprom ${Confuse_LIBRARIES})
 
     else(Confuse_FOUND)
         message(STATUS "libConfuse not found, won't build ftdi_eeprom")
