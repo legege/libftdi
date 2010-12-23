@@ -95,10 +95,7 @@ int ftdi_init(struct ftdi_context *ftdi)
     ftdi->writebuffer_chunksize = 4096;
     ftdi->max_packet_size = 0;
 
-    ftdi->interface = 0;
-    ftdi->index = 0;
-    ftdi->in_ep = 0x02;
-    ftdi->out_ep = 0x81;
+    ftdi_set_interface(ftdi, INTERFACE_ANY);
     ftdi->bitbang_mode = 1; /* when bitbang is enabled this holds the number of the mode  */
 
     ftdi->error_str = NULL;
@@ -154,7 +151,10 @@ int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
     {
         case INTERFACE_ANY:
         case INTERFACE_A:
-            /* ftdi_usb_open_desc cares to set the right index, depending on the found chip */
+            ftdi->interface = 0;
+            ftdi->index     = INTERFACE_A;
+            ftdi->in_ep     = 0x02;
+            ftdi->out_ep    = 0x81;
             break;
         case INTERFACE_B:
             ftdi->interface = 1;
