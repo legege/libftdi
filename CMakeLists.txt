@@ -59,7 +59,7 @@ endif(NOT APPLE)
 
 # Package information
 set(CPACK_PACKAGE_VERSION              ${VERSION_STRING})
-set(CPACK_PACKAGE_CONTACT              "Marek Vavrusa <marek@vavrusa.com>")
+set(CPACK_PACKAGE_CONTACT              "Intra2net AG <libftdi@intra2net.com>")
 set(CPACK_PACKAGE_DESCRIPTION          "libftdi library.")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY  ${CPACK_PACKAGE_DESCRIPTION}
                                        )
