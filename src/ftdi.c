@@ -2310,6 +2310,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         case TYPE_2232H:            // six extra config bytes + 4 bytes PnP stuff
         case TYPE_4232H:
             user_area_size = 86;
+            break;
         default:
             user_area_size = 0;
             break;
