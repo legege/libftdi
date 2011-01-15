@@ -16,7 +16,6 @@
 
 /*
  TODO:
-    - Use new eeprom get/set functions
     - Remove 128 bytes limit
     - Merge Uwe's eeprom tool. Current features:
         - Init eeprom defaults based upon eeprom type
@@ -143,7 +142,10 @@ int main(int argc, char *argv[])
     normal variables
     */
     int _read = 0, _erase = 0, _flash = 0;
-    unsigned char eeprom_buf[128];                  // TODO: Kill this and look for other hardcoded places of 128 bytes
+
+    const int my_eeprom_size = 128;                 /* TODO: Kill this. Check with Uwe how we can determine the eeprom size properly
+                                                             because it's initialized with -1. Maybe assume 128 bytes per default? */
+    unsigned char eeprom_buf[my_eeprom_size];
     char *filename;
     int size_check;
     int i, argc_filename;
@@ -306,8 +308,10 @@ int main(int argc, char *argv[])
 
         if (filename != NULL && strlen(filename) > 0)
         {
+            ftdi_get_eeprom_buf(ftdi, eeprom_buf, my_eeprom_size);
+
             FILE *fp = fopen (filename, "wb");
-            fwrite (eeprom_buf, 1, 128, fp);
+            fwrite (eeprom_buf, 1, my_eeprom_size, fp);
             fclose (fp);
         }
         else
@@ -335,7 +339,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf ("Used eeprom space: %d bytes\n", 128-size_check);
+        printf ("Used eeprom space: %d bytes\n", my_eeprom_size-size_check);
     }
 
     if (_flash > 0)
@@ -345,8 +349,11 @@ int main(int argc, char *argv[])
             if (filename != NULL && strlen(filename) > 0)
             {
                 FILE *fp = fopen(filename, "rb");
-                fread(eeprom_buf, 1, 128, fp);
+                fread(eeprom_buf, 1, my_eeprom_size, fp);
                 fclose(fp);
+
+                /* TODO: Dirty hack. Create an API for this. How about ftdi_set_eeprom_buf()? */
+                memcpy(ftdi->eeprom->buf, eeprom_buf, my_eeprom_size);
             }
         }
         printf ("FTDI write eeprom: %d\n", ftdi_write_eeprom(ftdi));
@@ -364,7 +371,9 @@ int main(int argc, char *argv[])
         else
             printf ("Writing to file: %s\n", filename);
 
-        fwrite(eeprom_buf, 128, 1, fp);
+        ftdi_get_eeprom_buf(ftdi, eeprom_buf, my_eeprom_size);
+
+        fwrite(eeprom_buf, my_eeprom_size, 1, fp);
         fclose(fp);
     }
 

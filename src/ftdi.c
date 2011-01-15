@@ -3252,11 +3252,15 @@ int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
 
     \retval 0: All fine
     \retval -1: struct ftdi_contxt or ftdi_eeprom missing
+    \retval -2: Not enough room to store eeprom
 */
 int ftdi_get_eeprom_buf(struct ftdi_context *ftdi, unsigned char * buf, int size)
 {
     if (!ftdi || !(ftdi->eeprom))
         ftdi_error_return(-1, "No appropriate structure");
+
+    if (!buf || size < ftdi->eeprom->size)
+        ftdi_error_return(-1, "Not enough room to store eeprom");
 
     // Only copy up to FTDI_MAX_EEPROM_SIZE bytes
     if (size > FTDI_MAX_EEPROM_SIZE)
