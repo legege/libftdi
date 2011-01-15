@@ -2976,12 +2976,12 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
 /**
    Get a value from the decoded EEPROM structure
 
-   \\param ftdi pointer to ftdi_context
-   \\param value_name Enum of the value to query
-   \\param Pointer to store read value
+   \param ftdi pointer to ftdi_context
+   \param value_name Enum of the value to query
+   \param value Pointer to store read value
 
-   \\retval 0: all fine
-   \\retval -1: Value doesn't exist
+   \retval 0: all fine
+   \retval -1: Value doesn't exist
 */
 int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int* value)
 {
@@ -3111,13 +3111,13 @@ int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
    Set a value in the decoded EEPROM Structure
    No parameter checking is performed
 
-   \\param ftdi pointer to ftdi_context
-   \\param value_name Enum of the value to query
-   \\param Value to set
+   \param ftdi pointer to ftdi_context
+   \param value_name Enum of the value to query
+   \param value to set
 
-   \\retval 0: all fine
-   \\retval -1: Value doesn't exist
-   \\retval -2: Value not user settable
+   \retval 0: all fine
+   \retval -1: Value doesn't exist
+   \retval -2: Value not user settable
 */
 int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int value)
 {
@@ -3245,7 +3245,7 @@ int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
 /** Get the read-only buffer to the binary EEPROM content
 
     \param ftdi pointer to ftdi_context
-    \param ftdi buffer to receive EEPROM content
+    \param buf buffer to receive EEPROM content
     \param size Size of receiving buffer
 
     \retval 0: All fine
