@@ -42,7 +42,7 @@
 #include <ftdi.h>
 #include <ftdi_eeprom_version.h>
 
-int str_to_cbus(char *str, int max_allowed)
+static int str_to_cbus(char *str, int max_allowed)
 {
     #define MAX_OPTION 14
     const char* options[MAX_OPTION] = {
@@ -59,6 +59,42 @@ int str_to_cbus(char *str, int max_allowed)
     }
     printf("WARNING: Invalid cbus option '%s'\n", str);
     return 0;
+}
+
+/**
+ * @brief Set eeprom value
+ *
+ * \param ftdi pointer to ftdi_context
+ * \param value_name Enum of the value to set
+ * \param value Value to set
+ *
+ * Function will abort the program on error
+ **/
+static void eeprom_set_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int value)
+{
+    if (ftdi_set_eeprom_value(ftdi, value_name, value) < 0)
+    {
+        printf("Unable to set eeprom value %d: %s. Aborting\n", value_name, ftdi_get_error_string(ftdi));
+        exit (-1);
+    }
+}
+
+/**
+ * @brief Get eeprom value
+ *
+ * \param ftdi pointer to ftdi_context
+ * \param value_name Enum of the value to get
+ * \param value Value to get
+ *
+ * Function will abort the program on error
+ **/
+static void eeprom_get_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int *value)
+{
+    if (ftdi_get_eeprom_value(ftdi, value_name, value) < 0)
+    {
+        printf("Unable to get eeprom value %d: %s. Aborting\n", value_name, ftdi_get_error_string(ftdi));
+        exit (-1);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -167,8 +203,10 @@ int main(int argc, char *argv[])
 
     ftdi_eeprom_initdefaults (ftdi, "Acme Inc.", "FTDI Chip", NULL);
 
-    ftdi->eeprom->vendor_id = cfg_getint(cfg, "vendor_id");
-    ftdi->eeprom->product_id = cfg_getint(cfg, "product_id");
+    eeprom_set_value(ftdi, VENDOR_ID, cfg_getint(cfg, "vendor_id"));
+    eeprom_set_value(ftdi, PRODUCT_ID, cfg_getint(cfg, "product_id"));
+
+    // TODO: Support all chip types
     char *type = cfg_getstr(cfg, "chip_type");
     if (!strcmp(type, "BM")) {
         ftdi->type = TYPE_BM;
@@ -178,28 +216,28 @@ int main(int argc, char *argv[])
         ftdi->type = TYPE_AM;
     }
 
-    ftdi->eeprom->self_powered = cfg_getbool(cfg, "self_powered");
-    ftdi->eeprom->remote_wakeup = cfg_getbool(cfg, "remote_wakeup");
-    ftdi->eeprom->max_power = cfg_getint(cfg, "max_power");
+    eeprom_set_value(ftdi, SELF_POWERED, cfg_getbool(cfg, "self_powered"));
+    eeprom_set_value(ftdi, REMOTE_WAKEUP, cfg_getbool(cfg, "remote_wakeup"));
+    eeprom_set_value(ftdi, MAX_POWER, cfg_getint(cfg, "max_power"));
 
-    ftdi->eeprom->in_is_isochronous = cfg_getbool(cfg, "in_is_isochronous");
-    ftdi->eeprom->out_is_isochronous = cfg_getbool(cfg, "out_is_isochronous");
-    ftdi->eeprom->suspend_pull_downs = cfg_getbool(cfg, "suspend_pull_downs");
+    eeprom_set_value(ftdi, IN_IS_ISOCHRONOUS, cfg_getbool(cfg, "in_is_isochronous"));
+    eeprom_set_value(ftdi, OUT_IS_ISOCHRONOUS, cfg_getbool(cfg, "out_is_isochronous"));
+    eeprom_set_value(ftdi, SUSPEND_PULL_DOWNS, cfg_getbool(cfg, "suspend_pull_downs"));
 
-    ftdi->eeprom->use_serial = cfg_getbool(cfg, "use_serial");
-    ftdi->eeprom->use_usb_version = cfg_getbool(cfg, "change_usb_version");
-    ftdi->eeprom->usb_version = cfg_getint(cfg, "usb_version");
+    eeprom_set_value(ftdi, USE_SERIAL, cfg_getbool(cfg, "use_serial"));
+    eeprom_set_value(ftdi, USE_USB_VERSION, cfg_getbool(cfg, "change_usb_version"));
+    eeprom_set_value(ftdi, USB_VERSION, cfg_getint(cfg, "usb_version"));
 
 
     ftdi->eeprom->manufacturer = cfg_getstr(cfg, "manufacturer");
     ftdi->eeprom->product = cfg_getstr(cfg, "product");
     ftdi->eeprom->serial = cfg_getstr(cfg, "serial");
-    ftdi->eeprom->high_current = cfg_getbool(cfg, "high_current");
-    ftdi->eeprom->cbus_function[0] = str_to_cbus(cfg_getstr(cfg, "cbus0"), 13);
-    ftdi->eeprom->cbus_function[1] = str_to_cbus(cfg_getstr(cfg, "cbus1"), 13);
-    ftdi->eeprom->cbus_function[2] = str_to_cbus(cfg_getstr(cfg, "cbus2"), 13);
-    ftdi->eeprom->cbus_function[3] = str_to_cbus(cfg_getstr(cfg, "cbus3"), 13);
-    ftdi->eeprom->cbus_function[4] = str_to_cbus(cfg_getstr(cfg, "cbus4"), 9);
+    eeprom_set_value(ftdi, HIGH_CURRENT, cfg_getbool(cfg, "high_current"));
+    eeprom_set_value(ftdi, CBUS_FUNCTION_0, str_to_cbus(cfg_getstr(cfg, "cbus0"), 13));
+    eeprom_set_value(ftdi, CBUS_FUNCTION_1, str_to_cbus(cfg_getstr(cfg, "cbus1"), 13));
+    eeprom_set_value(ftdi, CBUS_FUNCTION_2, str_to_cbus(cfg_getstr(cfg, "cbus2"), 13));
+    eeprom_set_value(ftdi, CBUS_FUNCTION_3, str_to_cbus(cfg_getstr(cfg, "cbus3"), 13));
+    eeprom_set_value(ftdi, CBUS_FUNCTION_4, str_to_cbus(cfg_getstr(cfg, "cbus4"), 9));
     int invert = 0;
     if (cfg_getbool(cfg, "invert_rxd")) invert |= INVERT_RXD;
     if (cfg_getbool(cfg, "invert_txd")) invert |= INVERT_TXD;
@@ -209,19 +247,24 @@ int main(int argc, char *argv[])
     if (cfg_getbool(cfg, "invert_dsr")) invert |= INVERT_DSR;
     if (cfg_getbool(cfg, "invert_dcd")) invert |= INVERT_DCD;
     if (cfg_getbool(cfg, "invert_ri")) invert |= INVERT_RI;
-    ftdi->eeprom->invert = invert;
+    eeprom_set_value(ftdi, INVERT, invert);
 
     if (_read > 0 || _erase > 0 || _flash > 0)
     {
-        i = ftdi_usb_open(ftdi, ftdi->eeprom->vendor_id, ftdi->eeprom->product_id);
+        int vendor_id = 0, product_id = 0;
+        eeprom_get_value(ftdi, VENDOR_ID, &vendor_id);
+        eeprom_get_value(ftdi, PRODUCT_ID, &product_id);
+
+        i = ftdi_usb_open(ftdi, vendor_id, product_id);
 
         if (i == 0)
         {
+            // TODO: Do we know the eeprom size already?
             printf("EEPROM size: %d\n", ftdi->eeprom->size);
         }
         else
         {
-            printf("Unable to find FTDI devices under given vendor/product id: 0x%X/0x%X\n", ftdi->eeprom->vendor_id, ftdi->eeprom->product_id);
+            printf("Unable to find FTDI devices under given vendor/product id: 0x%X/0x%X\n", vendor_id, product_id);
             printf("Error code: %d (%s)\n", i, ftdi_get_error_string(ftdi));
             printf("Retrying with default FTDI id.\n");
 
