@@ -3114,7 +3114,7 @@ int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
    No parameter checking is performed
 
    \param ftdi pointer to ftdi_context
-   \param value_name Enum of the value to query
+   \param value_name Enum of the value to set
    \param value to set
 
    \retval 0: all fine
