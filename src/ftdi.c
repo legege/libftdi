@@ -3257,7 +3257,13 @@ int ftdi_get_eeprom_buf(struct ftdi_context *ftdi, unsigned char * buf, int size
 {
     if (!ftdi || !(ftdi->eeprom))
         ftdi_error_return(-1, "No appropriate structure");
+
+    // Only copy up to FTDI_MAX_EEPROM_SIZE bytes
+    if (size > FTDI_MAX_EEPROM_SIZE)
+        size = FTDI_MAX_EEPROM_SIZE;
+
     memcpy(buf, ftdi->eeprom->buf, size);
+
     return 0;
 }
 
