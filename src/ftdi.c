@@ -2944,7 +2944,6 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
                                 "IOMODE","BB_WR","BB_RD"
                                };
             char *cbus_BB[] = {"RXF","TXE","RD", "WR"};
-            int i;
 
             if (eeprom->invert)
             {
