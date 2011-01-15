@@ -2958,8 +2958,15 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
                     fprintf(stdout,"C%d Function: %s\n", i,
                             cbus_mux[eeprom->cbus_function[i]]);
                 else
+                {
+                    /* FIXME for Uwe: This results in an access above array bounds.
+                       Also I couldn't find documentation about this mode.
                     fprintf(stdout,"C%d BB Function: %s\n", i,
                             cbus_BB[i]);
+                    */
+                    fprintf(stdout, "Unknown CBUS mode. Might be special mode?\n");
+                    (void)cbus_BB;
+                }
             }
         }
     }
