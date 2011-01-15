@@ -2256,10 +2256,10 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
 
     \retval >=0: size of eeprom user area in bytes
     \retval -1: eeprom size (128 bytes) exceeded by custom strings
-    \retval -2: Invalid eeprom pointer
-    \retval -3: Invalid cbus function setting
-    \retval -4: Chip doesn't support invert
-    \retval -5: Chip doesn't support high current drive
+    \retval -2: Invalid eeprom or ftdi pointer
+    \retval -3: Invalid cbus function setting     (FIXME: Not in the code?)
+    \retval -4: Chip doesn't support invert       (FIXME: Not in the code?)
+    \retval -5: Chip doesn't support high current drive         (FIXME: Not in the code?)
     \retval -6: No connected EEPROM or EEPROM Type unknown
 */
 int ftdi_eeprom_build(struct ftdi_context *ftdi)
@@ -2280,7 +2280,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     output = eeprom->buf;
 
     if (eeprom->chip == -1)
-        ftdi_error_return(-5,"No connected EEPROM or EEPROM type unknown");
+        ftdi_error_return(-6,"No connected EEPROM or EEPROM type unknown");
 
     if ((eeprom->chip == 0x56) || (eeprom->chip == 0x66))
         eeprom->size = 0x100;
@@ -2310,6 +2310,8 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         case TYPE_2232H:            // six extra config bytes + 4 bytes PnP stuff
         case TYPE_4232H:
             user_area_size = 86;
+        default:
+            user_area_size = 0;
             break;
     }
     user_area_size  -= (manufacturer_size + product_size + serial_size) * 2;
