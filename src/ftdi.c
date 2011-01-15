@@ -1376,19 +1376,22 @@ static void ftdi_write_data_cb(struct libusb_transfer *transfer)
 struct ftdi_transfer_control *ftdi_write_data_submit(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
     struct ftdi_transfer_control *tc;
-    struct libusb_transfer *transfer = libusb_alloc_transfer(0);
+    struct libusb_transfer *transfer;
     int write_size, ret;
 
     if (ftdi == NULL || ftdi->usb_dev == NULL)
-    {
-        libusb_free_transfer(transfer);
         return NULL;
-    }
 
     tc = (struct ftdi_transfer_control *) malloc (sizeof (*tc));
-
-    if (!tc || !transfer)
+    if (!tc)
         return NULL;
+
+    transfer = libusb_alloc_transfer(0);
+    if (!transfer)
+    {
+        free(tc);
+        return NULL;
+    }
 
     tc->ftdi = ftdi;
     tc->completed = 0;
@@ -1410,8 +1413,7 @@ struct ftdi_transfer_control *ftdi_write_data_submit(struct ftdi_context *ftdi, 
     if (ret < 0)
     {
         libusb_free_transfer(transfer);
-        tc->completed = 1;
-        tc->transfer = NULL;
+        free(tc);
         return NULL;
     }
     tc->transfer = transfer;
