@@ -2,7 +2,7 @@
                              main.c  -  description
                            -------------------
     begin                : Mon Apr  7 12:05:22 CEST 2003
-    copyright            : (C) 2003,2008 by Intra2net AG
+    copyright            : (C) 2003-2011 by Intra2net AG and the libftdi developers
     email                : opensource@intra2net.com
  ***************************************************************************/
 
@@ -13,6 +13,22 @@
  *   published by the Free Software Foundation.                            *
  *                                                                         *
  ***************************************************************************/
+
+/*
+ TODO:
+    - Use new eeprom get/set functions
+    - Remove 128 bytes limit
+    - Merge Uwe's eeprom tool. Current features:
+        - Init eeprom defaults based upon eeprom type
+        - Read -> Already there
+        - Write -> Already there
+        - Erase -> Already there
+        - Decode on stdout
+        - Ability to find device by PID/VID, product name or serial
+
+ TODO nice-to-have:
+    - Out-of-the-box compatibility with FTDI's eeprom tool configuration files
+ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -101,7 +117,7 @@ int main(int argc, char *argv[])
     struct ftdi_eeprom *eeprom;
 
     printf("\nFTDI eeprom generator v%s\n", EEPROM_VERSION_STRING);
-    printf ("(c) Intra2net AG <opensource@intra2net.com>\n");
+    printf ("(c) Intra2net AG and the libftdi developers <opensource@intra2net.com>\n");
 
     if (argc != 2 && argc != 3)
     {
