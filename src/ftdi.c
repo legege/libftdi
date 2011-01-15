@@ -557,19 +557,6 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, libusb_device *dev)
     else if (desc.bcdDevice == 0x800)
         ftdi->type = TYPE_4232H;
 
-    // Set default interface on dual/quad type chips
-    switch (ftdi->type)
-    {
-        case TYPE_2232C:
-        case TYPE_2232H:
-        case TYPE_4232H:
-            if (!ftdi->index)
-                ftdi->index = INTERFACE_A;
-            break;
-        default:
-            break;
-    }
-
     // Determine maximum packet size
     ftdi->max_packet_size = _ftdi_determine_max_packet_size(ftdi, dev);
 
