@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
     }
 
     // Write to file?
-    if (filename != NULL && strlen(filename) > 0)
+    if (filename != NULL && strlen(filename) > 0 && !cfg_getbool(cfg, "flash_raw"))
     {
         fp = fopen(filename, "w");
         if (fp == NULL)
