@@ -153,7 +153,6 @@ ftdi_readstream(struct ftdi_context *ftdi,
     int xferIndex;
     int err = 0;
     
-    fprintf(stderr, "ftdi_readstream\n");
     /*
      * Set up all transfers
      */
