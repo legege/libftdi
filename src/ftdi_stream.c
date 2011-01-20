@@ -153,6 +153,20 @@ ftdi_readstream(struct ftdi_context *ftdi,
     int xferIndex;
     int err = 0;
     
+    /* We don't know in what state we are, switch to reset*/
+    if (ftdi_set_bitmode(ftdi,  0xff, BITMODE_RESET) < 0)
+    {
+        fprintf(stderr,"Can't reset mode\n");
+        return 1;
+    }
+    
+    /* Purge anything remaining in the buffers*/
+    if (ftdi_usb_purge_buffers(ftdi) < 0)
+    {
+        fprintf(stderr,"Can't Purge\n");
+        return 1;
+    }
+
     /*
      * Set up all transfers
      */
