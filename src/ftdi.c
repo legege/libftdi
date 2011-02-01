@@ -643,12 +643,12 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
             {
                 if (libusb_get_string_descriptor_ascii(ftdi->usb_dev, desc.iProduct, (unsigned char *)string, sizeof(string)) < 0)
                 {
-                    libusb_close (ftdi->usb_dev);
+                    ftdi_usb_close_internal (ftdi);
                     ftdi_error_return_free_device_list(-8, "unable to fetch product description", devs);
                 }
                 if (strncmp(string, description, sizeof(string)) != 0)
                 {
-                    libusb_close (ftdi->usb_dev);
+                    ftdi_usb_close_internal (ftdi);
                     continue;
                 }
             }
