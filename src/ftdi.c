@@ -617,11 +617,11 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
     char string[256];
     int i = 0;
 
-    if (libusb_init(&ftdi->usb_ctx) < 0)
-        ftdi_error_return(-11, "libusb_init() failed");
-
     if (ftdi == NULL)
         ftdi_error_return(-11, "ftdi context invalid");
+
+    if (libusb_init(&ftdi->usb_ctx) < 0)
+        ftdi_error_return(-11, "libusb_init() failed");
 
     if (libusb_get_device_list(ftdi->usb_ctx, &devs) < 0)
         ftdi_error_return(-12, "libusb_get_device_list() failed");
