@@ -2961,13 +2961,13 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
                             cbus_mux[eeprom->cbus_function[i]]);
                 else
                 {
-                    /* FIXME for Uwe: This results in an access above array bounds.
-                       Also I couldn't find documentation about this mode.
-                    fprintf(stdout,"C%d BB Function: %s\n", i,
-                            cbus_BB[i]);
-                    */
-                    fprintf(stdout, "Unknown CBUS mode. Might be special mode?\n");
-                    (void)cbus_BB;
+                    if (i < 4)
+                        /* Running MPROG show that C0..3 have fixed function Synchronous
+                           Bit Bang mode */
+                        fprintf(stdout,"C%d BB Function: %s\n", i,
+                                cbus_BB[i]);
+                    else
+                        fprintf(stdout, "Unknown CBUS mode. Might be special mode?\n");
                 }
             }
         }
