@@ -2,7 +2,7 @@
                           ftdi.h  -  description
                              -------------------
     begin                : Fri Apr 4 2003
-    copyright            : (C) 2003 by Intra2net AG
+    copyright            : (C) 2003-2011 by Intra2net AG and the libftdi developers
     email                : opensource@intra2net.com
  ***************************************************************************/
 
@@ -19,7 +19,8 @@
 
 #include <libusb.h>
 
-#define FTDI_DEFAULT_EEPROM_SIZE 128
+/* Even on 93xx66 at max 256 bytes are used (AN_121)*/
+#define FTDI_MAX_EEPROM_SIZE 256
 
 /** FTDI chip type */
 enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2, TYPE_R=3, TYPE_2232H=4, TYPE_4232H=5 };
@@ -168,6 +169,96 @@ struct ftdi_transfer_control
 };
 
 /**
+    \brief FTDI eeprom structure
+*/
+struct ftdi_eeprom
+{
+    /** vendor id */
+    int vendor_id;
+    /** product id */
+    int product_id;
+
+    /** self powered */
+    int self_powered;
+    /** remote wakeup */
+    int remote_wakeup;
+
+    int is_not_pnp;
+
+    /* Suspend on DBUS7 Low */
+    int suspend_dbus7;
+
+    /** input in isochronous transfer mode */
+    int in_is_isochronous;
+    /** output in isochronous transfer mode */
+    int out_is_isochronous;
+    /** suspend pull downs */
+    int suspend_pull_downs;
+
+    /** use serial */
+    int use_serial;
+    /** usb version */
+    int usb_version;
+    /** Use usb version on FT2232 devices*/
+    int use_usb_version;
+     /** maximum power */
+    int max_power;
+
+    /** manufacturer name */
+    char *manufacturer;
+    /** product name */
+    char *product;
+    /** serial number */
+    char *serial;
+
+    /* 2232D/H(/FT4432H?) specific */
+    /* Hardware type, 0 = RS232 Uart, 1 = 245 FIFO, 2 = CPU FIFO, 
+       4 = OPTO Isolate */
+    int channel_a_type;
+    int channel_b_type;
+    /*  Driver Type, 1 = VCP */
+    int channel_a_driver;
+    int channel_b_driver;
+
+    /* Special function of FT232R devices (and possibly others as well) */
+    /** CBUS pin function. See CBUS_xxx defines. */
+    int cbus_function[5];
+    /** Select hight current drive on R devices. */
+    int high_current;
+    /** Select hight current drive on A channel (2232C */
+    int high_current_a;
+    /** Select hight current drive on B channel (2232C). */
+    int high_current_b;
+    /** Select inversion of data lines (bitmask). */
+    int invert;
+
+    /*2232H/4432H Group specific values */
+    /* Group0 is AL on 2322H and A on 4232H
+       Group1 is AH on 2232H and B on 4232H
+       Group2 is BL on 2322H and C on 4232H
+       Group3 is BH on 2232H and C on 4232H*/
+    int group0_drive;
+    int group0_schmitt;
+    int group0_slew;
+    int group1_drive;
+    int group1_schmitt;
+    int group1_slew;
+    int group2_drive;
+    int group2_schmitt;
+    int group2_slew;
+    int group3_drive;
+    int group3_schmitt;
+    int group3_slew;
+
+    /** eeprom size in bytes. This doesn't get stored in the eeprom
+        but is the only way to pass it to ftdi_eeprom_build. */
+    int size;
+    /* EEPROM Type 0x46 for 93xx46, 0x56 for 93xx56 and 0x66 for 93xx66*/
+    int chip;
+    unsigned char buf[FTDI_MAX_EEPROM_SIZE];
+};
+
+/**
     \brief Main context structure for all libftdi functions.
 
     Do not access directly if possible.
@@ -217,11 +308,58 @@ struct ftdi_context
     /** Bitbang mode. 1: (default) Normal bitbang mode, 2: FT2232C SPI bitbang mode */
     unsigned char bitbang_mode;
 
-    /** EEPROM size. Default is 128 bytes for 232BM and 245BM chips */
-    int eeprom_size;
+    /** Decoded eeprom structure */
+    struct ftdi_eeprom *eeprom;
 
     /** String representation of last error */
     char *error_str;
+};
+
+/**
+ List all handled EEPROM values.
+   Append future new values only at the end to provide API/ABI stability*/
+enum ftdi_eeprom_value
+{
+    VENDOR_ID          = 0,
+    PRODUCT_ID         = 1,
+    SELF_POWERED       = 2,
+    REMOTE_WAKEUP      = 3,
+    IS_NOT_PNP         = 4,
+    SUSPEND_DBUS7      = 5,
+    IN_IS_ISOCHRONOUS  = 6,
+    OUT_IS_ISOCHRONOUS = 7,
+    SUSPEND_PULL_DOWNS = 8,
+    USE_SERIAL         = 9,
+    USB_VERSION        = 10,
+    USE_USB_VERSION    = 11,
+    MAX_POWER          = 12,
+    CHANNEL_A_TYPE     = 13,
+    CHANNEL_B_TYPE     = 14,
+    CHANNEL_A_DRIVER   = 15,
+    CHANNEL_B_DRIVER   = 16,
+    CBUS_FUNCTION_0    = 17,
+    CBUS_FUNCTION_1    = 18,
+    CBUS_FUNCTION_2    = 19,
+    CBUS_FUNCTION_3    = 20,
+    CBUS_FUNCTION_4    = 21,
+    HIGH_CURRENT       = 22,
+    HIGH_CURRENT_A     = 23,
+    HIGH_CURRENT_B     = 24,
+    INVERT             = 25,
+    GROUP0_DRIVE       = 26,
+    GROUP0_SCHMITT     = 27,
+    GROUP0_SLEW        = 28,
+    GROUP1_DRIVE       = 29,
+    GROUP1_SCHMITT     = 30,
+    GROUP1_SLEW        = 31,
+    GROUP2_DRIVE       = 32,
+    GROUP2_SCHMITT     = 33,
+    GROUP2_SLEW        = 34,
+    GROUP3_DRIVE       = 35,
+    GROUP3_SCHMITT     = 36,
+    GROUP3_SLEW        = 37,
+    CHIP_SIZE          = 38,
+    CHIP_TYPE          = 39
 };
 
 /**
@@ -235,33 +373,11 @@ struct ftdi_device_list
     struct libusb_device *dev;
 };
 
-/** TXDEN */
-#define CBUS_TXDEN 0
-/** PWREN# */
-#define CBUS_PWREN 1
-/** RXLED# */
-#define CBUS_RXLED 2
-/** TXLED#*/
-#define CBUS_TXLED 3
-/** RXLED# & TXLED# */
-#define CBUS_TXRXLED 4
-/** SLEEP# */
-#define CBUS_SLEEP 5
-/** 48 MHz clock */
-#define CBUS_CLK48 6
-/** 24 MHz clock */
-#define CBUS_CLK24 7
-/** 12 MHz clock */
-#define CBUS_CLK12 8
-/** 6 MHz clock */
-#define CBUS_CLK6 9
-/** Bitbang IO Mode*/
-#define CBUS_IOMODE 10
-/** Bitbang IO WR#*/
-#define CBUS_BB_WR 11
-/** Bitbang IO RD#*/
-#define CBUS_BB_RD 12
-
+#define USE_SERIAL_NUM 0x08
+enum ftdi_cbus_func {/* FIXME: Recheck value, especially the last */
+    CBUS_TXDEN = 0, CBUS_PWREN = 1, CBUS_RXLED = 2, CBUS_TXLED = 3, CBUS_TXRXLED = 4,
+    CBUS_SLEEP = 5, CBUS_CLK48 = 6, CBUS_CLK24 = 7, CBUS_CLK12 = 8, CBUS_CLK6 =  9,
+    CBUS_IOMODE = 0xa, CBUS_BB_WR = 0xb, CBUS_BB_RD = 0xc, CBUS_BB   = 0xd};
 
 /** Invert TXD# */
 #define INVERT_TXD 0x01
@@ -280,61 +396,29 @@ struct ftdi_device_list
 /** Invert RI# */
 #define INVERT_RI  0x80
 
+/** Interface Mode. */
+#define CHANNEL_IS_UART 0x0
+#define CHANNEL_IS_245  0x1
+#define CHANNEL_IS_CPU  0x2
+#define CHANNEL_IS_OPTO 0x4
+
+#define DRIVE_4MA  0
+#define DRIVE_8MA  1
+#define DRIVE_12MA 2
+#define DRIVE_16MA 3
+#define SLOW_SLEW  4
+#define IS_SCHMITT 8
+
+/** Driver Type. */
+#define DRIVER_VCP 0x08
+
+#define USE_USB_VERSION_BIT 0x10
+
+#define SUSPEND_DBUS7_BIT 0x80
+
 /** High current drive. */
-#define HIGH_CURRENT_DRIVE 0x04
-
-/**
-    \brief FTDI eeprom structure
-*/
-struct ftdi_eeprom
-{
-    /** vendor id */
-    int vendor_id;
-    /** product id */
-    int product_id;
-
-    /** self powered */
-    int self_powered;
-    /** remote wakeup */
-    int remote_wakeup;
-    /** chip type */
-    int chip_type;
-
-    /** input in isochronous transfer mode */
-    int in_is_isochronous;
-    /** output in isochronous transfer mode */
-    int out_is_isochronous;
-    /** suspend pull downs */
-    int suspend_pull_downs;
-
-    /** use serial */
-    int use_serial;
-    /** fake usb version */
-    int change_usb_version;
-    /** usb version */
-    int usb_version;
-    /** maximum power */
-    int max_power;
-
-    /** manufacturer name */
-    char *manufacturer;
-    /** product name */
-    char *product;
-    /** serial number */
-    char *serial;
-
-    /* Special function of FT232R devices (and possibly others as well) */
-    /** CBUS pin function. See CBUS_xxx defines. */
-    int cbus_function[5];
-    /** Select hight current drive. */
-    int high_current;
-    /** Select inversion of data lines (bitmask). */
-    int invert;
-
-    /** eeprom size in bytes. This doesn't get stored in the eeprom
-        but is the only way to pass it to ftdi_eeprom_build. */
-    int size;
-};
+#define HIGH_CURRENT_DRIVE   0x10
+#define HIGH_CURRENT_DRIVE_R 0x04
 
 /**
     \brief Progress Info for streaming read
@@ -437,21 +521,21 @@ extern "C"
     int ftdi_set_event_char(struct ftdi_context *ftdi, unsigned char eventch, unsigned char enable);
     int ftdi_set_error_char(struct ftdi_context *ftdi, unsigned char errorch, unsigned char enable);
 
-    /* set eeprom size */
-    void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, int size);
+    /* init eeprom for the given FTDI type */
+    int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, 
+                                  char * manufacturer, char *product, 
+                                  char * serial);
+    int ftdi_eeprom_build(struct ftdi_context *ftdi);
+    int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose);
 
-    /* init and build eeprom from ftdi_eeprom structure */
-    void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom);
-    void ftdi_eeprom_free(struct ftdi_eeprom *eeprom);
-    int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output);
-    int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *output, int size);
+    int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int* value);
+    int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int  value);
 
-    /* "eeprom" needs to be valid 128 byte eeprom (generated by the eeprom generator)
-       the checksum of the eeprom is valided */
-    int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
+    int ftdi_get_eeprom_buf(struct ftdi_context *ftdi, unsigned char * buf, int size);
+
+    int ftdi_read_eeprom(struct ftdi_context *ftdi);
     int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid);
-    int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, int maxsize);
-    int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
+    int ftdi_write_eeprom(struct ftdi_context *ftdi);
     int ftdi_erase_eeprom(struct ftdi_context *ftdi);
 
     int ftdi_read_eeprom_location (struct ftdi_context *ftdi, int eeprom_addr, unsigned short *eeprom_val);

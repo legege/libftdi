@@ -393,19 +393,9 @@ Eeprom::~Eeprom()
 {
 }
 
-void Eeprom::init_defaults()
+int Eeprom::init_defaults(char* manufacturer, char *product, char * serial)
 {
-    return ftdi_eeprom_initdefaults(&d->eeprom);
-}
-
-void Eeprom::set_size(int size)
-{
-    return ftdi_eeprom_setsize(d->context, &d->eeprom, size);
-}
-
-int Eeprom::size(unsigned char *eeprom, int maxsize)
-{
-    return ftdi_read_eeprom_getsize(d->context, eeprom, maxsize);
+    return ftdi_eeprom_initdefaults(d->context, manufacturer, product, serial);
 }
 
 int Eeprom::chip_id(unsigned int *chipid)
@@ -415,17 +405,17 @@ int Eeprom::chip_id(unsigned int *chipid)
 
 int Eeprom::build(unsigned char *output)
 {
-    return ftdi_eeprom_build(&d->eeprom, output);
+    return ftdi_eeprom_build(d->context);
 }
 
 int Eeprom::read(unsigned char *eeprom)
 {
-    return ftdi_read_eeprom(d->context, eeprom);
+    return ftdi_read_eeprom(d->context);
 }
 
 int Eeprom::write(unsigned char *eeprom)
 {
-    return ftdi_write_eeprom(d->context, eeprom);
+    return ftdi_write_eeprom(d->context);
 }
 
 int Eeprom::read_location(int eeprom_addr, unsigned short *eeprom_val)

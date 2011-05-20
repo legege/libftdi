@@ -2,7 +2,7 @@
                           ftdi.c  -  description
                              -------------------
     begin                : Fri Apr 4 2003
-    copyright            : (C) 2003-2010 by Intra2net AG
+    copyright            : (C) 2003-2011 by Intra2net AG and the libftdi developers
     email                : opensource@intra2net.com
  ***************************************************************************/
 
@@ -61,8 +61,8 @@ static void ftdi_usb_close_internal (struct ftdi_context *ftdi)
 {
     if (ftdi && ftdi->usb_dev)
     {
-       libusb_close (ftdi->usb_dev);
-       ftdi->usb_dev = NULL;
+        libusb_close (ftdi->usb_dev);
+        ftdi->usb_dev = NULL;
     }
 }
 
@@ -73,11 +73,13 @@ static void ftdi_usb_close_internal (struct ftdi_context *ftdi)
 
     \retval  0: all fine
     \retval -1: couldn't allocate read buffer
+    \retval -2: couldn't allocate struct  buffer
 
     \remark This should be called before all functions
 */
 int ftdi_init(struct ftdi_context *ftdi)
 {
+    struct ftdi_eeprom* eeprom = (struct ftdi_eeprom *)malloc(sizeof(struct ftdi_eeprom));
     ftdi->usb_ctx = NULL;
     ftdi->usb_dev = NULL;
     ftdi->usb_read_timeout = 5000;
@@ -98,7 +100,10 @@ int ftdi_init(struct ftdi_context *ftdi)
 
     ftdi->error_str = NULL;
 
-    ftdi->eeprom_size = FTDI_DEFAULT_EEPROM_SIZE;
+    if (eeprom == 0)
+        ftdi_error_return(-2, "Can't malloc struct ftdi_eeprom");
+    memset(eeprom, 0, sizeof(struct ftdi_eeprom));
+    ftdi->eeprom = eeprom;
 
     /* All fine. Now allocate the readbuffer */
     return ftdi_read_data_set_chunksize(ftdi, 4096);
@@ -192,6 +197,27 @@ void ftdi_deinit(struct ftdi_context *ftdi)
         free(ftdi->readbuffer);
         ftdi->readbuffer = NULL;
     }
+
+    if (ftdi->eeprom != NULL)
+    {
+        if (ftdi->eeprom->manufacturer != 0)
+        {
+            free(ftdi->eeprom->manufacturer);
+            ftdi->eeprom->manufacturer = 0;
+        }
+        if (ftdi->eeprom->product != 0)
+        {
+            free(ftdi->eeprom->product);
+            ftdi->eeprom->product = 0;
+        }
+        if (ftdi->eeprom->serial != 0)
+        {
+            free(ftdi->eeprom->serial);
+            ftdi->eeprom->serial = 0;
+        }
+        free(ftdi->eeprom);
+        ftdi->eeprom = NULL;
+    }
     libusb_exit(ftdi->usb_ctx);
 }
 
@@ -265,7 +291,7 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
             *curdev = (struct ftdi_device_list*)malloc(sizeof(struct ftdi_device_list));
             if (!*curdev)
                 ftdi_error_return(-3, "out of memory");
-	      
+
             (*curdev)->next = NULL;
             (*curdev)->dev = dev;
 
@@ -485,7 +511,7 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, libusb_device *dev)
         if (libusb_set_configuration(ftdi->usb_dev, cfg0) < 0)
         {
             ftdi_usb_close_internal (ftdi);
-            if(detach_errno == EPERM)
+            if (detach_errno == EPERM)
             {
                 ftdi_error_return(-8, "inappropriate permissions on device!");
             }
@@ -499,7 +525,7 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, libusb_device *dev)
     if (libusb_claim_interface(ftdi->usb_dev, ftdi->interface) < 0)
     {
         ftdi_usb_close_internal (ftdi);
-        if(detach_errno == EPERM)
+        if (detach_errno == EPERM)
         {
             ftdi_error_return(-8, "inappropriate permissions on device!");
         }
@@ -518,7 +544,7 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, libusb_device *dev)
     // Try to guess chip type
     // Bug in the BM type chips: bcdDevice is 0x200 for serial == 0
     if (desc.bcdDevice == 0x400 || (desc.bcdDevice == 0x200
-            && desc.iSerialNumber == 0))
+                                    && desc.iSerialNumber == 0))
         ftdi->type = TYPE_BM;
     else if (desc.bcdDevice == 0x200)
         ftdi->type = TYPE_AM;
@@ -610,7 +636,7 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
     \retval -11: ftdi context invalid
 */
 int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
-                       const char* description, const char* serial, unsigned int index)
+                             const char* description, const char* serial, unsigned int index)
 {
     libusb_device *dev;
     libusb_device **devs;
@@ -668,11 +694,11 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
 
             ftdi_usb_close_internal (ftdi);
 
-                if (index > 0)
-                {
-                    index--;
-                    continue;
-                }
+            if (index > 0)
+            {
+                index--;
+                continue;
+            }
 
             res = ftdi_usb_open_dev(ftdi, dev);
             libusb_free_device_list(devs,1);
@@ -723,24 +749,24 @@ int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description)
     {
         libusb_device *dev;
         libusb_device **devs;
-	unsigned int bus_number, device_address;
-	int i = 0;
+        unsigned int bus_number, device_address;
+        int i = 0;
 
         if (libusb_init (&ftdi->usb_ctx) < 0)
-	    ftdi_error_return(-1, "libusb_init() failed");
+            ftdi_error_return(-1, "libusb_init() failed");
 
-	if (libusb_get_device_list(ftdi->usb_ctx, &devs) < 0)
-	    ftdi_error_return(-2, "libusb_get_device_list() failed");
+        if (libusb_get_device_list(ftdi->usb_ctx, &devs) < 0)
+            ftdi_error_return(-2, "libusb_get_device_list() failed");
 
         /* XXX: This doesn't handle symlinks/odd paths/etc... */
         if (sscanf (description + 2, "%u/%u", &bus_number, &device_address) != 2)
-	    ftdi_error_return_free_device_list(-11, "illegal description format", devs);
+            ftdi_error_return_free_device_list(-11, "illegal description format", devs);
 
-	while ((dev = devs[i++]) != NULL)
+        while ((dev = devs[i++]) != NULL)
         {
             int ret;
-	    if (bus_number == libusb_get_bus_number (dev)
-		&& device_address == libusb_get_device_address (dev))
+            if (bus_number == libusb_get_bus_number (dev)
+                    && device_address == libusb_get_device_address (dev))
             {
                 ret = ftdi_usb_open_dev(ftdi, dev);
                 libusb_free_device_list(devs,1);
@@ -1247,9 +1273,9 @@ static void ftdi_read_data_cb(struct libusb_transfer *transfer)
         if (actual_length > packet_size - 2)
         {
             for (i = 1; i < num_of_chunks; i++)
-              memmove (ftdi->readbuffer+ftdi->readbuffer_offset+(packet_size - 2)*i,
-                       ftdi->readbuffer+ftdi->readbuffer_offset+packet_size*i,
-                       packet_size - 2);
+                memmove (ftdi->readbuffer+ftdi->readbuffer_offset+(packet_size - 2)*i,
+                         ftdi->readbuffer+ftdi->readbuffer_offset+packet_size*i,
+                         packet_size - 2);
             if (chunk_remains > 2)
             {
                 memmove (ftdi->readbuffer+ftdi->readbuffer_offset+(packet_size - 2)*i,
@@ -1258,7 +1284,7 @@ static void ftdi_read_data_cb(struct libusb_transfer *transfer)
                 actual_length -= 2*num_of_chunks;
             }
             else
-              actual_length -= 2*(num_of_chunks-1)+chunk_remains;
+                actual_length -= 2*(num_of_chunks-1)+chunk_remains;
         }
 
         if (actual_length > 0)
@@ -1309,9 +1335,9 @@ static void ftdi_write_data_cb(struct libusb_transfer *transfer)
 {
     struct ftdi_transfer_control *tc = (struct ftdi_transfer_control *) transfer->user_data;
     struct ftdi_context *ftdi = tc->ftdi;
-    
+
     tc->offset += transfer->actual_length;
-    
+
     if (tc->offset == tc->size)
     {
         tc->completed = 1;
@@ -1350,19 +1376,22 @@ static void ftdi_write_data_cb(struct libusb_transfer *transfer)
 struct ftdi_transfer_control *ftdi_write_data_submit(struct ftdi_context *ftdi, unsigned char *buf, int size)
 {
     struct ftdi_transfer_control *tc;
-    struct libusb_transfer *transfer = libusb_alloc_transfer(0);
+    struct libusb_transfer *transfer;
     int write_size, ret;
 
     if (ftdi == NULL || ftdi->usb_dev == NULL)
-    {
-        libusb_free_transfer(transfer);
         return NULL;
-    }
 
     tc = (struct ftdi_transfer_control *) malloc (sizeof (*tc));
-
-    if (!tc || !transfer)
+    if (!tc)
         return NULL;
+
+    transfer = libusb_alloc_transfer(0);
+    if (!transfer)
+    {
+        free(tc);
+        return NULL;
+    }
 
     tc->ftdi = ftdi;
     tc->completed = 0;
@@ -1371,9 +1400,9 @@ struct ftdi_transfer_control *ftdi_write_data_submit(struct ftdi_context *ftdi, 
     tc->offset = 0;
 
     if (size < ftdi->writebuffer_chunksize)
-      write_size = size;
+        write_size = size;
     else
-      write_size = ftdi->writebuffer_chunksize;
+        write_size = ftdi->writebuffer_chunksize;
 
     libusb_fill_bulk_transfer(transfer, ftdi->usb_dev, ftdi->in_ep, buf,
                               write_size, ftdi_write_data_cb, tc,
@@ -1384,8 +1413,7 @@ struct ftdi_transfer_control *ftdi_write_data_submit(struct ftdi_context *ftdi, 
     if (ret < 0)
     {
         libusb_free_transfer(transfer);
-        tc->completed = 1;
-        tc->transfer = NULL;
+        free(tc);
         return NULL;
     }
     tc->transfer = transfer;
@@ -2140,109 +2168,126 @@ int ftdi_set_error_char(struct ftdi_context *ftdi,
 }
 
 /**
-   Set the eeprom size
-
-   \param ftdi pointer to ftdi_context
-   \param eeprom Pointer to ftdi_eeprom
-   \param size
-
-*/
-void ftdi_eeprom_setsize(struct ftdi_context *ftdi, struct ftdi_eeprom *eeprom, int size)
-{
-    if (ftdi == NULL)
-        return;
-
-    ftdi->eeprom_size=size;
-    eeprom->size=size;
-}
-
-/**
     Init eeprom with default values.
+    \param ftdi pointer to ftdi_context
+    \param manufacturer String to use as Manufacturer
+    \param product String to use as Product description
+    \param serial String to use as Serial number description
 
-    \param eeprom Pointer to ftdi_eeprom
+    \retval  0: all fine
+    \retval -1: No struct ftdi_context
+    \retval -2: No struct ftdi_eeprom
 */
-void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom)
+int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
+                             char * product, char * serial)
 {
-    int i;
+    struct ftdi_eeprom *eeprom;
 
-    if (eeprom == NULL)
-        return;
+    if (ftdi == NULL)
+        ftdi_error_return(-1, "No struct ftdi_context");
+
+    if (ftdi->eeprom == NULL)
+        ftdi_error_return(-2,"No struct ftdi_eeprom");
+
+    eeprom = ftdi->eeprom;
+    memset(eeprom, 0, sizeof(struct ftdi_eeprom));
 
     eeprom->vendor_id = 0x0403;
-    eeprom->product_id = 0x6001;
+    eeprom->use_serial = USE_SERIAL_NUM;
+    if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM) ||
+            (ftdi->type == TYPE_R))
+        eeprom->product_id = 0x6001;
+    else
+        eeprom->product_id = 0x6010;
+    if (ftdi->type == TYPE_AM)
+        eeprom->usb_version = 0x0101;
+    else
+        eeprom->usb_version = 0x0200;
+    eeprom->max_power = 100;
 
-    eeprom->self_powered = 1;
-    eeprom->remote_wakeup = 1;
-    eeprom->chip_type = TYPE_BM;
-
-    eeprom->in_is_isochronous = 0;
-    eeprom->out_is_isochronous = 0;
-    eeprom->suspend_pull_downs = 0;
-
-    eeprom->use_serial = 0;
-    eeprom->change_usb_version = 0;
-    eeprom->usb_version = 0x0200;
-    eeprom->max_power = 0;
-
+    if (eeprom->manufacturer)
+        free (eeprom->manufacturer);
     eeprom->manufacturer = NULL;
-    eeprom->product = NULL;
-    eeprom->serial = NULL;
-    for (i=0; i < 5; i++)
+    if (manufacturer)
     {
-        eeprom->cbus_function[i] = 0;
+        eeprom->manufacturer = malloc(strlen(manufacturer)+1);
+        if (eeprom->manufacturer)
+            strcpy(eeprom->manufacturer, manufacturer);
     }
-    eeprom->high_current = 0;
-    eeprom->invert = 0;
 
-    eeprom->size = FTDI_DEFAULT_EEPROM_SIZE;
+    if (eeprom->product)
+        free (eeprom->product);
+    eeprom->product = NULL;
+    {
+        eeprom->product = malloc(strlen(product)+1);
+        if (eeprom->product)
+            strcpy(eeprom->product, product);
+    }
+
+    if (eeprom->serial)
+        free (eeprom->serial);
+    eeprom->serial = NULL;
+    if (serial)
+    {
+        eeprom->serial = malloc(strlen(serial)+1);
+        if (eeprom->serial)
+            strcpy(eeprom->serial, serial);
+    }
+
+
+    if (ftdi->type == TYPE_R)
+    {
+        eeprom->max_power = 90;
+        eeprom->size = 0x80;
+        eeprom->cbus_function[0] = CBUS_TXLED;
+        eeprom->cbus_function[1] = CBUS_RXLED;
+        eeprom->cbus_function[2] = CBUS_TXDEN;
+        eeprom->cbus_function[3] = CBUS_PWREN;
+        eeprom->cbus_function[4] = CBUS_SLEEP;
+    }
+    else
+        eeprom->size = -1;
+    return 0;
 }
 
 /**
-    Frees allocated memory in eeprom.
-
-    \param eeprom Pointer to ftdi_eeprom
-*/
-void ftdi_eeprom_free(struct ftdi_eeprom *eeprom)
-{
-    if (eeprom->manufacturer != 0) {
-        free(eeprom->manufacturer);
-        eeprom->manufacturer = 0;
-    }
-    if (eeprom->product != 0) {
-        free(eeprom->product);
-        eeprom->product = 0;
-    }
-    if (eeprom->serial != 0) {
-        free(eeprom->serial);
-        eeprom->serial = 0;
-    }
-}
-
-/**
-    Build binary output from ftdi_eeprom structure.
+    Build binary buffer from ftdi_eeprom structure.
     Output is suitable for ftdi_write_eeprom().
 
-    \note This function doesn't handle FT2232x devices. Only FT232x.
-    \param eeprom Pointer to ftdi_eeprom
-    \param output Buffer of 128 bytes to store eeprom image to
+    \param ftdi pointer to ftdi_context
 
-    \retval >0: free eeprom size
+    \retval >=0: size of eeprom user area in bytes
     \retval -1: eeprom size (128 bytes) exceeded by custom strings
-    \retval -2: Invalid eeprom pointer
-    \retval -3: Invalid cbus function setting
-    \retval -4: Chip doesn't support invert
-    \retval -5: Chip doesn't support high current drive
+    \retval -2: Invalid eeprom or ftdi pointer
+    \retval -3: Invalid cbus function setting     (FIXME: Not in the code?)
+    \retval -4: Chip doesn't support invert       (FIXME: Not in the code?)
+    \retval -5: Chip doesn't support high current drive         (FIXME: Not in the code?)
+    \retval -6: No connected EEPROM or EEPROM Type unknown
 */
-int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
+int ftdi_eeprom_build(struct ftdi_context *ftdi)
 {
-    unsigned char i, j;
+    unsigned char i, j, eeprom_size_mask;
     unsigned short checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
-    int size_check;
-    const int cbus_max[5] = {13, 13, 13, 13, 9};
+    int user_area_size;
+    struct ftdi_eeprom *eeprom;
+    unsigned char * output;
 
-    if (eeprom == NULL)
-        return -2;
+    if (ftdi == NULL)
+        ftdi_error_return(-2,"No context");
+    if (ftdi->eeprom == NULL)
+        ftdi_error_return(-2,"No eeprom structure");
+
+    eeprom= ftdi->eeprom;
+    output = eeprom->buf;
+
+    if (eeprom->chip == -1)
+        ftdi_error_return(-6,"No connected EEPROM or EEPROM type unknown");
+
+    if ((eeprom->chip == 0x56) || (eeprom->chip == 0x66))
+        eeprom->size = 0x100;
+    else
+        eeprom->size = 0x80;
 
     if (eeprom->manufacturer != NULL)
         manufacturer_size = strlen(eeprom->manufacturer);
@@ -2251,43 +2296,37 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     if (eeprom->serial != NULL)
         serial_size = strlen(eeprom->serial);
 
-    // highest allowed cbus value
-    for (i = 0; i < 5; i++)
+    // eeprom size check
+    switch (ftdi->type)
     {
-        if ((eeprom->cbus_function[i] > cbus_max[i]) ||
-            (eeprom->cbus_function[i] && eeprom->chip_type != TYPE_R)) return -3;
+        case TYPE_AM:
+        case TYPE_BM:
+            user_area_size = 96;    // base size for strings (total of 48 characters)
+            break;
+        case TYPE_2232C:
+            user_area_size = 90;     // two extra config bytes and 4 bytes PnP stuff
+            break;
+        case TYPE_R:
+            user_area_size = 88;     // four extra config bytes + 4 bytes PnP stuff
+            break;
+        case TYPE_2232H:            // six extra config bytes + 4 bytes PnP stuff
+        case TYPE_4232H:
+            user_area_size = 86;
+            break;
+        default:
+            user_area_size = 0;
+            break;
     }
-    if (eeprom->chip_type != TYPE_R)
-    {
-        if (eeprom->invert) return -4;
-        if (eeprom->high_current) return -5;
-    }
+    user_area_size  -= (manufacturer_size + product_size + serial_size) * 2;
 
-    size_check = eeprom->size;
-    size_check -= 28; // 28 are always in use (fixed)
-
-    // Top half of a 256byte eeprom is used just for strings and checksum
-    // it seems that the FTDI chip will not read these strings from the lower half
-    // Each string starts with two bytes; offset and type (0x03 for string)
-    // the checksum needs two bytes, so without the string data that 8 bytes from the top half
-    if (eeprom->size>=256) size_check = 120;
-    size_check -= manufacturer_size*2;
-    size_check -= product_size*2;
-    size_check -= serial_size*2;
-
-    // eeprom size exceeded?
-    if (size_check < 0)
-        return (-1);
+    if (user_area_size < 0)
+        ftdi_error_return(-1,"eeprom size exceeded");
 
     // empty eeprom
-    memset (output, 0, eeprom->size);
+    memset (ftdi->eeprom->buf, 0, FTDI_MAX_EEPROM_SIZE);
 
-    // Addr 00: High current IO
-    output[0x00] = eeprom->high_current ? HIGH_CURRENT_DRIVE : 0;
-    // Addr 01: IN endpoint size (for R type devices, different for FT2232)
-    if (eeprom->chip_type == TYPE_R) {
-        output[0x01] = 0x40;
-    }
+    // Bytes and Bits set for all Types
+
     // Addr 02: Vendor ID
     output[0x02] = eeprom->vendor_id;
     output[0x03] = eeprom->vendor_id >> 8;
@@ -2298,7 +2337,8 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
 
     // Addr 06: Device release number (0400h for BM features)
     output[0x06] = 0x00;
-    switch (eeprom->chip_type) {
+    switch (ftdi->type)
+    {
         case TYPE_AM:
             output[0x07] = 0x02;
             break;
@@ -2311,6 +2351,12 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
         case TYPE_R:
             output[0x07] = 0x06;
             break;
+        case TYPE_2232H:
+            output[0x07] = 0x07;
+            break;
+        case TYPE_4232H:
+            output[0x07] = 0x08;
+            break;
         default:
             output[0x07] = 0x00;
     }
@@ -2319,7 +2365,7 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     // Bit 7: always 1
     // Bit 6: 1 if this device is self powered, 0 if bus powered
     // Bit 5: 1 if this device uses remote wakeup
-    // Bit 4: 1 if this device is battery powered
+    // Bit 4-0: reserved - 0
     j = 0x80;
     if (eeprom->self_powered == 1)
         j |= 0x40;
@@ -2328,102 +2374,266 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     output[0x08] = j;
 
     // Addr 09: Max power consumption: max power = value * 2 mA
-    output[0x09] = eeprom->max_power;
+    output[0x09] = eeprom->max_power>>1;
 
-    // Addr 0A: Chip configuration
-    // Bit 7: 0 - reserved
-    // Bit 6: 0 - reserved
-    // Bit 5: 0 - reserved
-    // Bit 4: 1 - Change USB version
-    // Bit 3: 1 - Use the serial number string
-    // Bit 2: 1 - Enable suspend pull downs for lower power
-    // Bit 1: 1 - Out EndPoint is Isochronous
-    // Bit 0: 1 - In EndPoint is Isochronous
-    //
-    j = 0;
-    if (eeprom->in_is_isochronous == 1)
-        j = j | 1;
-    if (eeprom->out_is_isochronous == 1)
-        j = j | 2;
-    if (eeprom->suspend_pull_downs == 1)
-        j = j | 4;
-    if (eeprom->use_serial == 1)
-        j = j | 8;
-    if (eeprom->change_usb_version == 1)
-        j = j | 16;
-    output[0x0A] = j;
-
-    // Addr 0B: Invert data lines
-    output[0x0B] = eeprom->invert & 0xff;
-
-    // Addr 0C: USB version low byte when 0x0A bit 4 is set
-    // Addr 0D: USB version high byte when 0x0A bit 4 is set
-    if (eeprom->change_usb_version == 1)
+    if (ftdi->type != TYPE_AM)
     {
-        output[0x0C] = eeprom->usb_version;
-        output[0x0D] = eeprom->usb_version >> 8;
+        // Addr 0A: Chip configuration
+        // Bit 7: 0 - reserved
+        // Bit 6: 0 - reserved
+        // Bit 5: 0 - reserved
+        // Bit 4: 1 - Change USB version
+        // Bit 3: 1 - Use the serial number string
+        // Bit 2: 1 - Enable suspend pull downs for lower power
+        // Bit 1: 1 - Out EndPoint is Isochronous
+        // Bit 0: 1 - In EndPoint is Isochronous
+        //
+        j = 0;
+        if (eeprom->in_is_isochronous == 1)
+            j = j | 1;
+        if (eeprom->out_is_isochronous == 1)
+            j = j | 2;
+        output[0x0A] = j;
     }
 
+    // Dynamic content
+    // Strings start at 0x94 (TYPE_AM, TYPE_BM)
+    // 0x96 (TYPE_2232C), 0x98 (TYPE_R) and 0x9a (TYPE_x232H)
+    i = 0;
+    switch (ftdi->type)
+    {
+        case TYPE_2232H:
+        case TYPE_4232H:
+            i += 2;
+        case TYPE_R:
+            i += 2;
+        case TYPE_2232C:
+            i += 2;
+        case TYPE_AM:
+        case TYPE_BM:
+            i += 0x94;
+    }
+    /* Wrap around 0x80 for 128 byte EEPROMS (Internale and 93x46) */
+    eeprom_size_mask = eeprom->size -1;
 
     // Addr 0E: Offset of the manufacturer string + 0x80, calculated later
     // Addr 0F: Length of manufacturer string
+    // Output manufacturer
+    output[0x0E] = i;  // calculate offset
+    output[i & eeprom_size_mask] = manufacturer_size*2 + 2, i++;
+    output[i & eeprom_size_mask] = 0x03, i++; // type: string
+    for (j = 0; j < manufacturer_size; j++)
+    {
+        output[i & eeprom_size_mask] = eeprom->manufacturer[j], i++;
+        output[i & eeprom_size_mask] = 0x00, i++;
+    }
     output[0x0F] = manufacturer_size*2 + 2;
 
     // Addr 10: Offset of the product string + 0x80, calculated later
     // Addr 11: Length of product string
+    output[0x10] = i | 0x80;  // calculate offset
+    output[i & eeprom_size_mask] = product_size*2 + 2, i++;
+    output[i & eeprom_size_mask] = 0x03, i++;
+    for (j = 0; j < product_size; j++)
+    {
+        output[i & eeprom_size_mask] = eeprom->product[j], i++;
+        output[i & eeprom_size_mask] = 0x00, i++;
+    }
     output[0x11] = product_size*2 + 2;
 
     // Addr 12: Offset of the serial string + 0x80, calculated later
     // Addr 13: Length of serial string
-    output[0x13] = serial_size*2 + 2;
-
-    // Addr 14: CBUS function: CBUS0, CBUS1
-    // Addr 15: CBUS function: CBUS2, CBUS3
-    // Addr 16: CBUS function: CBUS5
-    output[0x14] = eeprom->cbus_function[0] | (eeprom->cbus_function[1] << 4);
-    output[0x15] = eeprom->cbus_function[2] | (eeprom->cbus_function[3] << 4);
-    output[0x16] = eeprom->cbus_function[4];
-    // Addr 17: Unknown
-
-    // Dynamic content
-    // In images produced by FTDI's FT_Prog for FT232R strings start at 0x18
-    // Space till 0x18 should be considered as reserved.
-    if (eeprom->chip_type >= TYPE_R) {
-        i = 0x18;
-    } else {
-        i = 0x14;
-    }
-    if (eeprom->size >= 256) i = 0x80;
-
-
-    // Output manufacturer
-    output[0x0E] = i | 0x80;  // calculate offset
-    output[i++] = manufacturer_size*2 + 2;
-    output[i++] = 0x03; // type: string
-    for (j = 0; j < manufacturer_size; j++)
-    {
-        output[i] = eeprom->manufacturer[j], i++;
-        output[i] = 0x00, i++;
-    }
-
-    // Output product name
-    output[0x10] = i | 0x80;  // calculate offset
-    output[i] = product_size*2 + 2, i++;
-    output[i] = 0x03, i++;
-    for (j = 0; j < product_size; j++)
-    {
-        output[i] = eeprom->product[j], i++;
-        output[i] = 0x00, i++;
-    }
-
-    // Output serial
     output[0x12] = i | 0x80; // calculate offset
-    output[i] = serial_size*2 + 2, i++;
-    output[i] = 0x03, i++;
+    output[i & eeprom_size_mask] = serial_size*2 + 2, i++;
+    output[i & eeprom_size_mask] = 0x03, i++;
     for (j = 0; j < serial_size; j++)
     {
-        output[i] = eeprom->serial[j], i++;
-        output[i] = 0x00, i++;
+        output[i & eeprom_size_mask] = eeprom->serial[j], i++;
+        output[i & eeprom_size_mask] = 0x00, i++;
+    }
+
+    // Legacy port name and PnP fields for FT2232 and newer chips
+    if (ftdi->type > TYPE_BM)
+    {
+        output[i & eeprom_size_mask] = 0x02; /* as seen when written with FTD2XX */
+        i++;
+        output[i & eeprom_size_mask] = 0x03; /* as seen when written with FTD2XX */
+        i++;
+        output[i & eeprom_size_mask] = eeprom->is_not_pnp; /* as seen when written with FTD2XX */
+        i++;
+    }
+
+    output[0x13] = serial_size*2 + 2;
+
+    if (ftdi->type > TYPE_AM) /* use_serial not used in AM devices */
+    {
+        if (eeprom->use_serial == USE_SERIAL_NUM )
+            output[0x0A] |= USE_SERIAL_NUM;
+        else
+            output[0x0A] &= ~USE_SERIAL_NUM;
+    }
+
+    /* Bytes and Bits specific to (some) types
+       Write linear, as this allows easier fixing*/
+    switch (ftdi->type)
+    {
+        case TYPE_AM:
+            break;
+        case TYPE_BM:
+            output[0x0C] = eeprom->usb_version & 0xff;
+            output[0x0D] = (eeprom->usb_version>>8) & 0xff;
+            if (eeprom->use_usb_version == USE_USB_VERSION_BIT)
+                output[0x0A] |= USE_USB_VERSION_BIT;
+            else
+                output[0x0A] &= ~USE_USB_VERSION_BIT;
+
+            break;
+        case TYPE_2232C:
+
+            output[0x00] = (eeprom->channel_a_type);
+            if ( eeprom->channel_a_driver == DRIVER_VCP)
+                output[0x00] |= DRIVER_VCP;
+            else
+                output[0x00] &= ~DRIVER_VCP;
+
+            if ( eeprom->high_current_a == HIGH_CURRENT_DRIVE)
+                output[0x00] |= HIGH_CURRENT_DRIVE;
+            else
+                output[0x00] &= ~HIGH_CURRENT_DRIVE;
+
+            output[0x01] = (eeprom->channel_b_type);
+            if ( eeprom->channel_b_driver == DRIVER_VCP)
+                output[0x01] |= DRIVER_VCP;
+            else
+                output[0x01] &= ~DRIVER_VCP;
+
+            if ( eeprom->high_current_b == HIGH_CURRENT_DRIVE)
+                output[0x01] |= HIGH_CURRENT_DRIVE;
+            else
+                output[0x01] &= ~HIGH_CURRENT_DRIVE;
+
+            if (eeprom->in_is_isochronous == 1)
+                output[0x0A] |= 0x1;
+            else
+                output[0x0A] &= ~0x1;
+            if (eeprom->out_is_isochronous == 1)
+                output[0x0A] |= 0x2;
+            else
+                output[0x0A] &= ~0x2;
+            if (eeprom->suspend_pull_downs == 1)
+                output[0x0A] |= 0x4;
+            else
+                output[0x0A] &= ~0x4;
+            if (eeprom->use_usb_version == USE_USB_VERSION_BIT)
+                output[0x0A] |= USE_USB_VERSION_BIT;
+            else
+                output[0x0A] &= ~USE_USB_VERSION_BIT;
+
+            output[0x0C] = eeprom->usb_version & 0xff;
+            output[0x0D] = (eeprom->usb_version>>8) & 0xff;
+            output[0x14] = eeprom->chip;
+            break;
+        case TYPE_R:
+            if (eeprom->high_current == HIGH_CURRENT_DRIVE_R)
+                output[0x00] |= HIGH_CURRENT_DRIVE_R;
+            output[0x01] = 0x40; /* Hard coded Endpoint Size*/
+
+            if (eeprom->suspend_pull_downs == 1)
+                output[0x0A] |= 0x4;
+            else
+                output[0x0A] &= ~0x4;
+            output[0x0B] = eeprom->invert;
+            output[0x0C] = eeprom->usb_version & 0xff;
+            output[0x0D] = (eeprom->usb_version>>8) & 0xff;
+
+            if (eeprom->cbus_function[0] > CBUS_BB)
+                output[0x14] = CBUS_TXLED;
+            else
+                output[0x14] = eeprom->cbus_function[0];
+
+            if (eeprom->cbus_function[1] > CBUS_BB)
+                output[0x14] |= CBUS_RXLED<<4;
+            else
+                output[0x14] |= eeprom->cbus_function[1]<<4;
+
+            if (eeprom->cbus_function[2] > CBUS_BB)
+                output[0x15] = CBUS_TXDEN;
+            else
+                output[0x15] = eeprom->cbus_function[2];
+
+            if (eeprom->cbus_function[3] > CBUS_BB)
+                output[0x15] |= CBUS_PWREN<<4;
+            else
+                output[0x15] |= eeprom->cbus_function[3]<<4;
+
+            if (eeprom->cbus_function[4] > CBUS_CLK6)
+                output[0x16] = CBUS_SLEEP;
+            else
+                output[0x16] = eeprom->cbus_function[4];
+            break;
+        case TYPE_2232H:
+            output[0x00] = (eeprom->channel_a_type);
+            if ( eeprom->channel_a_driver == DRIVER_VCP)
+                output[0x00] |= DRIVER_VCP;
+            else
+                output[0x00] &= ~DRIVER_VCP;
+
+            output[0x01] = (eeprom->channel_b_type);
+            if ( eeprom->channel_b_driver == DRIVER_VCP)
+                output[0x01] |= DRIVER_VCP;
+            else
+                output[0x01] &= ~DRIVER_VCP;
+            if (eeprom->suspend_dbus7 == SUSPEND_DBUS7_BIT)
+                output[0x01] |= SUSPEND_DBUS7_BIT;
+            else
+                output[0x01] &= ~SUSPEND_DBUS7_BIT;
+
+            if (eeprom->suspend_pull_downs == 1)
+                output[0x0A] |= 0x4;
+            else
+                output[0x0A] &= ~0x4;
+
+            if (eeprom->group0_drive > DRIVE_16MA)
+                output[0x0c] |= DRIVE_16MA;
+            else
+                output[0x0c] |= eeprom->group0_drive;
+            if (eeprom->group0_schmitt == IS_SCHMITT)
+                output[0x0c] |= IS_SCHMITT;
+            if (eeprom->group0_slew == SLOW_SLEW)
+                output[0x0c] |= SLOW_SLEW;
+
+            if (eeprom->group1_drive > DRIVE_16MA)
+                output[0x0c] |= DRIVE_16MA<<4;
+            else
+                output[0x0c] |= eeprom->group1_drive<<4;
+            if (eeprom->group1_schmitt == IS_SCHMITT)
+                output[0x0c] |= IS_SCHMITT<<4;
+            if (eeprom->group1_slew == SLOW_SLEW)
+                output[0x0c] |= SLOW_SLEW<<4;
+
+            if (eeprom->group2_drive > DRIVE_16MA)
+                output[0x0d] |= DRIVE_16MA;
+            else
+                output[0x0d] |= eeprom->group2_drive;
+            if (eeprom->group2_schmitt == IS_SCHMITT)
+                output[0x0d] |= IS_SCHMITT;
+            if (eeprom->group2_slew == SLOW_SLEW)
+                output[0x0d] |= SLOW_SLEW;
+
+            if (eeprom->group3_drive > DRIVE_16MA)
+                output[0x0d] |= DRIVE_16MA<<4;
+            else
+                output[0x0d] |= eeprom->group3_drive<<4;
+            if (eeprom->group3_schmitt == IS_SCHMITT)
+                output[0x0d] |= IS_SCHMITT<<4;
+            if (eeprom->group3_slew == SLOW_SLEW)
+                output[0x0d] |= SLOW_SLEW<<4;
+
+            output[0x18] = eeprom->chip;
+
+            break;
+        case TYPE_4232H:
+            fprintf(stderr,"FIXME: Build FT4232H specific EEPROM settings\n");
     }
 
     // calculate checksum
@@ -2441,15 +2651,14 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
     output[eeprom->size-2] = checksum;
     output[eeprom->size-1] = checksum >> 8;
 
-    return size_check;
+    return user_area_size;
 }
 
 /**
    Decode binary EEPROM image into an ftdi_eeprom structure.
 
-   \param eeprom Pointer to ftdi_eeprom which will be filled in.
-   \param buf Buffer of \a size bytes of raw eeprom data
-   \param size size size of eeprom data in bytes
+   \param ftdi pointer to ftdi_context
+   \param verbose Decode EEPROM on stdout
 
    \retval 0: all fine
    \retval -1: something went wrong
@@ -2457,38 +2666,23 @@ int ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output)
    FIXME: How to pass size? How to handle size field in ftdi_eeprom?
    FIXME: Strings are malloc'ed here and should be freed somewhere
 */
-int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
+int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
 {
     unsigned char i, j;
     unsigned short checksum, eeprom_checksum, value;
     unsigned char manufacturer_size = 0, product_size = 0, serial_size = 0;
-    int eeprom_size = 128;
+    int eeprom_size;
+    struct ftdi_eeprom *eeprom;
+    unsigned char *buf = ftdi->eeprom->buf;
+    int release;
 
-    if (eeprom == NULL)
-        return -1;
-#if 0
-    size_check = eeprom->size;
-    size_check -= 28; // 28 are always in use (fixed)
+    if (ftdi == NULL)
+        ftdi_error_return(-1,"No context");
+    if (ftdi->eeprom == NULL)
+        ftdi_error_return(-1,"No eeprom structure");
 
-    // Top half of a 256byte eeprom is used just for strings and checksum
-    // it seems that the FTDI chip will not read these strings from the lower half
-    // Each string starts with two bytes; offset and type (0x03 for string)
-    // the checksum needs two bytes, so without the string data that 8 bytes from the top half
-    if (eeprom->size>=256)size_check = 120;
-    size_check -= manufacturer_size*2;
-    size_check -= product_size*2;
-    size_check -= serial_size*2;
-
-    // eeprom size exceeded?
-    if (size_check < 0)
-        return (-1);
-#endif
-
-    // empty eeprom struct
-    memset(eeprom, 0, sizeof(struct ftdi_eeprom));
-
-    // Addr 00: High current IO
-    eeprom->high_current = (buf[0x02] & HIGH_CURRENT_DRIVE);
+    eeprom = ftdi->eeprom;
+    eeprom_size = eeprom->size;
 
     // Addr 02: Vendor ID
     eeprom->vendor_id = buf[0x02] + (buf[0x03] << 8);
@@ -2496,31 +2690,14 @@ int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
     // Addr 04: Product ID
     eeprom->product_id = buf[0x04] + (buf[0x05] << 8);
 
-    value = buf[0x06] + (buf[0x07]<<8);
-    switch (value)
-    {
-        case 0x0600:
-            eeprom->chip_type = TYPE_R;
-            break;
-        case 0x0400:
-            eeprom->chip_type = TYPE_BM;
-            break;
-        case 0x0200:
-            eeprom->chip_type = TYPE_AM;
-            break;
-        default: // Unknown device
-            eeprom->chip_type = 0;
-            break;
-    }
+    release = buf[0x06] + (buf[0x07]<<8);
 
     // Addr 08: Config descriptor
     // Bit 7: always 1
     // Bit 6: 1 if this device is self powered, 0 if bus powered
     // Bit 5: 1 if this device uses remote wakeup
-    // Bit 4: 1 if this device is battery powered
-    j = buf[0x08];
-    if (j&0x40) eeprom->self_powered = 1;
-    if (j&0x20) eeprom->remote_wakeup = 1;
+    eeprom->self_powered = buf[0x08] & 0x40;
+    eeprom->remote_wakeup = buf[0x08] & 0x20;
 
     // Addr 09: Max power consumption: max power = value * 2 mA
     eeprom->max_power = buf[0x09];
@@ -2529,83 +2706,84 @@ int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
     // Bit 7: 0 - reserved
     // Bit 6: 0 - reserved
     // Bit 5: 0 - reserved
-    // Bit 4: 1 - Change USB version
+    // Bit 4: 1 - Change USB version on BM and 2232C
     // Bit 3: 1 - Use the serial number string
     // Bit 2: 1 - Enable suspend pull downs for lower power
     // Bit 1: 1 - Out EndPoint is Isochronous
     // Bit 0: 1 - In EndPoint is Isochronous
     //
-    j = buf[0x0A];
-    if (j&0x01) eeprom->in_is_isochronous = 1;
-    if (j&0x02) eeprom->out_is_isochronous = 1;
-    if (j&0x04) eeprom->suspend_pull_downs = 1;
-    if (j&0x08) eeprom->use_serial = 1;
-    if (j&0x10) eeprom->change_usb_version = 1;
+    eeprom->in_is_isochronous  = buf[0x0A]&0x01;
+    eeprom->out_is_isochronous = buf[0x0A]&0x02;
+    eeprom->suspend_pull_downs = buf[0x0A]&0x04;
+    eeprom->use_serial         = buf[0x0A] & USE_SERIAL_NUM;
+    eeprom->use_usb_version    = buf[0x0A] & USE_USB_VERSION_BIT;
 
-    // Addr 0B: Invert data lines
-    eeprom->invert = buf[0x0B];
-
-    // Addr 0C: USB version low byte when 0x0A bit 4 is set
-    // Addr 0D: USB version high byte when 0x0A bit 4 is set
-    if (eeprom->change_usb_version == 1)
-    {
-        eeprom->usb_version = buf[0x0C] + (buf[0x0D] << 8);
-    }
+    // Addr 0C: USB version low byte when 0x0A
+    // Addr 0D: USB version high byte when 0x0A
+    eeprom->usb_version = buf[0x0C] + (buf[0x0D] << 8);
 
     // Addr 0E: Offset of the manufacturer string + 0x80, calculated later
     // Addr 0F: Length of manufacturer string
     manufacturer_size = buf[0x0F]/2;
-    if (manufacturer_size > 0) eeprom->manufacturer = malloc(manufacturer_size);
+    if (eeprom->manufacturer)
+        free(eeprom->manufacturer);
+    if (manufacturer_size > 0)
+    {
+        eeprom->manufacturer = malloc(manufacturer_size);
+        if (eeprom->manufacturer)
+        {
+            // Decode manufacturer
+            i = buf[0x0E] & (eeprom_size -1); // offset
+            for (j=0;j<manufacturer_size-1;j++)
+            {
+                eeprom->manufacturer[j] = buf[2*j+i+2];
+            }
+            eeprom->manufacturer[j] = '\0';
+        }
+    }
     else eeprom->manufacturer = NULL;
 
     // Addr 10: Offset of the product string + 0x80, calculated later
     // Addr 11: Length of product string
+    if (eeprom->product)
+        free(eeprom->product);
     product_size = buf[0x11]/2;
-    if (product_size > 0) eeprom->product = malloc(product_size);
+    if (product_size > 0)
+    {
+        eeprom->product = malloc(product_size);
+        if (eeprom->product)
+        {
+            // Decode product name
+            i = buf[0x10] & (eeprom_size -1); // offset
+            for (j=0;j<product_size-1;j++)
+            {
+                eeprom->product[j] = buf[2*j+i+2];
+            }
+            eeprom->product[j] = '\0';
+        }
+    }
     else eeprom->product = NULL;
 
     // Addr 12: Offset of the serial string + 0x80, calculated later
     // Addr 13: Length of serial string
+    if (eeprom->serial)
+        free(eeprom->serial);
     serial_size = buf[0x13]/2;
-    if (serial_size > 0) eeprom->serial = malloc(serial_size);
+    if (serial_size > 0)
+    {
+        eeprom->serial = malloc(serial_size);
+        if (eeprom->serial)
+        {
+            // Decode serial
+            i = buf[0x12] & (eeprom_size -1); // offset
+            for (j=0;j<serial_size-1;j++)
+            {
+                eeprom->serial[j] = buf[2*j+i+2];
+            }
+            eeprom->serial[j] = '\0';
+        }
+    }
     else eeprom->serial = NULL;
-
-    // Addr 14: CBUS function: CBUS0, CBUS1
-    // Addr 15: CBUS function: CBUS2, CBUS3
-    // Addr 16: CBUS function: CBUS5
-    if (eeprom->chip_type == TYPE_R) {
-        eeprom->cbus_function[0] = buf[0x14] & 0x0f;
-        eeprom->cbus_function[1] = (buf[0x14] >> 4) & 0x0f;
-        eeprom->cbus_function[2] = buf[0x15] & 0x0f;
-        eeprom->cbus_function[3] = (buf[0x15] >> 4) & 0x0f;
-        eeprom->cbus_function[4] = buf[0x16] & 0x0f;
-    } else {
-        for (j=0; j<5; j++) eeprom->cbus_function[j] = 0;
-    }
-
-    // Decode manufacturer
-    i = buf[0x0E] & 0x7f; // offset
-    for (j=0;j<manufacturer_size-1;j++)
-    {
-        eeprom->manufacturer[j] = buf[2*j+i+2];
-    }
-    eeprom->manufacturer[j] = '\0';
-
-    // Decode product name
-    i = buf[0x10] & 0x7f; // offset
-    for (j=0;j<product_size-1;j++)
-    {
-        eeprom->product[j] = buf[2*j+i+2];
-    }
-    eeprom->product[j] = '\0';
-
-    // Decode serial
-    i = buf[0x12] & 0x7f; // offset
-    for (j=0;j<serial_size-1;j++)
-    {
-        eeprom->serial[j] = buf[2*j+i+2];
-    }
-    eeprom->serial[j] = '\0';
 
     // verify checksum
     checksum = 0xAAAA;
@@ -2624,8 +2802,471 @@ int ftdi_eeprom_decode(struct ftdi_eeprom *eeprom, unsigned char *buf, int size)
     if (eeprom_checksum != checksum)
     {
         fprintf(stderr, "Checksum Error: %04x %04x\n", checksum, eeprom_checksum);
-        return -1;
+        ftdi_error_return(-1,"EEPROM checksum error");
     }
+
+    eeprom->channel_a_type   = 0;
+    if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM))
+    {
+        eeprom->chip = -1;
+    }
+    else if (ftdi->type == TYPE_2232C)
+    {
+        eeprom->channel_a_type   = buf[0x00] & 0x7;
+        eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
+        eeprom->high_current_a   = buf[0x00] & HIGH_CURRENT_DRIVE;
+        eeprom->channel_b_type   = buf[0x01] & 0x7;
+        eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
+        eeprom->high_current_b   = buf[0x01] & HIGH_CURRENT_DRIVE;
+        eeprom->chip = buf[0x14];
+    }
+    else if (ftdi->type == TYPE_R)
+    {
+        /* TYPE_R flags D2XX, not VCP as all others*/
+        eeprom->channel_a_driver = (~buf[0x00]) & DRIVER_VCP;
+        eeprom->high_current     = buf[0x00] & HIGH_CURRENT_DRIVE_R;
+        if ( (buf[0x01]&0x40) != 0x40)
+            fprintf(stderr,
+                    "TYPE_R EEPROM byte[0x01] Bit 6 unexpected Endpoint size."
+                    " If this happened with the\n"
+                    " EEPROM programmed by FTDI tools, please report "
+                    "to libftdi@developer.intra2net.com\n");
+
+        eeprom->chip = buf[0x16];
+        // Addr 0B: Invert data lines
+        // Works only on FT232R, not FT245R, but no way to distinguish
+        eeprom->invert = buf[0x0B];
+        // Addr 14: CBUS function: CBUS0, CBUS1
+        // Addr 15: CBUS function: CBUS2, CBUS3
+        // Addr 16: CBUS function: CBUS5
+        eeprom->cbus_function[0] = buf[0x14] & 0x0f;
+        eeprom->cbus_function[1] = (buf[0x14] >> 4) & 0x0f;
+        eeprom->cbus_function[2] = buf[0x15] & 0x0f;
+        eeprom->cbus_function[3] = (buf[0x15] >> 4) & 0x0f;
+        eeprom->cbus_function[4] = buf[0x16] & 0x0f;
+    }
+    else if ((ftdi->type == TYPE_2232H) ||(ftdi->type == TYPE_4232H))
+    {
+        eeprom->channel_a_type   = buf[0x00] & 0x7;
+        eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
+        eeprom->channel_b_type   = buf[0x01] & 0x7;
+        eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
+
+        if (ftdi->type == TYPE_2232H)
+            eeprom->suspend_dbus7    = buf[0x01] & SUSPEND_DBUS7_BIT;
+
+        eeprom->chip = buf[0x18];
+        eeprom->group0_drive   =  buf[0x0c]       & DRIVE_16MA;
+        eeprom->group0_schmitt =  buf[0x0c]       & IS_SCHMITT;
+        eeprom->group0_slew    =  buf[0x0c]       & SLOW_SLEW;
+        eeprom->group1_drive   = (buf[0x0c] >> 4) & 0x3;
+        eeprom->group1_schmitt = (buf[0x0c] >> 4) & IS_SCHMITT;
+        eeprom->group1_slew    = (buf[0x0c] >> 4) & SLOW_SLEW;
+        eeprom->group2_drive   =  buf[0x0d]       & DRIVE_16MA;
+        eeprom->group2_schmitt =  buf[0x0d]       & IS_SCHMITT;
+        eeprom->group2_slew    =  buf[0x0d]       & SLOW_SLEW;
+        eeprom->group3_drive   = (buf[0x0d] >> 4) & DRIVE_16MA;
+        eeprom->group3_schmitt = (buf[0x0d] >> 4) & IS_SCHMITT;
+        eeprom->group3_slew    = (buf[0x0d] >> 4) & SLOW_SLEW;
+    }
+
+    if (verbose)
+    {
+        char *channel_mode[] = {"UART","245","CPU", "unknown", "OPTO"};
+        fprintf(stdout, "VID:     0x%04x\n",eeprom->vendor_id);
+        fprintf(stdout, "PID:     0x%04x\n",eeprom->product_id);
+        fprintf(stdout, "Release: 0x%04x\n",release);
+
+        if (eeprom->self_powered)
+            fprintf(stdout, "Self-Powered%s", (eeprom->remote_wakeup)?", USB Remote Wake Up\n":"\n");
+        else
+            fprintf(stdout, "Bus Powered: %3d mA%s", eeprom->max_power * 2,
+                    (eeprom->remote_wakeup)?" USB Remote Wake Up\n":"\n");
+        if (eeprom->manufacturer)
+            fprintf(stdout, "Manufacturer: %s\n",eeprom->manufacturer);
+        if (eeprom->product)
+            fprintf(stdout, "Product:      %s\n",eeprom->product);
+        if (eeprom->serial)
+            fprintf(stdout, "Serial:       %s\n",eeprom->serial);
+        fprintf(stdout,     "Checksum      : %04x\n", checksum);
+        if (ftdi->type == TYPE_R)
+            fprintf(stdout,     "Internal EEPROM\n");
+        else if (eeprom->chip >= 0x46)
+            fprintf(stdout,     "Attached EEPROM: 93x%02x\n", eeprom->chip);
+        if (eeprom->suspend_dbus7)
+            fprintf(stdout, "Suspend on DBUS7\n");
+        if (eeprom->suspend_pull_downs)
+            fprintf(stdout, "Pull IO pins low during suspend\n");
+        if (eeprom->remote_wakeup)
+            fprintf(stdout, "Enable Remote Wake Up\n");
+        fprintf(stdout, "PNP: %d\n",(eeprom->is_not_pnp)?0:1);
+        if (ftdi->type >= TYPE_2232C)
+            fprintf(stdout,"Channel A has Mode %s%s%s\n",
+                    channel_mode[eeprom->channel_a_type],
+                    (eeprom->channel_a_driver)?" VCP":"",
+                    (eeprom->high_current_a)?" High Current IO":"");
+        if ((ftdi->type >= TYPE_2232C) && (ftdi->type != TYPE_R))
+            fprintf(stdout,"Channel B has Mode %s%s%s\n",
+                    channel_mode[eeprom->channel_b_type],
+                    (eeprom->channel_b_driver)?" VCP":"",
+                    (eeprom->high_current_b)?" High Current IO":"");
+        if (((ftdi->type == TYPE_BM) || (ftdi->type == TYPE_2232C)) &&
+                eeprom->use_usb_version == USE_USB_VERSION_BIT)
+            fprintf(stdout,"Use explicit USB Version %04x\n",eeprom->usb_version);
+
+        if ((ftdi->type == TYPE_2232H) || (ftdi->type == TYPE_4232H))
+        {
+            fprintf(stdout,"%s has %d mA drive%s%s\n",
+                    (ftdi->type == TYPE_2232H)?"AL":"A",
+                    (eeprom->group0_drive+1) *4,
+                    (eeprom->group0_schmitt)?" Schmitt Input":"",
+                    (eeprom->group0_slew)?" Slow Slew":"");
+            fprintf(stdout,"%s has %d mA drive%s%s\n",
+                    (ftdi->type == TYPE_2232H)?"AH":"B",
+                    (eeprom->group1_drive+1) *4,
+                    (eeprom->group1_schmitt)?" Schmitt Input":"",
+                    (eeprom->group1_slew)?" Slow Slew":"");
+            fprintf(stdout,"%s has %d mA drive%s%s\n",
+                    (ftdi->type == TYPE_2232H)?"BL":"C",
+                    (eeprom->group2_drive+1) *4,
+                    (eeprom->group2_schmitt)?" Schmitt Input":"",
+                    (eeprom->group2_slew)?" Slow Slew":"");
+            fprintf(stdout,"%s has %d mA drive%s%s\n",
+                    (ftdi->type == TYPE_2232H)?"BH":"D",
+                    (eeprom->group3_drive+1) *4,
+                    (eeprom->group3_schmitt)?" Schmitt Input":"",
+                    (eeprom->group3_slew)?" Slow Slew":"");
+        }
+        if (ftdi->type == TYPE_R)
+        {
+            char *cbus_mux[] = {"TXDEN","PWREN","RXLED", "TXLED","TX+RXLED",
+                                "SLEEP","CLK48","CLK24","CLK12","CLK6",
+                                "IOMODE","BB_WR","BB_RD"
+                               };
+            char *cbus_BB[] = {"RXF","TXE","RD", "WR"};
+
+            if (eeprom->invert)
+            {
+                char *r_bits[] = {"TXD","RXD","RTS", "CTS","DTR","DSR","DCD","RI"};
+                fprintf(stdout,"Inverted bits:");
+                for (i=0; i<8; i++)
+                    if ((eeprom->invert & (1<<i)) == (1<<i))
+                        fprintf(stdout," %s",r_bits[i]);
+                fprintf(stdout,"\n");
+            }
+            for (i=0; i<5; i++)
+            {
+                if (eeprom->cbus_function[i]<CBUS_BB)
+                    fprintf(stdout,"C%d Function: %s\n", i,
+                            cbus_mux[eeprom->cbus_function[i]]);
+                else
+                {
+                    /* FIXME for Uwe: This results in an access above array bounds.
+                       Also I couldn't find documentation about this mode.
+                    fprintf(stdout,"C%d BB Function: %s\n", i,
+                            cbus_BB[i]);
+                    */
+                    fprintf(stdout, "Unknown CBUS mode. Might be special mode?\n");
+                    (void)cbus_BB;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+/**
+   Get a value from the decoded EEPROM structure
+
+   \param ftdi pointer to ftdi_context
+   \param value_name Enum of the value to query
+   \param value Pointer to store read value
+
+   \retval 0: all fine
+   \retval -1: Value doesn't exist
+*/
+int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int* value)
+{
+    switch (value_name)
+    {
+        case VENDOR_ID:
+            *value = ftdi->eeprom->vendor_id;
+            break;
+        case PRODUCT_ID:
+            *value = ftdi->eeprom->product_id;
+            break;
+        case SELF_POWERED:
+            *value = ftdi->eeprom->self_powered;
+            break;
+        case REMOTE_WAKEUP:
+            *value = ftdi->eeprom->remote_wakeup;
+            break;
+        case IS_NOT_PNP:
+            *value = ftdi->eeprom->is_not_pnp;
+            break;
+        case SUSPEND_DBUS7:
+            *value = ftdi->eeprom->suspend_dbus7;
+            break;
+        case IN_IS_ISOCHRONOUS:
+            *value = ftdi->eeprom->in_is_isochronous;
+            break;
+        case SUSPEND_PULL_DOWNS:
+            *value = ftdi->eeprom->suspend_pull_downs;
+            break;
+        case USE_SERIAL:
+            *value = ftdi->eeprom->use_serial;
+            break;
+        case USB_VERSION:
+            *value = ftdi->eeprom->usb_version;
+            break;
+        case MAX_POWER:
+            *value = ftdi->eeprom->max_power;
+            break;
+        case CHANNEL_A_TYPE:
+            *value = ftdi->eeprom->channel_a_type;
+            break;
+        case CHANNEL_B_TYPE:
+            *value = ftdi->eeprom->channel_b_type;
+            break;
+        case CHANNEL_A_DRIVER:
+            *value = ftdi->eeprom->channel_a_driver;
+            break;
+        case CHANNEL_B_DRIVER:
+            *value = ftdi->eeprom->channel_b_driver;
+            break;
+        case CBUS_FUNCTION_0:
+            *value = ftdi->eeprom->cbus_function[0];
+            break;
+        case CBUS_FUNCTION_1:
+            *value = ftdi->eeprom->cbus_function[1];
+            break;
+        case CBUS_FUNCTION_2:
+            *value = ftdi->eeprom->cbus_function[2];
+            break;
+        case CBUS_FUNCTION_3:
+            *value = ftdi->eeprom->cbus_function[3];
+            break;
+        case CBUS_FUNCTION_4:
+            *value = ftdi->eeprom->cbus_function[4];
+            break;
+        case HIGH_CURRENT:
+            *value = ftdi->eeprom->high_current;
+            break;
+        case HIGH_CURRENT_A:
+            *value = ftdi->eeprom->high_current_a;
+            break;
+        case HIGH_CURRENT_B:
+            *value = ftdi->eeprom->high_current_b;
+            break;
+        case INVERT:
+            *value = ftdi->eeprom->invert;
+            break;
+        case GROUP0_DRIVE:
+            *value = ftdi->eeprom->group0_drive;
+            break;
+        case GROUP0_SCHMITT:
+            *value = ftdi->eeprom->group0_schmitt;
+            break;
+        case GROUP0_SLEW:
+            *value = ftdi->eeprom->group0_slew;
+            break;
+        case GROUP1_DRIVE:
+            *value = ftdi->eeprom->group1_drive;
+            break;
+        case GROUP1_SCHMITT:
+            *value = ftdi->eeprom->group1_schmitt;
+            break;
+        case GROUP1_SLEW:
+            *value = ftdi->eeprom->group1_slew;
+            break;
+        case GROUP2_DRIVE:
+            *value = ftdi->eeprom->group2_drive;
+            break;
+        case GROUP2_SCHMITT:
+            *value = ftdi->eeprom->group2_schmitt;
+            break;
+        case GROUP2_SLEW:
+            *value = ftdi->eeprom->group2_slew;
+            break;
+        case GROUP3_DRIVE:
+            *value = ftdi->eeprom->group3_drive;
+            break;
+        case GROUP3_SCHMITT:
+            *value = ftdi->eeprom->group3_schmitt;
+            break;
+        case GROUP3_SLEW:
+            *value = ftdi->eeprom->group3_slew;
+            break;
+        case CHIP_TYPE:
+            *value = ftdi->eeprom->chip;
+            break;
+        case CHIP_SIZE:
+            *value = ftdi->eeprom->size;
+            break;
+        default:
+            ftdi_error_return(-1, "Request for unknown EEPROM value");
+    }
+    return 0;
+}
+
+/**
+   Set a value in the decoded EEPROM Structure
+   No parameter checking is performed
+
+   \param ftdi pointer to ftdi_context
+   \param value_name Enum of the value to set
+   \param value to set
+
+   \retval 0: all fine
+   \retval -1: Value doesn't exist
+   \retval -2: Value not user settable
+*/
+int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int value)
+{
+    switch (value_name)
+    {
+        case VENDOR_ID:
+            ftdi->eeprom->vendor_id = value;
+            break;
+        case PRODUCT_ID:
+            ftdi->eeprom->product_id = value;
+            break;
+        case SELF_POWERED:
+            ftdi->eeprom->self_powered = value;
+            break;
+        case REMOTE_WAKEUP:
+            ftdi->eeprom->remote_wakeup = value;
+            break;
+        case IS_NOT_PNP:
+            ftdi->eeprom->is_not_pnp = value;
+            break;
+        case SUSPEND_DBUS7:
+            ftdi->eeprom->suspend_dbus7 = value;
+            break;
+        case IN_IS_ISOCHRONOUS:
+            ftdi->eeprom->in_is_isochronous = value;
+            break;
+        case SUSPEND_PULL_DOWNS:
+            ftdi->eeprom->suspend_pull_downs = value;
+            break;
+        case USE_SERIAL:
+            ftdi->eeprom->use_serial = value;
+            break;
+        case USB_VERSION:
+            ftdi->eeprom->usb_version = value;
+            break;
+        case MAX_POWER:
+            ftdi->eeprom->max_power = value;
+            break;
+        case CHANNEL_A_TYPE:
+            ftdi->eeprom->channel_a_type = value;
+            break;
+        case CHANNEL_B_TYPE:
+            ftdi->eeprom->channel_b_type = value;
+            break;
+        case CHANNEL_A_DRIVER:
+            ftdi->eeprom->channel_a_driver = value;
+            break;
+        case CHANNEL_B_DRIVER:
+            ftdi->eeprom->channel_b_driver = value;
+            break;
+        case CBUS_FUNCTION_0:
+            ftdi->eeprom->cbus_function[0] = value;
+            break;
+        case CBUS_FUNCTION_1:
+            ftdi->eeprom->cbus_function[1] = value;
+            break;
+        case CBUS_FUNCTION_2:
+            ftdi->eeprom->cbus_function[2] = value;
+            break;
+        case CBUS_FUNCTION_3:
+            ftdi->eeprom->cbus_function[3] = value;
+            break;
+        case CBUS_FUNCTION_4:
+            ftdi->eeprom->cbus_function[4] = value;
+            break;
+        case HIGH_CURRENT:
+            ftdi->eeprom->high_current = value;
+            break;
+        case HIGH_CURRENT_A:
+            ftdi->eeprom->high_current_a = value;
+            break;
+        case HIGH_CURRENT_B:
+            ftdi->eeprom->high_current_b = value;
+            break;
+        case INVERT:
+            ftdi->eeprom->invert = value;
+            break;
+        case GROUP0_DRIVE:
+            ftdi->eeprom->group0_drive = value;
+            break;
+        case GROUP0_SCHMITT:
+            ftdi->eeprom->group0_schmitt = value;
+            break;
+        case GROUP0_SLEW:
+            ftdi->eeprom->group0_slew = value;
+            break;
+        case GROUP1_DRIVE:
+            ftdi->eeprom->group1_drive = value;
+            break;
+        case GROUP1_SCHMITT:
+            ftdi->eeprom->group1_schmitt = value;
+            break;
+        case GROUP1_SLEW:
+            ftdi->eeprom->group1_slew = value;
+            break;
+        case GROUP2_DRIVE:
+            ftdi->eeprom->group2_drive = value;
+            break;
+        case GROUP2_SCHMITT:
+            ftdi->eeprom->group2_schmitt = value;
+            break;
+        case GROUP2_SLEW:
+            ftdi->eeprom->group2_slew = value;
+            break;
+        case GROUP3_DRIVE:
+            ftdi->eeprom->group3_drive = value;
+            break;
+        case GROUP3_SCHMITT:
+            ftdi->eeprom->group3_schmitt = value;
+            break;
+        case GROUP3_SLEW:
+            ftdi->eeprom->group3_slew = value;
+            break;
+        case CHIP_TYPE:
+            ftdi->eeprom->chip = value;
+            break;
+        case CHIP_SIZE:
+            ftdi_error_return(-2, "EEPROM Value can't be changed");
+        default :
+            ftdi_error_return(-1, "Request to unknown EEPROM value");
+    }
+    return 0;
+}
+
+/** Get the read-only buffer to the binary EEPROM content
+
+    \param ftdi pointer to ftdi_context
+    \param buf buffer to receive EEPROM content
+    \param size Size of receiving buffer
+
+    \retval 0: All fine
+    \retval -1: struct ftdi_contxt or ftdi_eeprom missing
+    \retval -2: Not enough room to store eeprom
+*/
+int ftdi_get_eeprom_buf(struct ftdi_context *ftdi, unsigned char * buf, int size)
+{
+    if (!ftdi || !(ftdi->eeprom))
+        ftdi_error_return(-1, "No appropriate structure");
+
+    if (!buf || size < ftdi->eeprom->size)
+        ftdi_error_return(-1, "Not enough room to store eeprom");
+
+    // Only copy up to FTDI_MAX_EEPROM_SIZE bytes
+    if (size > FTDI_MAX_EEPROM_SIZE)
+        size = FTDI_MAX_EEPROM_SIZE;
+
+    memcpy(buf, ftdi->eeprom->buf, size);
 
     return 0;
 }
@@ -2656,25 +3297,40 @@ int ftdi_read_eeprom_location (struct ftdi_context *ftdi, int eeprom_addr, unsig
     Read eeprom
 
     \param ftdi pointer to ftdi_context
-    \param eeprom Pointer to store eeprom into
 
     \retval  0: all fine
     \retval -1: read failed
     \retval -2: USB device unavailable
 */
-int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
+int ftdi_read_eeprom(struct ftdi_context *ftdi)
 {
     int i;
+    unsigned char *buf;
 
     if (ftdi == NULL || ftdi->usb_dev == NULL)
         ftdi_error_return(-2, "USB device unavailable");
+    buf = ftdi->eeprom->buf;
 
-    for (i = 0; i < ftdi->eeprom_size/2; i++)
+    for (i = 0; i < FTDI_MAX_EEPROM_SIZE/2; i++)
     {
-        if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE, SIO_READ_EEPROM_REQUEST, 0, i, eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
+        if (libusb_control_transfer(
+                    ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE,SIO_READ_EEPROM_REQUEST, 0, i,
+                    buf+(i*2), 2, ftdi->usb_read_timeout) != 2)
             ftdi_error_return(-1, "reading eeprom failed");
     }
 
+    if (ftdi->type == TYPE_R)
+        ftdi->eeprom->size = 0x80;
+    /*    Guesses size of eeprom by comparing halves
+          - will not work with blank eeprom */
+    else if (strrchr((const char *)buf, 0xff) == ((const char *)buf +FTDI_MAX_EEPROM_SIZE -1))
+        ftdi->eeprom->size = -1;
+    else if (memcmp(buf,&buf[0x80],0x80) == 0)
+        ftdi->eeprom->size = 0x80;
+    else if (memcmp(buf,&buf[0x40],0x40) == 0)
+        ftdi->eeprom->size = 0x40;
+    else
+        ftdi->eeprom->size = 0x100;
     return 0;
 }
 
@@ -2730,43 +3386,6 @@ int ftdi_read_chipid(struct ftdi_context *ftdi, unsigned int *chipid)
 }
 
 /**
-    Guesses size of eeprom by reading eeprom and comparing halves - will not work with blank eeprom
-    Call this function then do a write then call again to see if size changes, if so write again.
-
-    \param ftdi pointer to ftdi_context
-    \param eeprom Pointer to store eeprom into
-    \param maxsize the size of the buffer to read into
-
-    \retval -1: eeprom read failed
-    \retval -2: USB device unavailable
-    \retval >=0: size of eeprom
-*/
-int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, int maxsize)
-{
-    int i=0,j,minsize=32;
-    int size=minsize;
-
-    if (ftdi == NULL || ftdi->usb_dev == NULL)
-        ftdi_error_return(-2, "USB device unavailable");
-
-    do
-    {
-        for (j = 0; i < maxsize/2 && j<size; j++)
-        {
-            if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_IN_REQTYPE,
-                                        SIO_READ_EEPROM_REQUEST, 0, i,
-                                        eeprom+(i*2), 2, ftdi->usb_read_timeout) != 2)
-                ftdi_error_return(-1, "eeprom read failed");
-            i++;
-        }
-        size*=2;
-    }
-    while (size<=maxsize && memcmp(eeprom,&eeprom[size/2],size/2)!=0);
-
-    return size/2;
-}
-
-/**
     Write eeprom location
 
     \param ftdi pointer to ftdi_context
@@ -2774,17 +3393,50 @@ int ftdi_read_eeprom_getsize(struct ftdi_context *ftdi, unsigned char *eeprom, i
     \param eeprom_val Value to be written
 
     \retval  0: all fine
-    \retval -1: read failed
+    \retval -1: write failed
     \retval -2: USB device unavailable
+    \retval -3: Invalid access to checksum protected area below 0x80
+    \retval -4: Device can't access unprotected area
+    \retval -5: Reading chip type failed
 */
-int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr, unsigned short eeprom_val)
+int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr,
+                               unsigned short eeprom_val)
 {
+    int chip_type_location;
+    unsigned short chip_type;
+
     if (ftdi == NULL || ftdi->usb_dev == NULL)
         ftdi_error_return(-2, "USB device unavailable");
 
+    if (eeprom_addr <0x80)
+        ftdi_error_return(-2, "Invalid access to checksum protected area  below 0x80");
+
+
+    switch (ftdi->type)
+    {
+        case TYPE_BM:
+        case  TYPE_2232C:
+            chip_type_location = 0x14;
+            break;
+        case TYPE_2232H:
+        case TYPE_4232H:
+            chip_type_location = 0x18;
+            break;
+        default:
+            ftdi_error_return(-4, "Device can't access unprotected area");
+    }
+
+    if (ftdi_read_eeprom_location( ftdi, chip_type_location>>1, &chip_type))
+        ftdi_error_return(-5, "Reading failed failed");
+    fprintf(stderr," loc 0x%04x val 0x%04x\n", chip_type_location,chip_type);
+    if ((chip_type & 0xff) != 0x66)
+    {
+        ftdi_error_return(-6, "EEPROM is not of 93x66");
+    }
+
     if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
-                                    SIO_WRITE_EEPROM_REQUEST, eeprom_val, eeprom_addr,
-                                    NULL, 0, ftdi->usb_write_timeout) != 0)
+                                SIO_WRITE_EEPROM_REQUEST, eeprom_val, eeprom_addr,
+                                NULL, 0, ftdi->usb_write_timeout) != 0)
         ftdi_error_return(-1, "unable to write eeprom");
 
     return 0;
@@ -2794,19 +3446,20 @@ int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr, unsig
     Write eeprom
 
     \param ftdi pointer to ftdi_context
-    \param eeprom Pointer to read eeprom from
 
     \retval  0: all fine
     \retval -1: read failed
     \retval -2: USB device unavailable
 */
-int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
+int ftdi_write_eeprom(struct ftdi_context *ftdi)
 {
     unsigned short usb_val, status;
     int i, ret;
+    unsigned char *eeprom;
 
     if (ftdi == NULL || ftdi->usb_dev == NULL)
         ftdi_error_return(-2, "USB device unavailable");
+    eeprom = ftdi->eeprom->buf;
 
     /* These commands were traced while running MProg */
     if ((ret = ftdi_usb_reset(ftdi)) != 0)
@@ -2816,7 +3469,7 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     if ((ret = ftdi_set_latency_timer(ftdi, 0x77)) != 0)
         return ret;
 
-    for (i = 0; i < ftdi->eeprom_size/2; i++)
+    for (i = 0; i < ftdi->eeprom->size/2; i++)
     {
         usb_val = eeprom[i*2];
         usb_val += eeprom[(i*2)+1] << 8;
@@ -2839,15 +3492,63 @@ int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom)
     \retval  0: all fine
     \retval -1: erase failed
     \retval -2: USB device unavailable
+    \retval -3: Writing magic failed
+    \retval -4: Read EEPROM failed
+    \retval -5: Unexpected EEPROM value
 */
+#define MAGIC 0x55aa
 int ftdi_erase_eeprom(struct ftdi_context *ftdi)
 {
+    unsigned short eeprom_value;
     if (ftdi == NULL || ftdi->usb_dev == NULL)
         ftdi_error_return(-2, "USB device unavailable");
 
-    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_ERASE_EEPROM_REQUEST, 0, 0, NULL, 0, ftdi->usb_write_timeout) < 0)
+    if (ftdi->type == TYPE_R)
+    {
+        ftdi->eeprom->chip = 0;
+        return 0;
+    }
+
+    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_ERASE_EEPROM_REQUEST,
+                                0, 0, NULL, 0, ftdi->usb_write_timeout) < 0)
         ftdi_error_return(-1, "unable to erase eeprom");
 
+
+    /* detect chip type by writing 0x55AA as magic at word position 0xc0
+       Chip is 93x46 if magic is read at word position 0x00, as wraparound happens around 0x40
+       Chip is 93x56 if magic is read at word position 0x40, as wraparound happens around 0x80
+       Chip is 93x66 if magic is only read at word position 0xc0*/
+    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
+                                SIO_WRITE_EEPROM_REQUEST, MAGIC, 0xc0,
+                                NULL, 0, ftdi->usb_write_timeout) != 0)
+        ftdi_error_return(-3, "Writing magic failed");
+    if (ftdi_read_eeprom_location( ftdi, 0x00, &eeprom_value))
+        ftdi_error_return(-4, "Reading failed failed");
+    if (eeprom_value == MAGIC)
+    {
+        ftdi->eeprom->chip = 0x46;
+    }
+    else
+    {
+        if (ftdi_read_eeprom_location( ftdi, 0x40, &eeprom_value))
+            ftdi_error_return(-4, "Reading failed failed");
+        if (eeprom_value == MAGIC)
+            ftdi->eeprom->chip = 0x56;
+        else
+        {
+            if (ftdi_read_eeprom_location( ftdi, 0xc0, &eeprom_value))
+                ftdi_error_return(-4, "Reading failed failed");
+            if (eeprom_value == MAGIC)
+                ftdi->eeprom->chip = 0x66;
+            else
+            {
+                ftdi->eeprom->chip = -1;
+            }
+        }
+    }
+    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_ERASE_EEPROM_REQUEST,
+                                0, 0, NULL, 0, ftdi->usb_write_timeout) < 0)
+        ftdi_error_return(-1, "unable to erase eeprom");
     return 0;
 }
 

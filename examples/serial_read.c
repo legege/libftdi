@@ -25,21 +25,21 @@ int main(int argc, char **argv)
     {
         switch (i)
         {
-	case 'i': // 0=ANY, 1=A, 2=B, 3=C, 4=D
-		interface = strtoul(optarg, NULL, 0);
-		break;
-	case 'v':
-		vid = strtoul(optarg, NULL, 0);
-		break;
-	case 'p':
-		pid = strtoul(optarg, NULL, 0);
-		break;
-	case 'b':
-		baudrate = strtoul(optarg, NULL, 0);
-		break;
-	default:
-		fprintf(stderr, "usage: %s [-i interface] [-v vid] [-p pid] [-b baudrate]\n", *argv);
-		exit(-1);
+            case 'i': // 0=ANY, 1=A, 2=B, 3=C, 4=D
+                interface = strtoul(optarg, NULL, 0);
+                break;
+            case 'v':
+                vid = strtoul(optarg, NULL, 0);
+                break;
+            case 'p':
+                pid = strtoul(optarg, NULL, 0);
+                break;
+            case 'b':
+                baudrate = strtoul(optarg, NULL, 0);
+                break;
+            default:
+                fprintf(stderr, "usage: %s [-i interface] [-v vid] [-p pid] [-b baudrate]\n", *argv);
+                exit(-1);
         }
     }
 
@@ -70,11 +70,12 @@ int main(int argc, char **argv)
     }
 
     // Read data forever
-    while ((f = ftdi_read_data(&ftdic, buf, sizeof(buf))) >= 0) {
-	    fprintf(stderr, "read %d bytes\n", f);
-	    fwrite(buf, f, 1, stdout);
-	    fflush(stderr);
-	    fflush(stdout);
+    while ((f = ftdi_read_data(&ftdic, buf, sizeof(buf))) >= 0)
+    {
+        fprintf(stderr, "read %d bytes\n", f);
+        fwrite(buf, f, 1, stdout);
+        fflush(stderr);
+        fflush(stdout);
     }
 
     ftdi_usb_close(&ftdic);

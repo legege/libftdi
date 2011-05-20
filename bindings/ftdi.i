@@ -41,12 +41,12 @@ extern "C" {
 %clear unsigned short *status;
 
 %apply char *OUTPUT { unsigned char *output };
-    int  ftdi_eeprom_build(struct ftdi_eeprom *eeprom, unsigned char *output);
+    int  ftdi_eeprom_build(struct ftdi_context *ftdi);
 %clear unsigned char *output;
 
 %apply char *OUTPUT { unsigned char *eeprom };
-    int ftdi_read_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
-    int ftdi_write_eeprom(struct ftdi_context *ftdi, unsigned char *eeprom);
+    int ftdi_read_eeprom(struct ftdi_context *ftdi);
+    int ftdi_write_eeprom(struct ftdi_context *ftdi);
 %clear unsigned char *eeprom;
 
 %apply int *OUTPUT { unsigned int *chipid };

@@ -12,7 +12,7 @@
  *       s:<vendor>:<product>:<serial> first device with given vendor id, product id and serial string
  *  -d <datasize to send in bytes>
  *  -b <baudrate> (divides by 16 if bitbang as taken from the ftdi datasheets)
- *  -m <mode to use> r: serial a: async bitbang s:sync bitbang 
+ *  -m <mode to use> r: serial a: async bitbang s:sync bitbang
  *  -c <chunksize>
  *
  * (C) 2009 by Gerd v. Egidy <gerd.von.egidy@intra2net.com>
@@ -39,7 +39,7 @@ double get_prec_time()
 {
     struct timeval tv;
     double res;
-    
+
     gettimeofday(&tv,NULL);
 
     res=tv.tv_sec;
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     char *devicedesc=default_devicedesc;
     int txchunksize=256;
     enum ftdi_mpsse_mode test_mode=BITMODE_BITBANG;
-    
+
     while ((t = getopt (argc, argv, "b:d:p:m:c:")) != -1)
     {
         switch (t)
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
                 datasize = atoi (optarg);
                 break;
             case 'm':
-                switch(*optarg)
+                switch (*optarg)
                 {
                     case 'r':
                         // serial
@@ -162,16 +162,16 @@ int main(int argc, char **argv)
     }
 
     if (ftdi_write_data_set_chunksize(&ftdic, txchunksize) < 0 ||
-        ftdi_read_data_set_chunksize(&ftdic, txchunksize) < 0)
+            ftdi_read_data_set_chunksize(&ftdic, txchunksize) < 0)
     {
         fprintf(stderr,"Can't set chunksize: %s\n",ftdi_get_error_string(&ftdic));
         return EXIT_FAILURE;
     }
 
-    if(test_mode==BITMODE_SYNCBB)
+    if (test_mode==BITMODE_SYNCBB)
     {
         // completely clear the receive buffer before beginning
-        while(ftdi_read_data(&ftdic, rxbuf, txchunksize)>0);
+        while (ftdi_read_data(&ftdic, rxbuf, txchunksize)>0);
     }
 
     start=get_prec_time();
@@ -181,7 +181,7 @@ int main(int argc, char **argv)
     ftdic.usb_read_timeout=1;
 
     i=0;
-    while(i < datasize)
+    while (i < datasize)
     {
         int sendsize=txchunksize;
         if (i+sendsize > datasize)
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 
         i+=sendsize;
 
-        if(test_mode==BITMODE_SYNCBB)
+        if (test_mode==BITMODE_SYNCBB)
         {
             // read the same amount of data as sent
             ftdi_read_data(&ftdic, rxbuf, sendsize);

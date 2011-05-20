@@ -21,6 +21,7 @@ if (EXAMPLES)
     add_executable(serial_read serial_read.c)
     add_executable(baud_test baud_test.c)
     add_executable(stream_test stream_test.c)
+    add_executable(eeprom eeprom.c)
 
     # Linkage
     target_link_libraries(simple ftdi)
@@ -32,6 +33,7 @@ if (EXAMPLES)
     target_link_libraries(serial_read ftdi)
     target_link_libraries(baud_test ftdi)
     target_link_libraries(stream_test ftdi)
+    target_link_libraries(eeprom ftdi)
 
     # libftdi++ examples
     if(FTDI_BUILD_CPP)
