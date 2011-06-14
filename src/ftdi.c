@@ -469,7 +469,7 @@ static unsigned int _ftdi_determine_max_packet_size(struct ftdi_context *ftdi, l
     \retval -8: ftdi context invalid
     \retval -9: libusb_get_device_descriptor() failed
     \retval -10: libusb_get_config_descriptor() failed
-    \retval -11: libusb_etach_kernel_driver() failed
+    \retval -11: libusb_detach_kernel_driver() failed
     \retval -12: libusb_get_configuration() failed
 */
 int ftdi_usb_open_dev(struct ftdi_context *ftdi, libusb_device *dev)
