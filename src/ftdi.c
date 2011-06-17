@@ -2663,6 +2663,10 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
                 output[0x00] |= DRIVER_VCPH;
             else
                 output[0x00] &= ~DRIVER_VCPH;
+            if (eeprom->powersave)
+                output[0x01] |= POWER_SAVE_DISABLE_H;
+            else
+                output[0x01] &= ~POWER_SAVE_DISABLE_H;
 
             if (eeprom->group0_drive > DRIVE_16MA)
                 output[0x0c] |= DRIVE_16MA;
@@ -2925,6 +2929,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     {
         eeprom->channel_a_type   = buf[0x00] & 0xf;
         eeprom->channel_a_driver = (buf[0x00] & DRIVER_VCPH)?DRIVER_VCP:0;
+        eeprom->powersave      =  buf[0x01]       & POWER_SAVE_DISABLE_H;
         eeprom->group0_drive   =  buf[0x0c]       & DRIVE_16MA;
         eeprom->group0_schmitt =  buf[0x0c]       & IS_SCHMITT;
         eeprom->group0_slew    =  buf[0x0c]       & SLOW_SLEW;
@@ -2963,6 +2968,11 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
             fprintf(stdout, "Suspend on DBUS7\n");
         if (eeprom->suspend_pull_downs)
             fprintf(stdout, "Pull IO pins low during suspend\n");
+        if(eeprom->powersave)
+        {
+            if(ftdi->type >= TYPE_232H)
+                fprintf(stdout,"Enter low power state on ACBUS7\n");
+        } 
         if (eeprom->remote_wakeup)
             fprintf(stdout, "Enable Remote Wake Up\n");
         fprintf(stdout, "PNP: %d\n",(eeprom->is_not_pnp)?0:1);
@@ -3175,6 +3185,9 @@ int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
         case GROUP3_SLEW:
             *value = ftdi->eeprom->group3_slew;
             break;
+         case POWER_SAVE:
+            *value = ftdi->eeprom->powersave;
+            break;
         case CHIP_TYPE:
             *value = ftdi->eeprom->chip;
             break;
@@ -3313,6 +3326,9 @@ int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
             break;
         case CHIP_TYPE:
             ftdi->eeprom->chip = value;
+            break;
+         case POWER_SAVE:
+            ftdi->eeprom->powersave = value;
             break;
         case CHIP_SIZE:
             ftdi_error_return(-2, "EEPROM Value can't be changed");

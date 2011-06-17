@@ -272,6 +272,8 @@ struct ftdi_eeprom
     int group3_schmitt;
     int group3_slew;
 
+    int powersave;
+
     /** eeprom size in bytes. This doesn't get stored in the eeprom
         but is the only way to pass it to ftdi_eeprom_build. */
     int size;
@@ -384,7 +386,8 @@ enum ftdi_eeprom_value
     GROUP3_SCHMITT     = 36,
     GROUP3_SLEW        = 37,
     CHIP_SIZE          = 38,
-    CHIP_TYPE          = 39
+    CHIP_TYPE          = 39,
+    POWER_SAVE         = 40
 };
 
 /**
@@ -397,6 +400,8 @@ struct ftdi_device_list
     /** pointer to libusb's usb_device */
     struct libusb_device *dev;
 };
+
+#define POWER_SAVE_DISABLE_H 0x80
 
 #define USE_SERIAL_NUM 0x08
 enum ftdi_cbus_func {/* FIXME: Recheck value, especially the last */
