@@ -23,7 +23,7 @@
 #define FTDI_MAX_EEPROM_SIZE 256
 
 /** FTDI chip type */
-enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2, TYPE_R=3, TYPE_2232H=4, TYPE_4232H=5 };
+enum ftdi_chip_type { TYPE_AM=0, TYPE_BM=1, TYPE_2232C=2, TYPE_R=3, TYPE_2232H=4, TYPE_4232H=5, TYPE_232H=6 };
 /** Parity mode for ftdi_set_line_property() */
 enum ftdi_parity_type { NONE=0, ODD=1, EVEN=2, MARK=3, SPACE=4 };
 /** Number of stop bits for ftdi_set_line_property() */
@@ -85,6 +85,21 @@ enum ftdi_module_detach_mode
 #define LOOPBACK_START 0x84
 #define LOOPBACK_END   0x85
 #define TCK_DIVISOR    0x86
+/* H Type specific commands */
+#define DIS_DIV_5       0x8a
+#define EN_DIV_5        0x8b
+#define EN_3_PHASE      0x8c
+#define DIS_3_PHASE     0x8d
+#define CLK_BITS        0x8e
+#define CLK_BYTES       0x8f
+#define CLK_WAIT_HIGH   0x94
+#define CLK_WAIT_LOW    0x95
+#define EN_ADAPTIVE     0x96
+#define DIS_ADAPTIVE    0x97
+#define CLK_BYTES_OR_HIGH 0x9c
+#define CLK_BYTES_OR_LOW  0x0d
+/*FT232H specific commands */
+#define DRIVE_OPEN_COLLECTOR 0x9e
 /* Value Low */
 /* Value HIGH */ /*rate is 12000000/((1+value)*2) */
 #define DIV_VALUE(rate) (rate > 6000000)?0:((6000000/rate -1) > 0xffff)? 0xffff: (6000000/rate -1)

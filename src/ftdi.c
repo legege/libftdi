@@ -428,7 +428,7 @@ static unsigned int _ftdi_determine_max_packet_size(struct ftdi_context *ftdi, l
     // Determine maximum packet size. Init with default value.
     // New hi-speed devices from FTDI use a packet size of 512 bytes
     // but could be connected to a normal speed USB hub -> 64 bytes packet size.
-    if (ftdi->type == TYPE_2232H || ftdi->type == TYPE_4232H)
+    if (ftdi->type == TYPE_2232H || ftdi->type == TYPE_4232H || ftdi->type == TYPE_232H )
         packet_size = 512;
     else
         packet_size = 64;
@@ -564,6 +564,8 @@ int ftdi_usb_open_dev(struct ftdi_context *ftdi, libusb_device *dev)
         ftdi->type = TYPE_2232H;
     else if (desc.bcdDevice == 0x800)
         ftdi->type = TYPE_4232H;
+    else if (desc.bcdDevice == 0x900)
+        ftdi->type = TYPE_232H;
 
     // Determine maximum packet size
     ftdi->max_packet_size = _ftdi_determine_max_packet_size(ftdi, dev);
@@ -2205,6 +2207,10 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
     if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM) ||
             (ftdi->type == TYPE_R))
         eeprom->product_id = 0x6001;
+    else if (ftdi->type == TYPE_4232H)
+        eeprom->product_id = 0x6011;
+    else if (ftdi->type == TYPE_232H)
+        eeprom->product_id = 0x6014;
     else
         eeprom->product_id = 0x6010;
     if (ftdi->type == TYPE_AM)
@@ -2366,6 +2372,9 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         case TYPE_4232H:
             output[0x07] = 0x08;
             break;
+        case TYPE_232H:
+            output[0x07] = 0x09;
+            break;
         default:
             output[0x07] = 0x00;
     }
@@ -2408,9 +2417,12 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     // Dynamic content
     // Strings start at 0x94 (TYPE_AM, TYPE_BM)
     // 0x96 (TYPE_2232C), 0x98 (TYPE_R) and 0x9a (TYPE_x232H)
+    // 0xa0 (TYPE_232H)
     i = 0;
     switch (ftdi->type)
     {
+        case TYPE_232H:
+            i += 2;
         case TYPE_2232H:
         case TYPE_4232H:
             i += 2;
@@ -2642,7 +2654,14 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
 
             break;
         case TYPE_4232H:
+            output[0x18] = eeprom->chip;
             fprintf(stderr,"FIXME: Build FT4232H specific EEPROM settings\n");
+            break;
+        case TYPE_232H:
+            output[0x1e] = eeprom->chip;
+            fprintf(stderr,"FIXME: Build FT232H specific EEPROM settings\n");
+            break;
+              
     }
 
     // calculate checksum
@@ -2878,10 +2897,15 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
         eeprom->group3_schmitt = (buf[0x0d] >> 4) & IS_SCHMITT;
         eeprom->group3_slew    = (buf[0x0d] >> 4) & SLOW_SLEW;
     }
+    else if (ftdi->type == TYPE_232H)
+    {
+        eeprom->chip = buf[0x1e];
+        /*FIXME: Decipher more values*/
+    }
 
     if (verbose)
     {
-        char *channel_mode[] = {"UART","245","CPU", "unknown", "OPTO"};
+        char *channel_mode[] = {"UART","245","CPU", "unknown", "OPTO"/*, "FT1284"*/};
         fprintf(stdout, "VID:     0x%04x\n",eeprom->vendor_id);
         fprintf(stdout, "PID:     0x%04x\n",eeprom->product_id);
         fprintf(stdout, "Release: 0x%04x\n",release);
@@ -2914,7 +2938,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
                     channel_mode[eeprom->channel_a_type],
                     (eeprom->channel_a_driver)?" VCP":"",
                     (eeprom->high_current_a)?" High Current IO":"");
-        if ((ftdi->type >= TYPE_2232C) && (ftdi->type != TYPE_R))
+        if ((ftdi->type >= TYPE_2232C) && (ftdi->type != TYPE_R) && (ftdi->type != TYPE_232H))
             fprintf(stdout,"Channel B has Mode %s%s%s\n",
                     channel_mode[eeprom->channel_b_type],
                     (eeprom->channel_b_driver)?" VCP":"",
@@ -3430,6 +3454,9 @@ int ftdi_write_eeprom_location(struct ftdi_context *ftdi, int eeprom_addr,
         case TYPE_2232H:
         case TYPE_4232H:
             chip_type_location = 0x18;
+            break;
+        case TYPE_232H:
+            chip_type_location = 0x1e;
             break;
         default:
             ftdi_error_return(-4, "Device can't access unprotected area");
