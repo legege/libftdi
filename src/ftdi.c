@@ -2667,7 +2667,18 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
                 output[0x01] |= POWER_SAVE_DISABLE_H;
             else
                 output[0x01] &= ~POWER_SAVE_DISABLE_H;
-
+            if (eeprom->clock_polarity)
+                output[0x01] |= FT1284_CLK_IDLE_STATE;
+            else
+                output[0x01] &= ~FT1284_CLK_IDLE_STATE;
+            if (eeprom->data_order)
+                output[0x01] |= FT1284_DATA_LSB;
+            else
+                output[0x01] &= ~FT1284_DATA_LSB;
+            if (eeprom->flow_control)
+                output[0x01] |= FT1284_FLOW_CONTROL;
+            else
+                output[0x01] &= ~FT1284_FLOW_CONTROL;
             if (eeprom->group0_drive > DRIVE_16MA)
                 output[0x0c] |= DRIVE_16MA;
             else
@@ -2929,6 +2940,9 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     {
         eeprom->channel_a_type   = buf[0x00] & 0xf;
         eeprom->channel_a_driver = (buf[0x00] & DRIVER_VCPH)?DRIVER_VCP:0;
+        eeprom->clock_polarity =  buf[0x01]       & FT1284_CLK_IDLE_STATE;
+        eeprom->data_order     =  buf[0x01]       & FT1284_DATA_LSB;
+        eeprom->flow_control   =  buf[0x01]       & FT1284_FLOW_CONTROL;
         eeprom->powersave      =  buf[0x01]       & POWER_SAVE_DISABLE_H;
         eeprom->group0_drive   =  buf[0x0c]       & DRIVE_16MA;
         eeprom->group0_schmitt =  buf[0x0c]       & IS_SCHMITT;
@@ -2981,6 +2995,13 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
                     channel_mode[eeprom->channel_a_type],
                     (eeprom->channel_a_driver)?" VCP":"",
                     (eeprom->high_current_a)?" High Current IO":"");
+        if (ftdi->type >= TYPE_232H)
+        {
+            fprintf(stdout,"FT1284 Mode Clock is idle %s, %s first, %sFlow Control\n",
+                    (eeprom->clock_polarity)?"HIGH":"LOW",
+                    (eeprom->data_order)?"LSB":"MSB",
+                    (eeprom->flow_control)?"":"No ");
+        }        
         if ((ftdi->type >= TYPE_2232C) && (ftdi->type != TYPE_R) && (ftdi->type != TYPE_232H))
             fprintf(stdout,"Channel B has Mode %s%s%s\n",
                     channel_mode[eeprom->channel_b_type],
@@ -3188,7 +3209,16 @@ int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
          case POWER_SAVE:
             *value = ftdi->eeprom->powersave;
             break;
-        case CHIP_TYPE:
+          case CLOCK_POLARITY:
+            *value = ftdi->eeprom->clock_polarity;
+            break;
+         case DATA_ORDER:
+            *value = ftdi->eeprom->data_order;
+            break;
+         case FLOW_CONTROL:
+            *value = ftdi->eeprom->flow_control;
+            break;
+       case CHIP_TYPE:
             *value = ftdi->eeprom->chip;
             break;
         case CHIP_SIZE:
@@ -3329,6 +3359,15 @@ int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
             break;
          case POWER_SAVE:
             ftdi->eeprom->powersave = value;
+            break;
+         case CLOCK_POLARITY:
+            ftdi->eeprom->clock_polarity = value;
+            break;
+         case DATA_ORDER:
+            ftdi->eeprom->data_order = value;
+            break;
+         case FLOW_CONTROL:
+            ftdi->eeprom->flow_control = value;
             break;
         case CHIP_SIZE:
             ftdi_error_return(-2, "EEPROM Value can't be changed");

@@ -273,6 +273,10 @@ struct ftdi_eeprom
     int group3_slew;
 
     int powersave;
+    
+    int clock_polarity;
+    int data_order;
+    int flow_control;
 
     /** eeprom size in bytes. This doesn't get stored in the eeprom
         but is the only way to pass it to ftdi_eeprom_build. */
@@ -387,7 +391,10 @@ enum ftdi_eeprom_value
     GROUP3_SLEW        = 37,
     CHIP_SIZE          = 38,
     CHIP_TYPE          = 39,
-    POWER_SAVE         = 40
+    POWER_SAVE         = 40,
+    CLOCK_POLARITY     = 41,
+    DATA_ORDER         = 42,
+    FLOW_CONTROL       = 43
 };
 
 /**
@@ -400,7 +407,9 @@ struct ftdi_device_list
     /** pointer to libusb's usb_device */
     struct libusb_device *dev;
 };
-
+#define FT1284_CLK_IDLE_STATE 0x01
+#define FT1284_DATA_LSB       0x02
+#define FT1284_FLOW_CONTROL   0x04
 #define POWER_SAVE_DISABLE_H 0x80
 
 #define USE_SERIAL_NUM 0x08
