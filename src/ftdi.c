@@ -2658,6 +2658,12 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             fprintf(stderr,"FIXME: Build FT4232H specific EEPROM settings\n");
             break;
         case TYPE_232H:
+            output[0x00] = (eeprom->channel_a_type);
+            if ( eeprom->channel_a_driver == DRIVER_VCP)
+                output[0x00] |= DRIVER_VCPH;
+            else
+                output[0x00] &= ~DRIVER_VCPH;
+
             output[0x1e] = eeprom->chip;
             fprintf(stderr,"FIXME: Build FT232H specific EEPROM settings\n");
             break;
@@ -2899,13 +2905,15 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     }
     else if (ftdi->type == TYPE_232H)
     {
+        eeprom->channel_a_type   = buf[0x00] & 0xf;
+        eeprom->channel_a_driver = (buf[0x00] & DRIVER_VCPH)?DRIVER_VCP:0;
         eeprom->chip = buf[0x1e];
         /*FIXME: Decipher more values*/
     }
 
     if (verbose)
     {
-        char *channel_mode[] = {"UART","245","CPU", "unknown", "OPTO"/*, "FT1284"*/};
+        char *channel_mode[] = {"UART","245","CPU", "unknown", "OPTO", "unknown1","unknown2","unknown3","FT1284"};
         fprintf(stdout, "VID:     0x%04x\n",eeprom->vendor_id);
         fprintf(stdout, "PID:     0x%04x\n",eeprom->product_id);
         fprintf(stdout, "Release: 0x%04x\n",release);

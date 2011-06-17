@@ -436,6 +436,7 @@ enum ftdi_cbus_func {/* FIXME: Recheck value, especially the last */
 
 /** Driver Type. */
 #define DRIVER_VCP 0x08
+#define DRIVER_VCPH 0x10 /* FT232H has moved the VCP bit */
 
 #define USE_USB_VERSION_BIT 0x10
 
