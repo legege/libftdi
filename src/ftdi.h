@@ -242,9 +242,9 @@ struct ftdi_eeprom
     int channel_a_driver;
     int channel_b_driver;
 
-    /* Special function of FT232R devices (and possibly others as well) */
+    /* Special function of FT232R/FT232H devices (and possibly others as well) */
     /** CBUS pin function. See CBUS_xxx defines. */
-    int cbus_function[5];
+    int cbus_function[9];
     /** Select hight current drive on R devices. */
     int high_current;
     /** Select hight current drive on A channel (2232C */
@@ -373,28 +373,33 @@ enum ftdi_eeprom_value
     CBUS_FUNCTION_2    = 19,
     CBUS_FUNCTION_3    = 20,
     CBUS_FUNCTION_4    = 21,
-    HIGH_CURRENT       = 22,
-    HIGH_CURRENT_A     = 23,
-    HIGH_CURRENT_B     = 24,
-    INVERT             = 25,
-    GROUP0_DRIVE       = 26,
-    GROUP0_SCHMITT     = 27,
-    GROUP0_SLEW        = 28,
-    GROUP1_DRIVE       = 29,
-    GROUP1_SCHMITT     = 30,
-    GROUP1_SLEW        = 31,
-    GROUP2_DRIVE       = 32,
-    GROUP2_SCHMITT     = 33,
-    GROUP2_SLEW        = 34,
-    GROUP3_DRIVE       = 35,
-    GROUP3_SCHMITT     = 36,
-    GROUP3_SLEW        = 37,
-    CHIP_SIZE          = 38,
-    CHIP_TYPE          = 39,
-    POWER_SAVE         = 40,
-    CLOCK_POLARITY     = 41,
-    DATA_ORDER         = 42,
-    FLOW_CONTROL       = 43
+    CBUS_FUNCTION_5    = 22,
+    CBUS_FUNCTION_6    = 23,
+    CBUS_FUNCTION_7    = 24,
+    CBUS_FUNCTION_8    = 25,
+    CBUS_FUNCTION_9    = 26,
+    HIGH_CURRENT       = 27,
+    HIGH_CURRENT_A     = 28,
+    HIGH_CURRENT_B     = 29,
+    INVERT             = 30,
+    GROUP0_DRIVE       = 31,
+    GROUP0_SCHMITT     = 32,
+    GROUP0_SLEW        = 33,
+    GROUP1_DRIVE       = 34,
+    GROUP1_SCHMITT     = 35,
+    GROUP1_SLEW        = 36,
+    GROUP2_DRIVE       = 37,
+    GROUP2_SCHMITT     = 38,
+    GROUP2_SLEW        = 39,
+    GROUP3_DRIVE       = 40,
+    GROUP3_SCHMITT     = 41,
+    GROUP3_SLEW        = 42,
+    CHIP_SIZE          = 43,
+    CHIP_TYPE          = 44,
+    POWER_SAVE         = 45,
+    CLOCK_POLARITY     = 46,
+    DATA_ORDER         = 47,
+    FLOW_CONTROL       = 48
 };
 
 /**
@@ -417,6 +422,11 @@ enum ftdi_cbus_func {/* FIXME: Recheck value, especially the last */
     CBUS_TXDEN = 0, CBUS_PWREN = 1, CBUS_RXLED = 2, CBUS_TXLED = 3, CBUS_TXRXLED = 4,
     CBUS_SLEEP = 5, CBUS_CLK48 = 6, CBUS_CLK24 = 7, CBUS_CLK12 = 8, CBUS_CLK6 =  9,
     CBUS_IOMODE = 0xa, CBUS_BB_WR = 0xb, CBUS_BB_RD = 0xc, CBUS_BB   = 0xd};
+
+enum ftdi_cbush_func {/* FIXME: Recheck value, especially the last */
+    CBUSH_TRISTATE = 0, CBUSH_RXLED = 1, CBUSH_TXLED = 2, CBUSH_TXRXLED = 3, CBUSH_PWREN = 4,
+    CBUSH_SLEEP = 5, CBUSH_DRIVE_0 = 6, CBUSG_DRIVE1 = 7, CBUSH_IOMODE = 8, CBUSH_TXDEN =  9,
+    CBUSH_CLK30 = 0xa, CBUSH_CLK15 = 0xb, CBUSH_CLK7_5 = 0xc};
 
 /** Invert TXD# */
 #define INVERT_TXD 0x01

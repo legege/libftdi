@@ -2261,10 +2261,36 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
         eeprom->cbus_function[4] = CBUS_SLEEP;
     }
     else
+    {
+        if(ftdi->type == TYPE_232H)
+        {
+            int i;
+            for (i=0; i<10; i++)
+                eeprom->cbus_function[i] = CBUSH_TRISTATE;
+        }
         eeprom->size = -1;
+    }
     return 0;
 }
+/*FTD2XX doesn't check for values not fitting in the ACBUS Signal oprtions*/
+void set_ft232h_cbus(struct ftdi_eeprom *eeprom, unsigned char * output)
+{
+    int i;
+    for(i=0; i<5;i++)
+    {
+        int mode_low, mode_high;
+        if (eeprom->cbus_function[2*i]> CBUSH_CLK7_5)
+            mode_low = CBUSH_TRISTATE;
+        else
+            mode_low = eeprom->cbus_function[2*i];
+        if (eeprom->cbus_function[2*i+1]> CBUSH_CLK7_5)
+            mode_high = CBUSH_TRISTATE;
+        else
+            mode_high = eeprom->cbus_function[2*i];
 
+        output[0x18+i] = mode_high <<4 | mode_low;
+    }
+}
 /**
     Build binary buffer from ftdi_eeprom structure.
     Output is suitable for ftdi_write_eeprom().
@@ -2697,6 +2723,8 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             if (eeprom->group1_slew == SLOW_SLEW)
                 output[0x0d] |= SLOW_SLEW;
 
+            set_ft232h_cbus(eeprom, output);
+
             output[0x1e] = eeprom->chip;
             fprintf(stderr,"FIXME: Build FT232H specific EEPROM settings\n");
             break;
@@ -2938,6 +2966,8 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     }
     else if (ftdi->type == TYPE_232H)
     {
+        int i;
+
         eeprom->channel_a_type   = buf[0x00] & 0xf;
         eeprom->channel_a_driver = (buf[0x00] & DRIVER_VCPH)?DRIVER_VCP:0;
         eeprom->clock_polarity =  buf[0x01]       & FT1284_CLK_IDLE_STATE;
@@ -2951,6 +2981,11 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
         eeprom->group1_schmitt =  buf[0x0d]       & IS_SCHMITT;
         eeprom->group1_slew    =  buf[0x0d]       & SLOW_SLEW;
 
+        for(i=0; i<5; i++)
+        {
+            eeprom->cbus_function[2*i  ] =  buf[0x18+i] & 0x0f;
+            eeprom->cbus_function[2*i+1] = (buf[0x18+i] >> 4) & 0x0f;
+        }
         eeprom->chip = buf[0x1e];
         /*FIXME: Decipher more values*/
     }
@@ -3036,6 +3071,11 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
         }
         else if (ftdi->type == TYPE_232H)
         {
+            int i;
+            char *cbush_mux[] = {"TRISTATE","RXLED","TXLED", "TXRXLED","PWREN",
+                                "SLEEP","DRIVE_0","DRIVE_1","IOMODE","TXDEN",
+                                "CLK30","CLK15","CLK7_5"
+                               };
             fprintf(stdout,"ACBUS has %d mA drive%s%s\n",
                     (eeprom->group0_drive+1) *4,
                     (eeprom->group0_schmitt)?" Schmitt Input":"",
@@ -3044,6 +3084,13 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
                     (eeprom->group1_drive+1) *4,
                     (eeprom->group1_schmitt)?" Schmitt Input":"",
                     (eeprom->group1_slew)?" Slow Slew":"");
+            for (i=0; i<10; i++)
+            {
+                if (eeprom->cbus_function[i]<= CBUSH_CLK7_5 )
+                    fprintf(stdout,"C%d Function: %s\n", i,
+                            cbush_mux[eeprom->cbus_function[i]]);
+            }
+
         }
 
         if (ftdi->type == TYPE_R)
@@ -3157,6 +3204,21 @@ int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
             break;
         case CBUS_FUNCTION_4:
             *value = ftdi->eeprom->cbus_function[4];
+            break;
+        case CBUS_FUNCTION_5:
+            *value = ftdi->eeprom->cbus_function[5];
+            break;
+        case CBUS_FUNCTION_6:
+            *value = ftdi->eeprom->cbus_function[6];
+            break;
+        case CBUS_FUNCTION_7:
+            *value = ftdi->eeprom->cbus_function[7];
+            break;
+        case CBUS_FUNCTION_8:
+            *value = ftdi->eeprom->cbus_function[8];
+            break;
+        case CBUS_FUNCTION_9:
+            *value = ftdi->eeprom->cbus_function[8];
             break;
         case HIGH_CURRENT:
             *value = ftdi->eeprom->high_current;
@@ -3305,6 +3367,21 @@ int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
             break;
         case CBUS_FUNCTION_4:
             ftdi->eeprom->cbus_function[4] = value;
+            break;
+        case CBUS_FUNCTION_5:
+            ftdi->eeprom->cbus_function[5] = value;
+            break;
+        case CBUS_FUNCTION_6:
+            ftdi->eeprom->cbus_function[6] = value;
+            break;
+        case CBUS_FUNCTION_7:
+            ftdi->eeprom->cbus_function[7] = value;
+            break;
+        case CBUS_FUNCTION_8:
+            ftdi->eeprom->cbus_function[8] = value;
+            break;
+        case CBUS_FUNCTION_9:
+            ftdi->eeprom->cbus_function[9] = value;
             break;
         case HIGH_CURRENT:
             ftdi->eeprom->high_current = value;
