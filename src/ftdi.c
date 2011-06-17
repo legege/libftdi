@@ -2537,7 +2537,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             break;
         case TYPE_2232C:
 
-            output[0x00] = (eeprom->channel_a_type);
+            output[0x00] = (1<<(eeprom->channel_a_type)) & 0x7;
             if ( eeprom->channel_a_driver == DRIVER_VCP)
                 output[0x00] |= DRIVER_VCP;
             else
@@ -2548,7 +2548,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             else
                 output[0x00] &= ~HIGH_CURRENT_DRIVE;
 
-            output[0x01] = (eeprom->channel_b_type);
+            output[0x01] = (1<<(eeprom->channel_b_type)) & 0x7;
             if ( eeprom->channel_b_driver == DRIVER_VCP)
                 output[0x01] |= DRIVER_VCP;
             else
@@ -2619,13 +2619,13 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
                 output[0x16] = eeprom->cbus_function[4];
             break;
         case TYPE_2232H:
-            output[0x00] = (eeprom->channel_a_type);
+            output[0x00] = (1<<(eeprom->channel_a_type)) & 0x7;
             if ( eeprom->channel_a_driver == DRIVER_VCP)
                 output[0x00] |= DRIVER_VCP;
             else
                 output[0x00] &= ~DRIVER_VCP;
 
-            output[0x01] = (eeprom->channel_b_type);
+            output[0x01] = (1<<(eeprom->channel_b_type)) & 0x7;
             if ( eeprom->channel_b_driver == DRIVER_VCP)
                 output[0x01] |= DRIVER_VCP;
             else
@@ -2684,7 +2684,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             fprintf(stderr,"FIXME: Build FT4232H specific EEPROM settings\n");
             break;
         case TYPE_232H:
-            output[0x00] = (eeprom->channel_a_type);
+            output[0x00] = (1<<(eeprom->channel_a_type)) & 0xf;
             if ( eeprom->channel_a_driver == DRIVER_VCP)
                 output[0x00] |= DRIVER_VCPH;
             else
@@ -2747,6 +2747,22 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
     output[eeprom->size-1] = checksum >> 8;
 
     return user_area_size;
+}
+/* FTD2XX doesn't allow to set multiple bits in the interface mode bitfield*/
+unsigned char bit2type(unsigned char bits)
+{
+    switch (bits)
+    {
+    case 0: return 0;
+    case 1: return 1;
+    case 2: return 2;
+    case 4: return 3;
+    case 8: return 4;
+    default:
+        fprintf(stderr," Unexpected value %d for Hardware Interface type\n",
+                bits);
+    }
+    return 0;
 }
 
 /**
@@ -2907,7 +2923,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     }
     else if (ftdi->type == TYPE_2232C)
     {
-        eeprom->channel_a_type   = buf[0x00] & 0x7;
+        eeprom->channel_a_type   = bit2type(buf[0x00] & 0x7);
         eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
         eeprom->high_current_a   = buf[0x00] & HIGH_CURRENT_DRIVE;
         eeprom->channel_b_type   = buf[0x01] & 0x7;
@@ -2942,7 +2958,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     }
     else if ((ftdi->type == TYPE_2232H) ||(ftdi->type == TYPE_4232H))
     {
-        eeprom->channel_a_type   = buf[0x00] & 0x7;
+        eeprom->channel_a_type   = bit2type(buf[0x00] & 0x7);
         eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
         eeprom->channel_b_type   = buf[0x01] & 0x7;
         eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
@@ -2992,7 +3008,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
 
     if (verbose)
     {
-        char *channel_mode[] = {"UART","245","CPU", "unknown", "OPTO", "unknown1","unknown2","unknown3","FT1284"};
+        char *channel_mode[] = {"UART","245","CPU", "OPTO", "FT1284"};
         fprintf(stdout, "VID:     0x%04x\n",eeprom->vendor_id);
         fprintf(stdout, "PID:     0x%04x\n",eeprom->product_id);
         fprintf(stdout, "Release: 0x%04x\n",release);
