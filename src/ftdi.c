@@ -2664,6 +2664,24 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             else
                 output[0x00] &= ~DRIVER_VCPH;
 
+            if (eeprom->group0_drive > DRIVE_16MA)
+                output[0x0c] |= DRIVE_16MA;
+            else
+                output[0x0c] |= eeprom->group0_drive;
+            if (eeprom->group0_schmitt == IS_SCHMITT)
+                output[0x0c] |= IS_SCHMITT;
+            if (eeprom->group0_slew == SLOW_SLEW)
+                output[0x0c] |= SLOW_SLEW;
+
+            if (eeprom->group1_drive > DRIVE_16MA)
+                output[0x0d] |= DRIVE_16MA;
+            else
+                output[0x0d] |= eeprom->group1_drive;
+            if (eeprom->group1_schmitt == IS_SCHMITT)
+                output[0x0d] |= IS_SCHMITT;
+            if (eeprom->group1_slew == SLOW_SLEW)
+                output[0x0d] |= SLOW_SLEW;
+
             output[0x1e] = eeprom->chip;
             fprintf(stderr,"FIXME: Build FT232H specific EEPROM settings\n");
             break;
@@ -2907,6 +2925,13 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     {
         eeprom->channel_a_type   = buf[0x00] & 0xf;
         eeprom->channel_a_driver = (buf[0x00] & DRIVER_VCPH)?DRIVER_VCP:0;
+        eeprom->group0_drive   =  buf[0x0c]       & DRIVE_16MA;
+        eeprom->group0_schmitt =  buf[0x0c]       & IS_SCHMITT;
+        eeprom->group0_slew    =  buf[0x0c]       & SLOW_SLEW;
+        eeprom->group1_drive   =  buf[0x0d]       & DRIVE_16MA;
+        eeprom->group1_schmitt =  buf[0x0d]       & IS_SCHMITT;
+        eeprom->group1_slew    =  buf[0x0d]       & SLOW_SLEW;
+
         eeprom->chip = buf[0x1e];
         /*FIXME: Decipher more values*/
     }
@@ -2978,6 +3003,18 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
                     (eeprom->group3_schmitt)?" Schmitt Input":"",
                     (eeprom->group3_slew)?" Slow Slew":"");
         }
+        else if (ftdi->type == TYPE_232H)
+        {
+            fprintf(stdout,"ACBUS has %d mA drive%s%s\n",
+                    (eeprom->group0_drive+1) *4,
+                    (eeprom->group0_schmitt)?" Schmitt Input":"",
+                    (eeprom->group0_slew)?" Slow Slew":"");
+            fprintf(stdout,"ADBUS has %d mA drive%s%s\n",
+                    (eeprom->group1_drive+1) *4,
+                    (eeprom->group1_schmitt)?" Schmitt Input":"",
+                    (eeprom->group1_slew)?" Slow Slew":"");
+        }
+
         if (ftdi->type == TYPE_R)
         {
             char *cbus_mux[] = {"TXDEN","PWREN","RXLED", "TXLED","TX+RXLED",
