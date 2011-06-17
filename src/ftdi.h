@@ -45,6 +45,7 @@ enum ftdi_mpsse_mode
     BITMODE_OPTO   = 0x10,    /**< Fast Opto-Isolated Serial Interface Mode, available on 2232x chips  */
     BITMODE_CBUS   = 0x20,    /**< Bitbang on CBUS pins of R-type chips, configure in EEPROM before */
     BITMODE_SYNCFF = 0x40,    /**< Single Channel Synchronous FIFO mode, available on 2232H chips */
+    BITMODE_FT1284 = 0x80,    /**< FT1284 mode, available on 232H chips */
 };
 
 /** Port interface for chips with multiple interfaces */
@@ -413,7 +414,7 @@ struct ftdi_device_list
     struct libusb_device *dev;
 };
 #define FT1284_CLK_IDLE_STATE 0x01
-#define FT1284_DATA_LSB       0x02
+#define FT1284_DATA_LSB       0x02 /* DS_FT232H 1.3 amd ftd2xx.h 1.0.4 disagree here*/
 #define FT1284_FLOW_CONTROL   0x04
 #define POWER_SAVE_DISABLE_H 0x80
 
@@ -449,7 +450,8 @@ enum ftdi_cbush_func {/* FIXME: Recheck value, especially the last */
 #define CHANNEL_IS_UART 0x0
 #define CHANNEL_IS_245  0x1
 #define CHANNEL_IS_CPU  0x2
-#define CHANNEL_IS_OPTO 0x4
+#define CHANNEL_IS_OPTO 0x3
+#define CHANNEL_IS_FT1284 0x4
 
 #define DRIVE_4MA  0
 #define DRIVE_8MA  1
