@@ -2537,7 +2537,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             break;
         case TYPE_2232C:
 
-            output[0x00] = (1<<(eeprom->channel_a_type)) & 0x7;
+            output[0x00] = (eeprom->channel_a_type)?((1<<(eeprom->channel_a_type)) & 0x7):0;
             if ( eeprom->channel_a_driver == DRIVER_VCP)
                 output[0x00] |= DRIVER_VCP;
             else
@@ -2548,7 +2548,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             else
                 output[0x00] &= ~HIGH_CURRENT_DRIVE;
 
-            output[0x01] = (1<<(eeprom->channel_b_type)) & 0x7;
+            output[0x01] = (eeprom->channel_b_type)?((1<<(eeprom->channel_b_type)) & 0x7):0;
             if ( eeprom->channel_b_driver == DRIVER_VCP)
                 output[0x01] |= DRIVER_VCP;
             else
@@ -2619,13 +2619,13 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
                 output[0x16] = eeprom->cbus_function[4];
             break;
         case TYPE_2232H:
-            output[0x00] = (1<<(eeprom->channel_a_type)) & 0x7;
+            output[0x00] = (eeprom->channel_a_type)?((1<<(eeprom->channel_a_type)) & 0x7):0;
             if ( eeprom->channel_a_driver == DRIVER_VCP)
                 output[0x00] |= DRIVER_VCP;
             else
                 output[0x00] &= ~DRIVER_VCP;
 
-            output[0x01] = (1<<(eeprom->channel_b_type)) & 0x7;
+            output[0x01] = (eeprom->channel_b_type)?((1<<(eeprom->channel_b_type)) & 0x7):0;
             if ( eeprom->channel_b_driver == DRIVER_VCP)
                 output[0x01] |= DRIVER_VCP;
             else
@@ -2684,7 +2684,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             fprintf(stderr,"FIXME: Build FT4232H specific EEPROM settings\n");
             break;
         case TYPE_232H:
-            output[0x00] = (1<<(eeprom->channel_a_type)) & 0xf;
+            output[0x00] = (eeprom->channel_a_type)?((1<<(eeprom->channel_a_type)) & 0xf):0;
             if ( eeprom->channel_a_driver == DRIVER_VCP)
                 output[0x00] |= DRIVER_VCPH;
             else
