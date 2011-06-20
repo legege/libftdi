@@ -123,7 +123,6 @@ int main(int argc, char **argv)
     if (use_defaults)
     {
         ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAG", "0001");
-        ftdi_eeprom_initdefaults(ftdi, "IKDA", "FTDIJTAG", "0001");
         if (ftdi_set_eeprom_value(ftdi, MAX_POWER, 500) <0)
         {
             fprintf(stderr, "ftdi_set_eeprom_value: %d (%s)\n",
