@@ -188,6 +188,12 @@ int main(int argc, char **argv)
 
 
     ftdi_get_eeprom_value(ftdi, CHIP_SIZE, & value);
+    if (value <0)
+    {
+        fprintf(stderr, "No EEPROM found\n");
+        return -1;
+
+    }
     fprintf(stderr, "Chip type %d ftdi_eeprom_size: %d\n", ftdi->type, value);
     if (ftdi->type == TYPE_R)
         size = 0xa0;
