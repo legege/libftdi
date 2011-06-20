@@ -55,6 +55,7 @@ int main(int argc, char **argv)
     unsigned char *txbuf;
     unsigned char *rxbuf;
     double start, duration, plan;
+    int retval= 0;
 
     // default values
     int baud=9600;
@@ -113,13 +114,15 @@ int main(int argc, char **argv)
     if (ftdi_init(&ftdic) < 0)
     {
         fprintf(stderr, "ftdi_init failed\n");
-        return EXIT_FAILURE;
+        retval = EXIT_FAILURE;
+        goto done;
     }
 
     if (ftdi_usb_open_string(&ftdic, devicedesc) < 0)
     {
         fprintf(stderr,"Can't open ftdi device: %s\n",ftdi_get_error_string(&ftdic));
-        return EXIT_FAILURE;
+        retval = EXIT_FAILURE;
+        goto do_deinit;
     }
 
     set_baud=baud;
@@ -135,7 +138,8 @@ int main(int argc, char **argv)
     if (ftdi_set_bitmode(&ftdic, 0xFF,test_mode) < 0)
     {
         fprintf(stderr,"Can't set mode: %s\n",ftdi_get_error_string(&ftdic));
-        return EXIT_FAILURE;
+        retval = EXIT_FAILURE;
+        goto do_close;
     }
 
     if (test_mode==BITMODE_RESET)
@@ -165,7 +169,8 @@ int main(int argc, char **argv)
             ftdi_read_data_set_chunksize(&ftdic, txchunksize) < 0)
     {
         fprintf(stderr,"Can't set chunksize: %s\n",ftdi_get_error_string(&ftdic));
-        return EXIT_FAILURE;
+        retval = EXIT_FAILURE;
+        goto do_close;
     }
 
     if (test_mode==BITMODE_SYNCBB)
@@ -191,7 +196,8 @@ int main(int argc, char **argv)
         {
             fprintf(stderr,"write failed at %d: %s\n",
                     i, ftdi_get_error_string(&ftdic));
-            return EXIT_FAILURE;
+            retval = EXIT_FAILURE;
+            goto do_close;
         }
 
         i+=sendsize;
@@ -205,8 +211,14 @@ int main(int argc, char **argv)
 
     duration=get_prec_time()-start;
     printf("and took %.4f seconds, this is %.0f baud or factor %.3f\n",duration,(plan*baud)/duration,plan/duration);
-
+do_close:
     ftdi_usb_close(&ftdic);
+do_deinit:
     ftdi_deinit(&ftdic);
+done:
+    if(rxbuf)
+        free(rxbuf);
+    if(txbuf)
+        free(txbuf);
     exit (0);
 }
