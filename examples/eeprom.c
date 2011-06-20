@@ -177,23 +177,13 @@ int main(int argc, char **argv)
                     f, ftdi_get_error_string(ftdi));
             exit(-1);
         }
-        f = ftdi_read_eeprom(ftdi);
-        if (f < 0)
-        {
-            fprintf(stderr, "ftdi_read_eeprom: %d (%s)\n",
-                    f, ftdi_get_error_string(ftdi));
-            exit(-1);
-        }
     }
-    else
+    f = ftdi_read_eeprom(ftdi);
+    if (f < 0)
     {
-        f = ftdi_read_eeprom(ftdi);
-        if (f < 0)
-        {
-            fprintf(stderr, "ftdi_read_eeprom: %d (%s)\n",
-                    f, ftdi_get_error_string(ftdi));
-            exit(-1);
-        }
+        fprintf(stderr, "ftdi_read_eeprom: %d (%s)\n",
+                f, ftdi_get_error_string(ftdi));
+        exit(-1);
     }
 
 
