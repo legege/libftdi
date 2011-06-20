@@ -2226,6 +2226,7 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
     if (eeprom->product)
         free (eeprom->product);
     eeprom->product = NULL;
+    if(product)
     {
         eeprom->product = malloc(strlen(product)+1);
         if (eeprom->product)
