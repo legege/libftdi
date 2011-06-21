@@ -611,7 +611,6 @@ int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product)
     \retval -7: set baudrate failed
     \retval -8: get product description failed
     \retval -9: get serial number failed
-    \retval -11: libusb_init() failed
     \retval -12: libusb_get_device_list() failed
     \retval -13: libusb_get_device_descriptor() failed
 */
@@ -655,9 +654,6 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
 
     if (ftdi == NULL)
         ftdi_error_return(-11, "ftdi context invalid");
-
-    if (libusb_init(&ftdi->usb_ctx) < 0)
-        ftdi_error_return(-11, "libusb_init() failed");
 
     if (libusb_get_device_list(ftdi->usb_ctx, &devs) < 0)
         ftdi_error_return(-12, "libusb_get_device_list() failed");
@@ -734,7 +730,6 @@ int ftdi_usb_open_desc_index(struct ftdi_context *ftdi, int vendor, int product,
     \note The description format may be extended in later versions.
 
     \retval  0: all fine
-    \retval -1: libusb_init() failed
     \retval -2: libusb_get_device_list() failed
     \retval -3: usb device not found
     \retval -4: unable to open device
@@ -761,9 +756,6 @@ int ftdi_usb_open_string(struct ftdi_context *ftdi, const char* description)
         libusb_device **devs;
         unsigned int bus_number, device_address;
         int i = 0;
-
-        if (libusb_init (&ftdi->usb_ctx) < 0)
-            ftdi_error_return(-1, "libusb_init() failed");
 
         if (libusb_get_device_list(ftdi->usb_ctx, &devs) < 0)
             ftdi_error_return(-2, "libusb_get_device_list() failed");
