@@ -152,6 +152,13 @@ ftdi_readstream(struct ftdi_context *ftdi,
     int bufferSize = packetsPerTransfer * ftdi->max_packet_size;
     int xferIndex;
     int err = 0;
+
+    /* Only FT2232H and FT232H know about the synchronous FIFO Mode*/
+    if ((ftdi->type != TYPE_2232H) && (ftdi->type != TYPE_232H))
+    {
+        fprintf(stderr,"Device doesn't support synchronous FIFO mode\n");
+        return 1;
+    }
     
     /* We don't know in what state we are, switch to reset*/
     if (ftdi_set_bitmode(ftdi,  0xff, BITMODE_RESET) < 0)
