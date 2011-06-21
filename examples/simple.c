@@ -22,6 +22,7 @@ int main(void)
     if ((ret = ftdi_usb_open(&ftdic, 0x0403, 0x6001)) < 0)
     {
         fprintf(stderr, "unable to open ftdi device: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
+        ftdi_deinit(&ftdic);
         return EXIT_FAILURE;
     }
 
@@ -36,6 +37,7 @@ int main(void)
     if ((ret = ftdi_usb_close(&ftdic)) < 0)
     {
         fprintf(stderr, "unable to close ftdi device: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
+        ftdi_deinit(&ftdic);
         return EXIT_FAILURE;
     }
 

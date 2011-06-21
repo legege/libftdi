@@ -41,6 +41,7 @@ int main(void)
     unsigned char buf[1];
     unsigned char bitmask;
     char input[10];
+    int retval = 0;
 
     if (ftdi_init(&ftdic) < 0)
     {
@@ -52,6 +53,7 @@ int main(void)
     if (f < 0 && f != -5)
     {
         fprintf(stderr, "unable to open ftdi device: %d (%s)\n", f, ftdi_get_error_string(&ftdic));
+        ftdi_deinit(&ftdic);
         exit(-1);
     }
     printf("ftdi open succeeded: %d\n",f);
@@ -67,7 +69,9 @@ int main(void)
         if (f < 0)
         {
             fprintf(stderr, "set_bitmode failed for 0x%x, error %d (%s)\n", bitmask, f, ftdi_get_error_string(&ftdic));
-            exit(-1);
+            ftdi_usb_close(&ftdic);
+            ftdi_deinit(&ftdic);
+            retval = -1;
         }
 
         // read CBUS
@@ -75,6 +79,8 @@ int main(void)
         if (f < 0)
         {
             fprintf(stderr, "read_pins failed, error %d (%s)\n", f, ftdi_get_error_string(&ftdic));
+            ftdi_usb_close(&ftdic);
+            ftdi_deinit(&ftdic);
             exit(-1);
         }
         printf("Read returned 0x%01x\n", buf[0] & 0x0f);

@@ -34,6 +34,7 @@ int main(int argc, char **argv)
     if (f < 0 && f != -5)
     {
         fprintf(stderr, "unable to open ftdi device: %d (%s)\n", f, ftdi_get_error_string(&ftdic));
+        ftdi_deinit(&ftdic);
         exit(-1);
     }
     printf("ftdi open succeeded(channel 1): %d\n",f);
@@ -52,6 +53,7 @@ int main(int argc, char **argv)
     if (f < 0 && f != -5)
     {
         fprintf(stderr, "unable to open ftdi device: %d (%s)\n", f, ftdi_get_error_string(&ftdic2));
+        ftdi_deinit(&ftdic2);
         exit(-1);
     }
     printf("ftdi open succeeded(channel 2): %d\n",f);

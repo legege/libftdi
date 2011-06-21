@@ -41,6 +41,7 @@ void ftdi_fatal (struct ftdi_context *ftdi, char *str)
 {
     fprintf (stderr, "%s: %s\n",
              str, ftdi_get_error_string (ftdi));
+    ftdi_deinit(ftdi);
     exit (1);
 }
 
@@ -64,6 +65,7 @@ int main(int argc, char **argv)
     if (ftdi_init(&ftdic) < 0)
     {
         fprintf(stderr, "ftdi_init failed\n");
+        ftdi_deinit(&ftdic);
         return EXIT_FAILURE;
     }
 

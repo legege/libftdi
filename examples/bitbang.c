@@ -13,6 +13,7 @@ int main(int argc, char **argv)
     struct ftdi_context ftdic;
     int f,i;
     unsigned char buf[1];
+    int retval = 0;
 
     if (ftdi_init(&ftdic) < 0)
     {
@@ -25,7 +26,8 @@ int main(int argc, char **argv)
     if (f < 0 && f != -5)
     {
         fprintf(stderr, "unable to open ftdi device: %d (%s)\n", f, ftdi_get_error_string(&ftdic));
-        exit(-1);
+        retval = 1;
+        goto done;
     }
 
     printf("ftdi open succeeded: %d\n",f);
@@ -78,7 +80,8 @@ int main(int argc, char **argv)
     ftdi_disable_bitbang(&ftdic);
 
     ftdi_usb_close(&ftdic);
+done:
     ftdi_deinit(&ftdic);
 
-    return 0;
+    return retval;
 }
