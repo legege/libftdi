@@ -74,6 +74,7 @@ static void ftdi_usb_close_internal (struct ftdi_context *ftdi)
     \retval  0: all fine
     \retval -1: couldn't allocate read buffer
     \retval -2: couldn't allocate struct  buffer
+    \retval -3: libusb_init() failed
 
     \remark This should be called before all functions
 */
@@ -94,18 +95,19 @@ int ftdi_init(struct ftdi_context *ftdi)
     ftdi->readbuffer_remaining = 0;
     ftdi->writebuffer_chunksize = 4096;
     ftdi->max_packet_size = 0;
+    ftdi->error_str = NULL;
+    ftdi->module_detach_mode = AUTO_DETACH_SIO_MODULE;
+
+    if (libusb_init(&ftdi->usb_ctx) < 0)
+        ftdi_error_return(-3, "libusb_init() failed");
 
     ftdi_set_interface(ftdi, INTERFACE_ANY);
     ftdi->bitbang_mode = 1; /* when bitbang is enabled this holds the number of the mode  */
-
-    ftdi->error_str = NULL;
 
     if (eeprom == 0)
         ftdi_error_return(-2, "Can't malloc struct ftdi_eeprom");
     memset(eeprom, 0, sizeof(struct ftdi_eeprom));
     ftdi->eeprom = eeprom;
-
-    ftdi->module_detach_mode = AUTO_DETACH_SIO_MODULE;
 
     /* All fine. Now allocate the readbuffer */
     return ftdi_read_data_set_chunksize(ftdi, 4096);
@@ -220,7 +222,12 @@ void ftdi_deinit(struct ftdi_context *ftdi)
         free(ftdi->eeprom);
         ftdi->eeprom = NULL;
     }
-    libusb_exit(ftdi->usb_ctx);
+
+    if (ftdi->usb_ctx)
+    {
+        libusb_exit(ftdi->usb_ctx);
+        ftdi->usb_ctx = NULL;
+    }
 }
 
 /**
@@ -260,7 +267,6 @@ void ftdi_set_usbdev (struct ftdi_context *ftdi, libusb_device_handle *usb)
 
     \retval >0: number of devices found
     \retval -3: out of memory
-    \retval -4: libusb_init() failed
     \retval -5: libusb_get_device_list() failed
     \retval -6: libusb_get_device_descriptor() failed
 */
@@ -271,9 +277,6 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
     libusb_device **devs;
     int count = 0;
     int i = 0;
-
-    if (libusb_init(&ftdi->usb_ctx) < 0)
-        ftdi_error_return(-4, "libusb_init() failed");
 
     if (libusb_get_device_list(ftdi->usb_ctx, &devs) < 0)
         ftdi_error_return(-5, "libusb_get_device_list() failed");
