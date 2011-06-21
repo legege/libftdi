@@ -289,13 +289,13 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
         struct libusb_device_descriptor desc;
 
         if (libusb_get_device_descriptor(dev, &desc) < 0)
-            ftdi_error_return(-6, "libusb_get_device_descriptor() failed");
+            ftdi_error_return_free_device_list(-6, "libusb_get_device_descriptor() failed", devs);
 
         if (desc.idVendor == vendor && desc.idProduct == product)
         {
             *curdev = (struct ftdi_device_list*)malloc(sizeof(struct ftdi_device_list));
             if (!*curdev)
-                ftdi_error_return(-3, "out of memory");
+                ftdi_error_return_free_device_list(-3, "out of memory", devs);
 
             (*curdev)->next = NULL;
             (*curdev)->dev = dev;
@@ -304,7 +304,7 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
             count++;
         }
     }
-
+    libusb_free_device_list(devs,1);
     return count;
 }
 
