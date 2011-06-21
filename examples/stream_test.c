@@ -181,12 +181,14 @@ int main(int argc, char **argv)
    if (ftdi_set_interface(&ftdic, INTERFACE_A) < 0)
    {
        fprintf(stderr, "ftdi_set_interface failed\n");
+       ftdi_deinit(&ftdic);
        return EXIT_FAILURE;
    }
    
    if (ftdi_usb_open_desc(&ftdic, 0x0403, 0x6010, descstring, NULL) < 0)
    {
        fprintf(stderr,"Can't open ftdi device: %s\n",ftdi_get_error_string(&ftdic));
+       ftdi_deinit(&ftdic);
        return EXIT_FAILURE;
    }
    
@@ -194,6 +196,8 @@ int main(int argc, char **argv)
    if(ftdi_set_latency_timer(&ftdic, 2))
    {
        fprintf(stderr,"Can't set latency, Error %s\n",ftdi_get_error_string(&ftdic));
+       ftdi_usb_close(&ftdic);
+       ftdi_deinit(&ftdic);
        return EXIT_FAILURE;
    }
    
@@ -223,6 +227,8 @@ int main(int argc, char **argv)
    if (ftdi_set_bitmode(&ftdic,  0xff, BITMODE_RESET) < 0)
    {
        fprintf(stderr,"Can't set synchronous fifo mode, Error %s\n",ftdi_get_error_string(&ftdic));
+       ftdi_usb_close(&ftdic);
+       ftdi_deinit(&ftdic);
        return EXIT_FAILURE;
    }
    ftdi_usb_close(&ftdic);
@@ -233,6 +239,8 @@ int main(int argc, char **argv)
        if ((outputFile = fopen(outfile,"r")) == 0)
        {
            fprintf(stderr,"Can't open logfile %s, Error %s\n", outfile, strerror(errno));
+           ftdi_usb_close(&ftdic);
+           ftdi_deinit(&ftdic);
            return EXIT_FAILURE;
        }
        check_outfile(descstring);
