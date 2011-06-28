@@ -23,11 +23,10 @@ int main(void)
         return EXIT_FAILURE;
     }
 
-    if ((ret = ftdi_usb_find_all(&ftdic, &devlist, 0x0403, 0x6001)) < 0)
+    if ((ret = ftdi_usb_find_all(&ftdic, &devlist, 0x0403, 0x6010)) < 0)
     {
         fprintf(stderr, "ftdi_usb_find_all failed: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
         retval =  EXIT_FAILURE;
-        return retval;
         goto do_deinit;
     }
 
@@ -41,7 +40,6 @@ int main(void)
         {
             fprintf(stderr, "ftdi_usb_get_strings failed: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
             retval = EXIT_FAILURE;
-            return retval;
             goto done;
         }
         printf("Manufacturer: %s, Description: %s\n\n", manufacturer, description);
@@ -52,5 +50,5 @@ done:
 do_deinit:
     ftdi_deinit(&ftdic);
 
-    return EXIT_SUCCESS;
+    return retval;
 }
