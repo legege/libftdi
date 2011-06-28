@@ -257,8 +257,10 @@ void ftdi_set_usbdev (struct ftdi_context *ftdi, libusb_device_handle *usb)
 
 
 /**
-    Finds all ftdi devices on the usb bus. Creates a new ftdi_device_list which
-    needs to be deallocated by ftdi_list_free() after use.
+    Finds all ftdi devices with given VID:PID on the usb bus. Creates a new
+    ftdi_device_list which needs to be deallocated by ftdi_list_free() after
+    use.  With VID:PID 0:0, search for the default devices
+    (0x403:0x6001, 0x403:0x6010, 0x403:0x6011, 0x403:0x6014) 
 
     \param ftdi pointer to ftdi_context
     \param devlist Pointer where to store list of found devices
@@ -291,7 +293,9 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
         if (libusb_get_device_descriptor(dev, &desc) < 0)
             ftdi_error_return_free_device_list(-6, "libusb_get_device_descriptor() failed", devs);
 
-        if (desc.idVendor == vendor && desc.idProduct == product)
+        if ((vendor != 0 && product != 0 && desc.idVendor == vendor && desc.idProduct == product) ||
+            ((desc.idVendor == 0x403) && (desc.idProduct == 0x6001 || desc.idProduct == 0x6010
+                                          || desc.idProduct == 0x6011 || desc.idProduct == 0x6014)))
         {
             *curdev = (struct ftdi_device_list*)malloc(sizeof(struct ftdi_device_list));
             if (!*curdev)
