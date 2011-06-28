@@ -299,7 +299,7 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
 
             (*curdev)->next = NULL;
             (*curdev)->dev = dev;
-
+            libusb_ref_device(dev);
             curdev = &(*curdev)->next;
             count++;
         }
@@ -320,6 +320,7 @@ void ftdi_list_free(struct ftdi_device_list **devlist)
     for (curdev = *devlist; curdev != NULL;)
     {
         next = curdev->next;
+        libusb_unref_device(curdev->dev);
         free(curdev);
         curdev = next;
     }
