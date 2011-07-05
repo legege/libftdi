@@ -23,7 +23,7 @@ int main(void)
         return EXIT_FAILURE;
     }
 
-    if ((ret = ftdi_usb_find_all(&ftdic, &devlist, NULL, NULL)) < 0)
+    if ((ret = ftdi_usb_find_all(&ftdic, &devlist, 0, 0)) < 0)
     {
         fprintf(stderr, "ftdi_usb_find_all failed: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
         retval =  EXIT_FAILURE;
