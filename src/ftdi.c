@@ -3181,6 +3181,9 @@ int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
         case IN_IS_ISOCHRONOUS:
             *value = ftdi->eeprom->in_is_isochronous;
             break;
+        case OUT_IS_ISOCHRONOUS:
+            *value = ftdi->eeprom->out_is_isochronous;
+            break;
         case SUSPEND_PULL_DOWNS:
             *value = ftdi->eeprom->suspend_pull_downs;
             break;
@@ -3189,6 +3192,9 @@ int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
             break;
         case USB_VERSION:
             *value = ftdi->eeprom->usb_version;
+            break;
+        case USE_USB_VERSION:
+            *value = ftdi->eeprom->use_usb_version;
             break;
         case MAX_POWER:
             *value = ftdi->eeprom->max_power;
@@ -3344,6 +3350,9 @@ int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
         case IN_IS_ISOCHRONOUS:
             ftdi->eeprom->in_is_isochronous = value;
             break;
+        case OUT_IS_ISOCHRONOUS:
+            ftdi->eeprom->out_is_isochronous = value;
+            break;
         case SUSPEND_PULL_DOWNS:
             ftdi->eeprom->suspend_pull_downs = value;
             break;
@@ -3352,6 +3361,9 @@ int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
             break;
         case USB_VERSION:
             ftdi->eeprom->usb_version = value;
+            break;
+        case USE_USB_VERSION:
+            ftdi->eeprom->use_usb_version = value;
             break;
         case MAX_POWER:
             ftdi->eeprom->max_power = value;
