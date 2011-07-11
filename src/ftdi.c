@@ -3508,6 +3508,29 @@ int ftdi_get_eeprom_buf(struct ftdi_context *ftdi, unsigned char * buf, int size
     return 0;
 }
 
+/** Set the EEPROM content from the user-supplied prefilled buffer
+
+    \param ftdi pointer to ftdi_context
+    \param buf buffer to read EEPROM content
+    \param size Size of buffer
+
+    \retval 0: All fine
+    \retval -1: struct ftdi_contxt or ftdi_eeprom of buf missing
+*/
+int ftdi_set_eeprom_buf(struct ftdi_context *ftdi, const unsigned char * buf, int size)
+{
+    if (!ftdi || !(ftdi->eeprom) || !buf)
+        ftdi_error_return(-1, "No appropriate structure");
+
+    // Only copy up to FTDI_MAX_EEPROM_SIZE bytes
+    if (size > FTDI_MAX_EEPROM_SIZE)
+        size = FTDI_MAX_EEPROM_SIZE;
+
+    memcpy(ftdi->eeprom->buf, buf, size);
+
+    return 0;
+}
+
 /**
     Read eeprom location
 
