@@ -144,9 +144,8 @@ int main(int argc, char *argv[])
     */
     int _read = 0, _erase = 0, _flash = 0;
 
-    const int my_eeprom_size = 128;                 /* TODO: Kill this. Check with Uwe how we can determine the eeprom size properly
-                                                             because it's initialized with -1. Maybe assume 128 bytes per default? */
-    unsigned char eeprom_buf[my_eeprom_size];
+    int my_eeprom_size = 0;
+    unsigned char eeprom_buf[FTDI_MAX_EEPROM_SIZE];
     char *filename;
     int size_check;
     int i, argc_filename;
@@ -261,10 +260,10 @@ int main(int argc, char *argv[])
 
         if (i == 0)
         {
-            int chip_size;
-            eeprom_get_value(ftdi, CHIP_SIZE, &chip_size);
+            printf("FTDI read eeprom: %d\n", ftdi_read_eeprom(ftdi));
+            eeprom_get_value(ftdi, CHIP_SIZE, &my_eeprom_size);
             // TODO: Do we know the eeprom size already?
-            printf("EEPROM size: %d\n", chip_size);
+            printf("EEPROM size: %d\n", my_eeprom_size);
         }
         else
         {
@@ -284,7 +283,6 @@ int main(int argc, char *argv[])
 
     if (_read > 0)
     {
-        printf("FTDI read eeprom: %d\n", ftdi_read_eeprom(ftdi));
 
         ftdi_eeprom_decode(ftdi, 0);
         /* Debug output */
