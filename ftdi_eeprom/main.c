@@ -204,7 +204,9 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    ftdi_eeprom_initdefaults (ftdi, "Acme Inc.", "FTDI Chip", NULL);
+    ftdi_eeprom_initdefaults (ftdi, cfg_getstr(cfg, "manufacturer"), 
+                              cfg_getstr(cfg, "product"), 
+                              cfg_getstr(cfg, "serial"));
 
     eeprom_set_value(ftdi, VENDOR_ID, cfg_getint(cfg, "vendor_id"));
     eeprom_set_value(ftdi, PRODUCT_ID, cfg_getint(cfg, "product_id"));
@@ -232,9 +234,6 @@ int main(int argc, char *argv[])
     eeprom_set_value(ftdi, USB_VERSION, cfg_getint(cfg, "usb_version"));
 
 
-    ftdi->eeprom->manufacturer = cfg_getstr(cfg, "manufacturer");
-    ftdi->eeprom->product = cfg_getstr(cfg, "product");
-    ftdi->eeprom->serial = cfg_getstr(cfg, "serial");
     eeprom_set_value(ftdi, HIGH_CURRENT, cfg_getbool(cfg, "high_current"));
     eeprom_set_value(ftdi, CBUS_FUNCTION_0, str_to_cbus(cfg_getstr(cfg, "cbus0"), 13));
     eeprom_set_value(ftdi, CBUS_FUNCTION_1, str_to_cbus(cfg_getstr(cfg, "cbus1"), 13));
@@ -262,8 +261,10 @@ int main(int argc, char *argv[])
 
         if (i == 0)
         {
+            int chip_size;
+            eeprom_get_value(ftdi, CHIP_SIZE, &chip_size);
             // TODO: Do we know the eeprom size already?
-            printf("EEPROM size: %d\n", ftdi->eeprom->size);
+            printf("EEPROM size: %d\n", chip_size);
         }
         else
         {
@@ -354,8 +355,7 @@ int main(int argc, char *argv[])
                 fread(eeprom_buf, 1, my_eeprom_size, fp);
                 fclose(fp);
 
-                /* TODO: Dirty hack. Create an API for this. How about ftdi_set_eeprom_buf()? */
-                memcpy(ftdi->eeprom->buf, eeprom_buf, my_eeprom_size);
+                ftdi_set_eeprom_buf(ftdi, eeprom_buf, my_eeprom_size);
             }
         }
         printf ("FTDI write eeprom: %d\n", ftdi_write_eeprom(ftdi));
