@@ -203,58 +203,10 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    ftdi_eeprom_initdefaults (ftdi, cfg_getstr(cfg, "manufacturer"), 
-                              cfg_getstr(cfg, "product"), 
-                              cfg_getstr(cfg, "serial"));
-
-    eeprom_set_value(ftdi, VENDOR_ID, cfg_getint(cfg, "vendor_id"));
-    eeprom_set_value(ftdi, PRODUCT_ID, cfg_getint(cfg, "product_id"));
-
-    // TODO: Support all chip types
-    char *type = cfg_getstr(cfg, "chip_type");
-    if (!strcmp(type, "BM")) {
-        ftdi->type = TYPE_BM;
-    } else if (!strcmp(type, "R")) {
-        ftdi->type = TYPE_R;
-    } else {
-        ftdi->type = TYPE_AM;
-    }
-
-    eeprom_set_value(ftdi, SELF_POWERED, cfg_getbool(cfg, "self_powered"));
-    eeprom_set_value(ftdi, REMOTE_WAKEUP, cfg_getbool(cfg, "remote_wakeup"));
-    eeprom_set_value(ftdi, MAX_POWER, cfg_getint(cfg, "max_power"));
-
-    eeprom_set_value(ftdi, IN_IS_ISOCHRONOUS, cfg_getbool(cfg, "in_is_isochronous"));
-    eeprom_set_value(ftdi, OUT_IS_ISOCHRONOUS, cfg_getbool(cfg, "out_is_isochronous"));
-    eeprom_set_value(ftdi, SUSPEND_PULL_DOWNS, cfg_getbool(cfg, "suspend_pull_downs"));
-
-    eeprom_set_value(ftdi, USE_SERIAL, cfg_getbool(cfg, "use_serial"));
-    eeprom_set_value(ftdi, USE_USB_VERSION, cfg_getbool(cfg, "change_usb_version"));
-    eeprom_set_value(ftdi, USB_VERSION, cfg_getint(cfg, "usb_version"));
-
-
-    eeprom_set_value(ftdi, HIGH_CURRENT, cfg_getbool(cfg, "high_current"));
-    eeprom_set_value(ftdi, CBUS_FUNCTION_0, str_to_cbus(cfg_getstr(cfg, "cbus0"), 13));
-    eeprom_set_value(ftdi, CBUS_FUNCTION_1, str_to_cbus(cfg_getstr(cfg, "cbus1"), 13));
-    eeprom_set_value(ftdi, CBUS_FUNCTION_2, str_to_cbus(cfg_getstr(cfg, "cbus2"), 13));
-    eeprom_set_value(ftdi, CBUS_FUNCTION_3, str_to_cbus(cfg_getstr(cfg, "cbus3"), 13));
-    eeprom_set_value(ftdi, CBUS_FUNCTION_4, str_to_cbus(cfg_getstr(cfg, "cbus4"), 9));
-    int invert = 0;
-    if (cfg_getbool(cfg, "invert_rxd")) invert |= INVERT_RXD;
-    if (cfg_getbool(cfg, "invert_txd")) invert |= INVERT_TXD;
-    if (cfg_getbool(cfg, "invert_rts")) invert |= INVERT_RTS;
-    if (cfg_getbool(cfg, "invert_cts")) invert |= INVERT_CTS;
-    if (cfg_getbool(cfg, "invert_dtr")) invert |= INVERT_DTR;
-    if (cfg_getbool(cfg, "invert_dsr")) invert |= INVERT_DSR;
-    if (cfg_getbool(cfg, "invert_dcd")) invert |= INVERT_DCD;
-    if (cfg_getbool(cfg, "invert_ri")) invert |= INVERT_RI;
-    eeprom_set_value(ftdi, INVERT, invert);
-
     if (_read > 0 || _erase > 0 || _flash > 0)
     {
-        int vendor_id = 0, product_id = 0;
-        eeprom_get_value(ftdi, VENDOR_ID, &vendor_id);
-        eeprom_get_value(ftdi, PRODUCT_ID, &product_id);
+        int vendor_id = cfg_getint(cfg, "vendor_id");
+        int product_id = cfg_getint(cfg, "product_id");
 
         i = ftdi_usb_open(ftdi, vendor_id, product_id);
 
@@ -322,6 +274,53 @@ int main(int argc, char *argv[])
 
         goto cleanup;
     }
+
+    ftdi_eeprom_initdefaults (ftdi, cfg_getstr(cfg, "manufacturer"), 
+                              cfg_getstr(cfg, "product"), 
+                              cfg_getstr(cfg, "serial"));
+
+    eeprom_set_value(ftdi, VENDOR_ID, cfg_getint(cfg, "vendor_id"));
+    eeprom_set_value(ftdi, PRODUCT_ID, cfg_getint(cfg, "product_id"));
+
+    // TODO: Support all chip types
+    char *type = cfg_getstr(cfg, "chip_type");
+    if (!strcmp(type, "BM")) {
+        ftdi->type = TYPE_BM;
+    } else if (!strcmp(type, "R")) {
+        ftdi->type = TYPE_R;
+    } else {
+        ftdi->type = TYPE_AM;
+    }
+
+    eeprom_set_value(ftdi, SELF_POWERED, cfg_getbool(cfg, "self_powered"));
+    eeprom_set_value(ftdi, REMOTE_WAKEUP, cfg_getbool(cfg, "remote_wakeup"));
+    eeprom_set_value(ftdi, MAX_POWER, cfg_getint(cfg, "max_power"));
+
+    eeprom_set_value(ftdi, IN_IS_ISOCHRONOUS, cfg_getbool(cfg, "in_is_isochronous"));
+    eeprom_set_value(ftdi, OUT_IS_ISOCHRONOUS, cfg_getbool(cfg, "out_is_isochronous"));
+    eeprom_set_value(ftdi, SUSPEND_PULL_DOWNS, cfg_getbool(cfg, "suspend_pull_downs"));
+
+    eeprom_set_value(ftdi, USE_SERIAL, cfg_getbool(cfg, "use_serial"));
+    eeprom_set_value(ftdi, USE_USB_VERSION, cfg_getbool(cfg, "change_usb_version"));
+    eeprom_set_value(ftdi, USB_VERSION, cfg_getint(cfg, "usb_version"));
+
+
+    eeprom_set_value(ftdi, HIGH_CURRENT, cfg_getbool(cfg, "high_current"));
+    eeprom_set_value(ftdi, CBUS_FUNCTION_0, str_to_cbus(cfg_getstr(cfg, "cbus0"), 13));
+    eeprom_set_value(ftdi, CBUS_FUNCTION_1, str_to_cbus(cfg_getstr(cfg, "cbus1"), 13));
+    eeprom_set_value(ftdi, CBUS_FUNCTION_2, str_to_cbus(cfg_getstr(cfg, "cbus2"), 13));
+    eeprom_set_value(ftdi, CBUS_FUNCTION_3, str_to_cbus(cfg_getstr(cfg, "cbus3"), 13));
+    eeprom_set_value(ftdi, CBUS_FUNCTION_4, str_to_cbus(cfg_getstr(cfg, "cbus4"), 9));
+    int invert = 0;
+    if (cfg_getbool(cfg, "invert_rxd")) invert |= INVERT_RXD;
+    if (cfg_getbool(cfg, "invert_txd")) invert |= INVERT_TXD;
+    if (cfg_getbool(cfg, "invert_rts")) invert |= INVERT_RTS;
+    if (cfg_getbool(cfg, "invert_cts")) invert |= INVERT_CTS;
+    if (cfg_getbool(cfg, "invert_dtr")) invert |= INVERT_DTR;
+    if (cfg_getbool(cfg, "invert_dsr")) invert |= INVERT_DSR;
+    if (cfg_getbool(cfg, "invert_dcd")) invert |= INVERT_DCD;
+    if (cfg_getbool(cfg, "invert_ri")) invert |= INVERT_RI;
+    eeprom_set_value(ftdi, INVERT, invert);
 
     if (_erase > 0)
     {
