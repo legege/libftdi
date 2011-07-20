@@ -169,7 +169,20 @@ int main(int argc, char **argv)
             retval = EXIT_SUCCESS;
             goto do_deinit;
         }
-        f = ftdi_usb_open_dev(ftdi,  devlist[0].dev);
+        else if (res == 1)
+        {
+            f = ftdi_usb_open_dev(ftdi,  devlist[0].dev);
+            if (f<0)
+            {
+                fprintf(stderr, "Unable to open device %d: (%s)",
+                        i, ftdi_get_error_string(ftdi));
+            }
+        }
+        else
+        {
+            fprintf(stderr, "No devices found\n");
+            f = 0;
+        }
         ftdi_list_free(&devlist);
     }
     else
