@@ -17,7 +17,7 @@ all_examples = simple \
 	bitbang_ft2232 \
 	bitbang_cbus \
 	find_all \
-	serial_read \
+	serial_test \
 	baud_test \
 	$(examples_libftdipp)
 else
