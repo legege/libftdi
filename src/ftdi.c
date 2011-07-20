@@ -2353,6 +2353,9 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
         case TYPE_4232H:
             user_area_size = 86;
             break;
+        case TYPE_232H:
+            user_area_size = 80;
+            break;
         default:
             user_area_size = 0;
             break;
