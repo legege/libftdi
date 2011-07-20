@@ -30,7 +30,8 @@ int read_decode_eeprom(struct ftdi_context *ftdi)
     ftdi_get_eeprom_value(ftdi, CHIP_SIZE, & value);
     if (value <0)
     {
-        fprintf(stderr, "No EEPROM found\n");
+        fprintf(stderr, "No EEPROM found or EEPROM empty\n");
+        fprintf(stderr, "On empty EEPROM, use -w option to write default values\n");
         return -1;
     }
     fprintf(stderr, "Chip type %d ftdi_eeprom_size: %d\n", ftdi->type, value);
