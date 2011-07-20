@@ -2290,6 +2290,42 @@ void set_ft232h_cbus(struct ftdi_eeprom *eeprom, unsigned char * output)
         output[0x18+i] = mode_high <<4 | mode_low;
     }
 }
+/* Return the bits for the encoded EEPROM Structure of a requested Mode
+ *
+ */
+static unsigned char type2bit(unsigned char type, enum ftdi_chip_type chip)
+{
+    switch (chip)
+    {
+    case TYPE_2232H:
+    case TYPE_2232C:
+    {
+        switch (type)
+        {
+        case CHANNEL_IS_UART: return 0;
+        case CHANNEL_IS_FIFO: return 0x01;
+        case CHANNEL_IS_OPTO: return 0x02;
+        case CHANNEL_IS_CPU : return 0x04;
+        default: return 0;
+        }
+    }
+    case TYPE_232H:
+    {
+        switch (type)
+        {
+        case CHANNEL_IS_UART   : return 0;
+        case CHANNEL_IS_FIFO   : return 0x01;
+        case CHANNEL_IS_OPTO   : return 0x02;
+        case CHANNEL_IS_CPU    : return 0x04;
+        case CHANNEL_IS_FT1284 : return 0x08;
+        default: return 0;
+        }
+    }
+    default: return 0;
+    }
+    return 0;
+}    
+
 /**
     Build binary buffer from ftdi_eeprom structure.
     Output is suitable for ftdi_write_eeprom().
@@ -2539,7 +2575,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             break;
         case TYPE_2232C:
 
-            output[0x00] = (eeprom->channel_a_type)?((1<<(eeprom->channel_a_type)) & 0x7):0;
+            output[0x00] = type2bit(eeprom->channel_a_type, TYPE_2232C);
             if ( eeprom->channel_a_driver == DRIVER_VCP)
                 output[0x00] |= DRIVER_VCP;
             else
@@ -2550,7 +2586,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             else
                 output[0x00] &= ~HIGH_CURRENT_DRIVE;
 
-            output[0x01] = (eeprom->channel_b_type)?((1<<(eeprom->channel_b_type)) & 0x7):0;
+            output[0x01] = type2bit(eeprom->channel_b_type, TYPE_2232C);
             if ( eeprom->channel_b_driver == DRIVER_VCP)
                 output[0x01] |= DRIVER_VCP;
             else
@@ -2621,13 +2657,13 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
                 output[0x16] = eeprom->cbus_function[4];
             break;
         case TYPE_2232H:
-            output[0x00] = (eeprom->channel_a_type)?((1<<(eeprom->channel_a_type)) & 0x7):0;
+            output[0x00] = type2bit(eeprom->channel_a_type, TYPE_2232H);
             if ( eeprom->channel_a_driver == DRIVER_VCP)
                 output[0x00] |= DRIVER_VCP;
             else
                 output[0x00] &= ~DRIVER_VCP;
 
-            output[0x01] = (eeprom->channel_b_type)?((1<<(eeprom->channel_b_type)) & 0x7):0;
+            output[0x01] = type2bit(eeprom->channel_b_type, TYPE_2232H);
             if ( eeprom->channel_b_driver == DRIVER_VCP)
                 output[0x01] |= DRIVER_VCP;
             else
@@ -2686,7 +2722,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
             fprintf(stderr,"FIXME: Build FT4232H specific EEPROM settings\n");
             break;
         case TYPE_232H:
-            output[0x00] = (eeprom->channel_a_type)?((1<<(eeprom->channel_a_type)) & 0xf):0;
+            output[0x00] = type2bit(eeprom->channel_a_type, TYPE_232H);
             if ( eeprom->channel_a_driver == DRIVER_VCP)
                 output[0x00] |= DRIVER_VCPH;
             else
@@ -2750,23 +2786,26 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
 
     return user_area_size;
 }
-/* FTD2XX doesn't allow to set multiple bits in the interface mode bitfield*/
-unsigned char bit2type(unsigned char bits)
+/* Decode the encoded EEPROM field for the FTDI Mode into a value for the abstracted 
+ * EEPROM structure
+ *
+ * FTD2XX doesn't allow to set multiple bits in the interface mode bitfield, and so do we
+ */
+static unsigned char bit2type(unsigned char bits)
 {
     switch (bits)
     {
-    case 0: return 0;
-    case 1: return 1;
-    case 2: return 2;
-    case 4: return 3;
-    case 8: return 4;
+    case   0: return CHANNEL_IS_UART;
+    case   1: return CHANNEL_IS_FIFO;
+    case   2: return CHANNEL_IS_OPTO;
+    case   4: return CHANNEL_IS_CPU;
+    case   8: return CHANNEL_IS_FT1284;
     default:
         fprintf(stderr," Unexpected value %d for Hardware Interface type\n",
                 bits);
     }
     return 0;
 }
-
 /**
    Decode binary EEPROM image into an ftdi_eeprom structure.
 
@@ -2962,7 +3001,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     {
         eeprom->channel_a_type   = bit2type(buf[0x00] & 0x7);
         eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
-        eeprom->channel_b_type   = buf[0x01] & 0x7;
+        eeprom->channel_b_type   = bit2type(buf[0x01] & 0x7);
         eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
 
         if (ftdi->type == TYPE_2232H)
@@ -3010,7 +3049,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
 
     if (verbose)
     {
-        char *channel_mode[] = {"UART","245","CPU", "OPTO", "FT1284"};
+        char *channel_mode[] = {"UART", "FIFO", "CPU", "OPTO", "FT1284"};
         fprintf(stdout, "VID:     0x%04x\n",eeprom->vendor_id);
         fprintf(stdout, "PID:     0x%04x\n",eeprom->product_id);
         fprintf(stdout, "Release: 0x%04x\n",release);

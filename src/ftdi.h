@@ -448,10 +448,10 @@ enum ftdi_cbush_func {/* FIXME: Recheck value, especially the last */
 
 /** Interface Mode. */
 #define CHANNEL_IS_UART 0x0
-#define CHANNEL_IS_245  0x1
-#define CHANNEL_IS_CPU  0x2
-#define CHANNEL_IS_OPTO 0x3
-#define CHANNEL_IS_FT1284 0x4
+#define CHANNEL_IS_FIFO 0x1
+#define CHANNEL_IS_OPTO 0x2
+#define CHANNEL_IS_CPU  0x4
+#define CHANNEL_IS_FT1284 0x8
 
 #define DRIVE_4MA  0
 #define DRIVE_8MA  1
