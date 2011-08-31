@@ -283,16 +283,6 @@ int main(int argc, char *argv[])
     eeprom_set_value(ftdi, VENDOR_ID, cfg_getint(cfg, "vendor_id"));
     eeprom_set_value(ftdi, PRODUCT_ID, cfg_getint(cfg, "product_id"));
 
-    // TODO: Support all chip types
-    char *type = cfg_getstr(cfg, "chip_type");
-    if (!strcmp(type, "BM")) {
-        ftdi->type = TYPE_BM;
-    } else if (!strcmp(type, "R")) {
-        ftdi->type = TYPE_R;
-    } else {
-        ftdi->type = TYPE_AM;
-    }
-
     eeprom_set_value(ftdi, SELF_POWERED, cfg_getbool(cfg, "self_powered"));
     eeprom_set_value(ftdi, REMOTE_WAKEUP, cfg_getbool(cfg, "remote_wakeup"));
     eeprom_set_value(ftdi, MAX_POWER, cfg_getint(cfg, "max_power"));
