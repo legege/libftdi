@@ -2253,6 +2253,25 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
         if (eeprom->product)
             strcpy(eeprom->product, product);
     }
+    else
+    {
+        const char* default_product;
+        switch(ftdi->type)
+        {
+        case TYPE_AM:    default_product = "AM"; break;
+        case TYPE_BM:    default_product = "BM"; break;
+        case TYPE_2232C: default_product = "Dual RS232"; break;
+        case TYPE_R:     default_product = "FT232R USB UART"; break;
+        case TYPE_2232H: default_product = "Dual RS232-HS"; break;
+        case TYPE_4232H: default_product = "FT4232H"; break;
+        case TYPE_232H:  default_product = "Single-RS232-HS"; break;
+        default:
+        ftdi_error_return(-3, "Unknown chip type");
+        }
+        eeprom->product = malloc(strlen(default_product) +1);
+        if (eeprom->product)
+            strcpy(eeprom->product, default_product);
+    }
 
     if (eeprom->serial)
         free (eeprom->serial);
