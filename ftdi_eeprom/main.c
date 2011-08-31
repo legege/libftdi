@@ -170,11 +170,15 @@ int main(int argc, char *argv[])
     {
         if (strcmp(argv[1], "--read-eeprom") == 0)
             _read = 1;
-        if (strcmp(argv[1], "--erase-eeprom") == 0)
+        else if (strcmp(argv[1], "--erase-eeprom") == 0)
             _erase = 1;
-        if (strcmp(argv[1], "--flash-eeprom") == 0)
+        else if (strcmp(argv[1], "--flash-eeprom") == 0)
             _flash = 1;
-
+        else
+        {
+            printf ("Can't open configuration file\n");
+            exit (-1);
+        }
         argc_filename = 2;
     }
     else
@@ -213,9 +217,6 @@ int main(int argc, char *argv[])
         if (i == 0)
         {
             printf("FTDI read eeprom: %d\n", ftdi_read_eeprom(ftdi));
-            eeprom_get_value(ftdi, CHIP_SIZE, &my_eeprom_size);
-            // TODO: Do we know the eeprom size already?
-            printf("EEPROM size: %d\n", my_eeprom_size);
         }
         else
         {
@@ -231,6 +232,9 @@ int main(int argc, char *argv[])
                 exit (-1);
             }
         }
+        eeprom_get_value(ftdi, CHIP_SIZE, &my_eeprom_size);
+        // TODO: Do we know the eeprom size already?
+        printf("EEPROM size: %d\n", my_eeprom_size);
     }
 
     if (_read > 0)
