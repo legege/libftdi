@@ -2218,7 +2218,7 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
         ftdi_error_return(-3, "No connected device or device not yet opened");
 
     eeprom->vendor_id = 0x0403;
-    eeprom->use_serial = USE_SERIAL_NUM;
+    eeprom->use_serial = 1;
     if ((ftdi->type == TYPE_AM) || (ftdi->type == TYPE_BM) ||
             (ftdi->type == TYPE_R))
         eeprom->product_id = 0x6001;
@@ -2569,7 +2569,7 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
 
     if (ftdi->type > TYPE_AM) /* use_serial not used in AM devices */
     {
-        if (eeprom->use_serial == USE_SERIAL_NUM )
+        if (eeprom->use_serial)
             output[0x0A] |= USE_SERIAL_NUM;
         else
             output[0x0A] &= ~USE_SERIAL_NUM;
@@ -2884,7 +2884,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     eeprom->in_is_isochronous  = buf[0x0A]&0x01;
     eeprom->out_is_isochronous = buf[0x0A]&0x02;
     eeprom->suspend_pull_downs = buf[0x0A]&0x04;
-    eeprom->use_serial         = buf[0x0A] & USE_SERIAL_NUM;
+    eeprom->use_serial         = (buf[0x0A] & USE_SERIAL_NUM)?1:0;
     eeprom->use_usb_version    = buf[0x0A] & USE_USB_VERSION_BIT;
 
     // Addr 0C: USB version low byte when 0x0A
