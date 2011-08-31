@@ -214,11 +214,7 @@ int main(int argc, char *argv[])
 
         i = ftdi_usb_open(ftdi, vendor_id, product_id);
 
-        if (i == 0)
-        {
-            printf("FTDI read eeprom: %d\n", ftdi_read_eeprom(ftdi));
-        }
-        else
+        if (i != 0)
         {
             int default_pid = cfg_getint(cfg, "default_pid");
             printf("Unable to find FTDI devices under given vendor/product id: 0x%X/0x%X\n", vendor_id, product_id);
@@ -232,11 +228,16 @@ int main(int argc, char *argv[])
                 exit (-1);
             }
         }
-        eeprom_get_value(ftdi, CHIP_SIZE, &my_eeprom_size);
-        // TODO: Do we know the eeprom size already?
-        printf("EEPROM size: %d\n", my_eeprom_size);
     }
-
+    ftdi_eeprom_initdefaults (ftdi, cfg_getstr(cfg, "manufacturer"), 
+                              cfg_getstr(cfg, "product"), 
+                              cfg_getstr(cfg, "serial"));
+    
+    printf("FTDI read eeprom: %d\n", ftdi_read_eeprom(ftdi));
+    eeprom_get_value(ftdi, CHIP_SIZE, &my_eeprom_size);
+    // TODO: Do we know the eeprom size already?
+    printf("EEPROM size: %d\n", my_eeprom_size);
+    
     if (_read > 0)
     {
 
@@ -278,10 +279,6 @@ int main(int argc, char *argv[])
 
         goto cleanup;
     }
-
-    ftdi_eeprom_initdefaults (ftdi, cfg_getstr(cfg, "manufacturer"), 
-                              cfg_getstr(cfg, "product"), 
-                              cfg_getstr(cfg, "serial"));
 
     eeprom_set_value(ftdi, VENDOR_ID, cfg_getint(cfg, "vendor_id"));
     eeprom_set_value(ftdi, PRODUCT_ID, cfg_getint(cfg, "product_id"));
