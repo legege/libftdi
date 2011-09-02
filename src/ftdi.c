@@ -1091,6 +1091,16 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
 }
 
 /**
+ * @brief Wrapper function to export ftdi_convert_baudrate() to the unit test
+ * Do not use, it's only for the unit test framework
+ **/
+int convert_baudrate_UT_export(int baudrate, struct ftdi_context *ftdi,
+                                 unsigned short *value, unsigned short *index)
+{
+    return ftdi_convert_baudrate(baudrate, ftdi, value, index);
+}
+
+/**
     Sets the chip baud rate
 
     \param ftdi pointer to ftdi_context
