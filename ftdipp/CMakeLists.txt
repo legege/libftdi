@@ -8,10 +8,11 @@ if (FTDIPP)
     if(Boost_FOUND)
 
         # Includes
-        include_directories(${Boost_INCLUDE_DIRS}
-                            ${CMAKE_CURRENT_BINARY_DIR}
+        include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR}
                             ${CMAKE_CURRENT_SOURCE_DIR}
-                            ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+                            ${CMAKE_SOURCE_DIR}/src)
+
+        include_directories(${Boost_INCLUDE_DIRS})
 
         # Targets
         set(cpp_sources   ftdi.cpp)

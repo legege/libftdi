@@ -9,7 +9,7 @@ if (EXAMPLES)
     message(STATUS "Building example programs.")
 
     # Source includes
-    include_directories(${CMAKE_SOURCE_DIR}/src)
+    include_directories(BEFORE ${CMAKE_SOURCE_DIR}/src)
 
     # Targets
     add_executable(simple simple.c)
@@ -39,7 +39,7 @@ if (EXAMPLES)
     if(FTDI_BUILD_CPP)
         if(Boost_FOUND)
             message(STATUS "Building libftdi++ examples.")
-            include_directories(${CMAKE_SOURCE_DIR}/ftdipp
+            include_directories(BEFORE ${CMAKE_SOURCE_DIR}/ftdipp
                                 ${Boost_INCLUDE_DIRS})
 
             # Target

@@ -18,8 +18,8 @@ if (FTDI_EEPROM)
         set(EEPROM_MINOR_VERSION 17)
         set(EEPROM_VERSION_STRING ${EEPROM_MAJOR_VERSION}.${EEPROM_MINOR_VERSION})
 
-        include_directories(${CMAKE_SOURCE_DIR}/src)
-        include_directories(${CMAKE_BINARY_DIR}/ftdi_eeprom)
+        include_directories(BEFORE ${CMAKE_SOURCE_DIR}/src)
+        include_directories(BEFORE ${CMAKE_BINARY_DIR}/ftdi_eeprom)
 
         configure_file(
           "ftdi_eeprom_version.h.in"
