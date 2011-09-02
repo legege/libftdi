@@ -99,6 +99,7 @@ add_subdirectory(bindings)
 add_subdirectory(ftdi_eeprom)
 add_subdirectory(examples)
 add_subdirectory(packages)
+add_subdirectory(test)
 
 
 
