@@ -44,7 +44,7 @@ public:
     }
 };
 
-BOOST_FIXTURE_TEST_SUITE(BaudrateAM, BaseFTDIFixture)
+BOOST_FIXTURE_TEST_SUITE(Baudrate, BaseFTDIFixture)
 
 /// Helper class to store the convert_baudrate_UT_export result
 struct calc_result
@@ -85,7 +85,7 @@ static void test_baudrates(ftdi_context *ftdi, const map<int, calc_result> &baud
 
         // Aid debugging since this test is a generic function
         BOOST_CHECK_MESSAGE(res->actual_baudrate == calc_baudrate && res->expected_value == calc_value && res->expected_index == calc_index,
-                            " baudrate calculation failed for --" << baudrate.first << " baud--. Details below: ");
+                            "\n\nERROR: baudrate calculation failed for --" << baudrate.first << " baud--. Details below: ");
 
         BOOST_CHECK_EQUAL(res->actual_baudrate, calc_baudrate);
         BOOST_CHECK_EQUAL(res->expected_value, calc_value);
