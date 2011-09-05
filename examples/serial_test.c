@@ -153,7 +153,9 @@ int main(int argc, char **argv)
     while (!exitRequested)
     {
         if (do_write)
-            f = ftdi_write_data(ftdi, buf, sizeof(buf));
+            f = ftdi_write_data(ftdi, buf, 
+                                (baudrate/512 >sizeof(buf))?sizeof(buf):
+                                (baudrate/512)?baudrate/512:1);
         else
             f = ftdi_read_data(ftdi, buf, sizeof(buf));
         if (f<0)
