@@ -130,6 +130,21 @@ int main(int argc, char **argv)
         exit(-1);
     }
     
+    /* Set line parameters
+     *
+     * TODO: Make these parameters settable from the command line
+     *
+     * Parameters are choosen that sending a continous stream of 0x55 
+     * should give a square wave
+     *
+     */
+    f = ftdi_set_line_property(ftdi, 8, STOP_BIT_1, NONE);
+    if (f < 0)
+    {
+        fprintf(stderr, "unable to set line parameters: %d (%s)\n", f, ftdi_get_error_string(ftdi));
+        exit(-1);
+    }
+    
     if (do_write)
         for(i=0; i<1024; i++)
             buf[i] = pattern;
