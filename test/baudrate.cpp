@@ -137,11 +137,11 @@ BOOST_AUTO_TEST_CASE(TypeBMFixedBaudrates)
     baudrates[9600] = calc_result(9600, 312, 4, 48);
     baudrates[19200] = calc_result(19200, 156, 8, 48);
     baudrates[38400] = calc_result(38400, 78, 12, 48);
-    baudrates[57600] = calc_result(57554, 52, 12, 48);
-    baudrates[115200] = calc_result(115385, 26, 0, 48);
+    baudrates[57600] = calc_result(57553, 52, 12, 48);
+    baudrates[115200] = calc_result(115384, 26, 0, 48);
     baudrates[230400] = calc_result(230769, 13, 0, 48);
     baudrates[460800] = calc_result(461538, 6, 4, 48);
-    baudrates[921600] = calc_result(923077, 3, 8, 48);
+    baudrates[921600] = calc_result(923076, 3, 8, 48);
 
     test_baudrates(ftdi, baudrates);
 }
@@ -159,11 +159,11 @@ BOOST_AUTO_TEST_CASE(Type2232CFixedBaudrates)
     baudrates[9600] = calc_result(9600, 312, 4, 48);
     baudrates[19200] = calc_result(19200, 156, 8, 48);
     baudrates[38400] = calc_result(38400, 78, 12, 48);
-    baudrates[57600] = calc_result(57554, 52, 12, 48);
-    baudrates[115200] = calc_result(115385, 26, 0, 48);
+    baudrates[57600] = calc_result(57553, 52, 12, 48);
+    baudrates[115200] = calc_result(115384, 26, 0, 48);
     baudrates[230400] = calc_result(230769, 13, 0, 48);
     baudrates[460800] = calc_result(461538, 6, 4, 48);
-    baudrates[921600] = calc_result(923077, 3, 8, 48);
+    baudrates[921600] = calc_result(923076, 3, 8, 48);
 
     test_baudrates(ftdi, baudrates);
 }
@@ -181,11 +181,11 @@ BOOST_AUTO_TEST_CASE(TypeRFixedBaudrates)
     baudrates[9600] = calc_result(9600, 312, 4, 48);
     baudrates[19200] = calc_result(19200, 156, 8, 48);
     baudrates[38400] = calc_result(38400, 78, 12, 48);
-    baudrates[57600] = calc_result(57554, 52, 12, 48);
-    baudrates[115200] = calc_result(115385, 26, 0, 48);
+    baudrates[57600] = calc_result(57553, 52, 12, 48);
+    baudrates[115200] = calc_result(115384, 26, 0, 48);
     baudrates[230400] = calc_result(230769, 13, 0, 48);
     baudrates[460800] = calc_result(461538, 6, 4, 48);
-    baudrates[921600] = calc_result(923077, 3, 8, 48);
+    baudrates[921600] = calc_result(923076, 3, 8, 48);
 
     test_baudrates(ftdi, baudrates);
 }
@@ -197,17 +197,17 @@ BOOST_AUTO_TEST_CASE(Type2232HFixedBaudrates)
     map<int, calc_result> baudrates;
     baudrates[300] = calc_result(300, 784, 2, 48);
     baudrates[600] = calc_result(600, 904, 1, 48);
-    baudrates[1200] = calc_result(1200, 452, 0, 48);
-    baudrates[2400] = calc_result(2400, 226, 0, 48);
-    baudrates[4800] = calc_result(4800, 625, 0, 48);
-    baudrates[9600] = calc_result(9600, 312, 4, 48);
-    baudrates[19200] = calc_result(19200, 156, 8, 48);
-    baudrates[38400] = calc_result(38400, 78, 12, 48);
-    baudrates[57600] = calc_result(57554, 52, 12, 48);
-    baudrates[115200] = calc_result(115385, 26, 0, 48);
-    baudrates[230400] = calc_result(230769, 13, 0, 48);
-    baudrates[460800] = calc_result(461538, 6, 4, 48);
-    baudrates[921600] = calc_result(923077, 3, 8, 48);
+    baudrates[1200] = calc_result(1200, 784, 2, 48);
+    baudrates[2400] = calc_result(2400, 904, 1, 48);
+    baudrates[4800] = calc_result(4800, 452, 0, 48);
+    baudrates[9600] = calc_result(9600, 226, 0, 48);
+    baudrates[19200] = calc_result(19200, 625, 0, 48);
+    baudrates[38400] = calc_result(38400, 312, 4, 48);
+    baudrates[57600] = calc_result(57588, 208, 4, 120);
+    baudrates[115200] = calc_result(115246, 104, 12, 48);
+    baudrates[230400] = calc_result(230215, 52, 12, 48);
+    baudrates[460800] = calc_result(461538, 26, 0, 48);
+    baudrates[921600] = calc_result(923076, 13, 0, 48);
 
     test_baudrates(ftdi, baudrates);
 }
@@ -219,17 +219,17 @@ BOOST_AUTO_TEST_CASE(Type4232HFixedBaudrates)
     map<int, calc_result> baudrates;
     baudrates[300] = calc_result(300, 784, 2, 48);
     baudrates[600] = calc_result(600, 904, 1, 48);
-    baudrates[1200] = calc_result(1200, 452, 0, 48);
-    baudrates[2400] = calc_result(2400, 226, 0, 48);
-    baudrates[4800] = calc_result(4800, 625, 0, 48);
-    baudrates[9600] = calc_result(9600, 312, 4, 48);
-    baudrates[19200] = calc_result(19200, 156, 8, 48);
-    baudrates[38400] = calc_result(38400, 78, 12, 48);
-    baudrates[57600] = calc_result(57554, 52, 12, 48);
-    baudrates[115200] = calc_result(115385, 26, 0, 48);
-    baudrates[230400] = calc_result(230769, 13, 0, 48);
-    baudrates[460800] = calc_result(461538, 6, 4, 48);
-    baudrates[921600] = calc_result(923077, 3, 8, 48);
+    baudrates[1200] = calc_result(1200, 784, 2, 48);
+    baudrates[2400] = calc_result(2400, 904, 1, 48);
+    baudrates[4800] = calc_result(4800, 452, 0, 48);
+    baudrates[9600] = calc_result(9600, 226, 0, 48);
+    baudrates[19200] = calc_result(19200, 625, 0, 48);
+    baudrates[38400] = calc_result(38400, 312, 4, 48);
+    baudrates[57600] = calc_result(57588, 208, 4, 120);
+    baudrates[115200] = calc_result(115246, 104, 12, 48);
+    baudrates[230400] = calc_result(230215, 52, 12, 48);
+    baudrates[460800] = calc_result(461538, 26, 0, 48);
+    baudrates[921600] = calc_result(923076, 13, 0, 48);
 
     test_baudrates(ftdi, baudrates);
 }
@@ -241,17 +241,17 @@ BOOST_AUTO_TEST_CASE(Type232HFixedBaudrates)
     map<int, calc_result> baudrates;
     baudrates[300] = calc_result(300, 784, 2, 48);
     baudrates[600] = calc_result(600, 904, 1, 48);
-    baudrates[1200] = calc_result(1200, 452, 0, 48);
-    baudrates[2400] = calc_result(2400, 226, 0, 48);
-    baudrates[4800] = calc_result(4800, 625, 0, 48);
-    baudrates[9600] = calc_result(9600, 312, 4, 48);
-    baudrates[19200] = calc_result(19200, 156, 8, 48);
-    baudrates[38400] = calc_result(38400, 78, 12, 48);
-    baudrates[57600] = calc_result(57554, 52, 12, 48);
-    baudrates[115200] = calc_result(115385, 26, 0, 48);
-    baudrates[230400] = calc_result(230769, 13, 0, 48);
-    baudrates[460800] = calc_result(461538, 6, 4, 48);
-    baudrates[921600] = calc_result(923077, 3, 8, 48);
+    baudrates[1200] = calc_result(1200, 784, 2, 48);
+    baudrates[2400] = calc_result(2400, 904, 1, 48);
+    baudrates[4800] = calc_result(4800, 452, 0, 48);
+    baudrates[9600] = calc_result(9600, 226, 0, 48);
+    baudrates[19200] = calc_result(19200, 625, 0, 48);
+    baudrates[38400] = calc_result(38400, 312, 4, 48);
+    baudrates[57600] = calc_result(57588, 208, 4, 120);
+    baudrates[115200] = calc_result(115246, 104, 12, 48);
+    baudrates[230400] = calc_result(230215, 52, 12, 48);
+    baudrates[460800] = calc_result(461538, 26, 0, 48);
+    baudrates[921600] = calc_result(923076, 13, 0, 48);
 
     test_baudrates(ftdi, baudrates);
 }
