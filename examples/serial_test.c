@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     int baudrate = 115200;
     int interface = INTERFACE_ANY;
     int do_write = 0;
-    unsigned int pattern;
+    unsigned int pattern = 0xffff;
     int retval = EXIT_FAILURE;
 
     while ((i = getopt(argc, argv, "i:v:p:b:w::")) != -1)
@@ -55,9 +55,13 @@ int main(int argc, char **argv)
                 break;
             case 'w':
                 do_write = 1;
-                pattern = strtoul(optarg, NULL, 0);
+                if (optarg)
+                    pattern = strtoul(optarg, NULL, 0);
                 if (pattern > 0xff)
+                {
                     fprintf(stderr, "Please provide a 8 bit pattern\n");
+                    exit(-1);
+                }
                 break;
             default:
                 fprintf(stderr, "usage: %s [-i interface] [-v vid] [-p pid] [-b baudrate] [-w [pattern]]\n", *argv);
