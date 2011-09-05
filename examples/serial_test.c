@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     struct ftdi_context *ftdi;
     unsigned char buf[1024];
     int f, i;
-    int vid = 0;
+    int vid = 0x403;
     int pid = 0;
     int baudrate = 115200;
     int interface = INTERFACE_ANY;
