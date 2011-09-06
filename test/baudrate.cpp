@@ -17,6 +17,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 #include <boost/foreach.hpp>
+#include <vector>
 #include <map>
 
 using namespace std;
@@ -124,9 +125,13 @@ BOOST_AUTO_TEST_CASE(TypeAMFixedBaudrates)
     test_baudrates(ftdi, baudrates);
 }
 
-BOOST_AUTO_TEST_CASE(TypeBMFixedBaudrates)
+BOOST_AUTO_TEST_CASE(Type_BM_232C_R_FixedBaudrates)
 {
-    ftdi->type = TYPE_BM;
+    // Unify testing of chips behaving the same
+    std::vector<enum ftdi_chip_type> test_types;
+    test_types.push_back(TYPE_BM);
+    test_types.push_back(TYPE_2232C);
+    test_types.push_back(TYPE_R);
 
     map<int, calc_result> baudrates;
     baudrates[300] = calc_result(300, 784, 2, 48);
@@ -143,56 +148,20 @@ BOOST_AUTO_TEST_CASE(TypeBMFixedBaudrates)
     baudrates[460800] = calc_result(461538, 6, 4, 48);
     baudrates[921600] = calc_result(923076, 3, 8, 48);
 
-    test_baudrates(ftdi, baudrates);
+    BOOST_FOREACH(const enum ftdi_chip_type &test_chip_type, test_types)
+    {
+        ftdi->type = test_chip_type;
+        test_baudrates(ftdi, baudrates);
+    }
 }
 
-BOOST_AUTO_TEST_CASE(Type2232CFixedBaudrates)
+BOOST_AUTO_TEST_CASE(Type_x232H_FixedBaudrates)
 {
-    ftdi->type = TYPE_2232C;
-
-    map<int, calc_result> baudrates;
-    baudrates[300] = calc_result(300, 784, 2, 48);
-    baudrates[600] = calc_result(600, 904, 1, 48);
-    baudrates[1200] = calc_result(1200, 452, 0, 48);
-    baudrates[2400] = calc_result(2400, 226, 0, 48);
-    baudrates[4800] = calc_result(4800, 625, 0, 48);
-    baudrates[9600] = calc_result(9600, 312, 4, 48);
-    baudrates[19200] = calc_result(19200, 156, 8, 48);
-    baudrates[38400] = calc_result(38400, 78, 12, 48);
-    baudrates[57600] = calc_result(57553, 52, 12, 48);
-    baudrates[115200] = calc_result(115384, 26, 0, 48);
-    baudrates[230400] = calc_result(230769, 13, 0, 48);
-    baudrates[460800] = calc_result(461538, 6, 4, 48);
-    baudrates[921600] = calc_result(923076, 3, 8, 48);
-
-    test_baudrates(ftdi, baudrates);
-}
-
-BOOST_AUTO_TEST_CASE(TypeRFixedBaudrates)
-{
-    ftdi->type = TYPE_R;
-
-    map<int, calc_result> baudrates;
-    baudrates[300] = calc_result(300, 784, 2, 48);
-    baudrates[600] = calc_result(600, 904, 1, 48);
-    baudrates[1200] = calc_result(1200, 452, 0, 48);
-    baudrates[2400] = calc_result(2400, 226, 0, 48);
-    baudrates[4800] = calc_result(4800, 625, 0, 48);
-    baudrates[9600] = calc_result(9600, 312, 4, 48);
-    baudrates[19200] = calc_result(19200, 156, 8, 48);
-    baudrates[38400] = calc_result(38400, 78, 12, 48);
-    baudrates[57600] = calc_result(57553, 52, 12, 48);
-    baudrates[115200] = calc_result(115384, 26, 0, 48);
-    baudrates[230400] = calc_result(230769, 13, 0, 48);
-    baudrates[460800] = calc_result(461538, 6, 4, 48);
-    baudrates[921600] = calc_result(923076, 3, 8, 48);
-
-    test_baudrates(ftdi, baudrates);
-}
-
-BOOST_AUTO_TEST_CASE(Type2232HFixedBaudrates)
-{
-    ftdi->type = TYPE_2232H;
+    // Unify testing of chips behaving the same
+    std::vector<enum ftdi_chip_type> test_types;
+    test_types.push_back(TYPE_2232H);
+    test_types.push_back(TYPE_4232H);
+    test_types.push_back(TYPE_232H);
 
     map<int, calc_result> baudrates;
     baudrates[300] = calc_result(300, 784, 2, 48);
@@ -209,51 +178,11 @@ BOOST_AUTO_TEST_CASE(Type2232HFixedBaudrates)
     baudrates[460800] = calc_result(461538, 26, 0, 48);
     baudrates[921600] = calc_result(923076, 13, 0, 48);
 
-    test_baudrates(ftdi, baudrates);
-}
-
-BOOST_AUTO_TEST_CASE(Type4232HFixedBaudrates)
-{
-    ftdi->type = TYPE_4232H;
-
-    map<int, calc_result> baudrates;
-    baudrates[300] = calc_result(300, 784, 2, 48);
-    baudrates[600] = calc_result(600, 904, 1, 48);
-    baudrates[1200] = calc_result(1200, 784, 2, 48);
-    baudrates[2400] = calc_result(2400, 904, 1, 48);
-    baudrates[4800] = calc_result(4800, 452, 0, 48);
-    baudrates[9600] = calc_result(9600, 226, 0, 48);
-    baudrates[19200] = calc_result(19200, 625, 0, 48);
-    baudrates[38400] = calc_result(38400, 312, 4, 48);
-    baudrates[57600] = calc_result(57588, 208, 4, 120);
-    baudrates[115200] = calc_result(115246, 104, 12, 48);
-    baudrates[230400] = calc_result(230215, 52, 12, 48);
-    baudrates[460800] = calc_result(461538, 26, 0, 48);
-    baudrates[921600] = calc_result(923076, 13, 0, 48);
-
-    test_baudrates(ftdi, baudrates);
-}
-
-BOOST_AUTO_TEST_CASE(Type232HFixedBaudrates)
-{
-    ftdi->type = TYPE_232H;
-
-    map<int, calc_result> baudrates;
-    baudrates[300] = calc_result(300, 784, 2, 48);
-    baudrates[600] = calc_result(600, 904, 1, 48);
-    baudrates[1200] = calc_result(1200, 784, 2, 48);
-    baudrates[2400] = calc_result(2400, 904, 1, 48);
-    baudrates[4800] = calc_result(4800, 452, 0, 48);
-    baudrates[9600] = calc_result(9600, 226, 0, 48);
-    baudrates[19200] = calc_result(19200, 625, 0, 48);
-    baudrates[38400] = calc_result(38400, 312, 4, 48);
-    baudrates[57600] = calc_result(57588, 208, 4, 120);
-    baudrates[115200] = calc_result(115246, 104, 12, 48);
-    baudrates[230400] = calc_result(230215, 52, 12, 48);
-    baudrates[460800] = calc_result(461538, 26, 0, 48);
-    baudrates[921600] = calc_result(923076, 13, 0, 48);
-
-    test_baudrates(ftdi, baudrates);
+    BOOST_FOREACH(const enum ftdi_chip_type &test_chip_type, test_types)
+    {
+        ftdi->type = test_chip_type;
+        test_baudrates(ftdi, baudrates);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
