@@ -1069,6 +1069,18 @@ static int ftdi_to_clkbits_AM(int baudrate, unsigned long *encoded_divisor)
    clk/2   -> 2
    From /2, 0.125 steps may be taken.
    The fractional part has frac_code encoding
+
+   value[13:0] of value is the divisor
+   index[9] mean 12 MHz Base(120 MHz/10) rate versus 3 MHz (48 MHz/16) else
+
+   H Type have all features above with
+   {index[8],value[15:14]} is the encoded subdivisor
+
+   FT232R, FT2232 and FT232BM have no option for 12 MHz and with 
+   {index[0],value[15:14]} is the encoded subdivisor
+
+   AM Type chips have only four fractional subdivisors at value[15:14]
+   for subdivisors 0, 0.5, 0.25, 0.125
 */
 static int ftdi_to_clkbits(int baudrate, unsigned int clk, int clk_div, unsigned long *encoded_divisor)
 {

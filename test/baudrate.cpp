@@ -87,10 +87,24 @@ static void test_baudrates(ftdi_context *ftdi, const map<int, calc_result> &baud
 
         const calc_result *res = &baudrate.second;
 
-        unsigned short divisor = calc_value & 0x3ff;
-        unsigned short fractional_bits = (calc_index & 0x100) ? 4 : (calc_value >> 12);
-        unsigned short clock = (calc_index & 0x100) ? 120 : 48;
+        unsigned short divisor = calc_value & 0x3fff;
+        unsigned short fractional_bits = (calc_value >> 14);
+        unsigned short clock = (calc_index & 0x200) ? 120 : 48;
 
+        switch (ftdi->type)
+        {
+        case TYPE_232H:
+        case TYPE_2232H:
+        case TYPE_4232H:
+            fractional_bits |= (calc_index & 0x100) ? 4 : 0;
+            break;
+        case TYPE_R:
+        case TYPE_2232C:
+        case TYPE_BM:
+            fractional_bits |= (calc_index & 0x001) ? 4 : 0;
+            break;
+        default:;
+        }
         // Aid debugging since this test is a generic function
         BOOST_CHECK_MESSAGE(res->actual_baudrate == calc_baudrate && res->divisor == divisor && res->fractional_bits == fractional_bits
                             && res->clock == clock,
