@@ -160,6 +160,7 @@ BOOST_AUTO_TEST_CASE(TypeBMFixedBaudrates)
 
     map<int, calc_result> baudrates;
     baudrates[183] = calc_result(183, 16383, 7, 48);
+    baudrates[184] = calc_result(184, 16304, 4, 48);
     baudrates[300] = calc_result(300, 10000, 0, 48);
     baudrates[600] = calc_result(600,  5000, 0, 48);
     baudrates[1200] = calc_result(1200, 2500, 0, 48);
@@ -168,14 +169,14 @@ BOOST_AUTO_TEST_CASE(TypeBMFixedBaudrates)
     baudrates[9600] = calc_result(9600, 312, 1, 48);
     baudrates[19200] = calc_result(19200, 156, 2, 48);
     baudrates[38400] = calc_result(38400, 78, 3, 48);
-    baudrates[57600] = calc_result(57553, 52, 3, 48);
-    baudrates[115200] = calc_result(115384, 26, 0, 48);
+    baudrates[57600] = calc_result(57554, 52, 3, 48);
+    baudrates[115200] = calc_result(115385, 26, 0, 48);
     baudrates[230400] = calc_result(230769, 13, 0, 48);
     baudrates[460800] = calc_result(461538,  6, 1, 48);
-    baudrates[921600] = calc_result(923076,  3, 2, 48);
+    baudrates[921600] = calc_result(923077,  3, 2, 48);
     baudrates[1000000] = calc_result(1000000, 3, 0, 48);
     baudrates[1050000] = calc_result(1043478, 2, 7, 48);
-    baudrates[1400000] = calc_result(1411764, 2, 3, 48);
+    baudrates[1400000] = calc_result(1411765, 2, 3, 48);
     baudrates[1500000] = calc_result(1500000, 2, 0, 48);
     baudrates[2000000] = calc_result(2000000, 1, 0, 48);
     baudrates[3000000] = calc_result(3000000, 0, 0, 48);
@@ -207,9 +208,9 @@ BOOST_AUTO_TEST_CASE(TypeHFixedBaudrates)
     baudrates[38400] = calc_result(38400, 312, 1, 120);
     baudrates[57600] = calc_result(57588, 208, 4, 120);
     baudrates[115200] = calc_result(115246, 104, 3, 120);
-    baudrates[230400] = calc_result(230215, 52, 3, 120);
+    baudrates[230400] = calc_result(230216, 52, 3, 120);
     baudrates[460800] = calc_result(461538, 26, 0, 120);
-    baudrates[921600] = calc_result(923076, 13, 0, 120);
+    baudrates[921600] = calc_result(923077, 13, 0, 120);
     baudrates[1000000] = calc_result(1000000, 12, 0, 120);
     baudrates[1000000] = calc_result(1000000, 12, 0, 120);
     baudrates[6000000] = calc_result(6000000, 2, 0, 120);

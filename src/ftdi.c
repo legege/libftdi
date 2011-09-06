@@ -1112,7 +1112,11 @@ static int ftdi_to_clkbits(int baudrate, unsigned int clk, int clk_div, unsigned
             best_divisor = divisor/2;
         if(best_divisor > 0x20000)
             best_divisor = 0x1ffff;
-        best_baud = clk*8/clk_div/best_divisor;
+        best_baud = clk*16/clk_div/best_divisor;
+        if (best_baud & 1) /* Decide if to round up or down*/
+            best_baud = best_baud /2 +1;
+        else
+            best_baud = best_baud /2;
         *encoded_divisor = (best_divisor >> 3) | (frac_code[best_divisor & 0x7] << 14);
     }
     return best_baud;
