@@ -19,6 +19,7 @@
 #include <boost/foreach.hpp>
 #include <vector>
 #include <map>
+#include <math.h>
 
 using namespace std;
 
@@ -181,6 +182,23 @@ BOOST_AUTO_TEST_CASE(TypeBMFixedBaudrates)
     baudrates[2000000] = calc_result(2000000, 1, 0, 48);
     baudrates[3000000] = calc_result(3000000, 0, 0, 48);
 
+    baudrates[(3000000*16/(2*16+15))-1] = calc_result(round(3000000/3.000), 3, 0, 48);
+    baudrates[ 3000000*16/(2*16+15)   ] = calc_result(round(3000000/3.000), 3, 0, 48);
+    baudrates[(3000000*16/(2*16+15))+1] = calc_result(round(3000000/2.875), 2, 7, 48);
+    baudrates[ 3000000*16/(2*16+13)   ] = calc_result(round(3000000/2.875), 2, 7, 48);
+    baudrates[(3000000*16/(2*16+13))+1] = calc_result(round(3000000/2.750), 2, 6, 48);
+    baudrates[ 3000000*16/(2*16+11)   ] = calc_result(round(3000000/2.750), 2, 6, 48);
+    baudrates[(3000000*16/(2*16+11))+1] = calc_result(round(3000000/2.625), 2, 5, 48);
+    baudrates[ 3000000*16/(2*16+ 9)   ] = calc_result(round(3000000/2.625), 2, 5, 48);
+    baudrates[(3000000*16/(2*16+ 9))+1] = calc_result(round(3000000/2.500), 2, 1, 48);
+    baudrates[ 3000000*16/(2*16+ 7)   ] = calc_result(round(3000000/2.500), 2, 1, 48);
+    baudrates[(3000000*16/(2*16+ 7))+1] = calc_result(round(3000000/2.375), 2, 4, 48);
+    baudrates[ 3000000*16/(2*16+ 5)   ] = calc_result(round(3000000/2.375), 2, 4, 48);
+    baudrates[(3000000*16/(2*16+ 5))+1] = calc_result(round(3000000/2.250), 2, 2, 48);
+    baudrates[ 3000000*16/(2*16+ 3)   ] = calc_result(round(3000000/2.250), 2, 2, 48);
+    baudrates[(3000000*16/(2*16+ 3))+1] = calc_result(round(3000000/2.125), 2, 3, 48);
+    baudrates[ 3000000*16/(2*16+ 1)   ] = calc_result(round(3000000/2.125), 2, 3, 48);
+    baudrates[(3000000*16/(2*16+ 1))+1] = calc_result(round(3000000/2.000), 2, 0, 48);
     BOOST_FOREACH(const enum ftdi_chip_type &test_chip_type, test_types)
     {
         ftdi->type = test_chip_type;
@@ -198,6 +216,7 @@ BOOST_AUTO_TEST_CASE(TypeHFixedBaudrates)
 
     map<int, calc_result> baudrates;
     baudrates[183] = calc_result(183, 16383, 7, 48);
+    baudrates[184] = calc_result(184, 16304, 4, 48);
     baudrates[300] = calc_result(300, 10000, 0, 48);
     baudrates[600] = calc_result(600,  5000, 0, 48);
     baudrates[1200] = calc_result(1200, 10000, 0, 120);
@@ -217,6 +236,24 @@ BOOST_AUTO_TEST_CASE(TypeHFixedBaudrates)
     baudrates[4173913] = calc_result(4173913, 2, 7, 120);
     baudrates[8000000] = calc_result(8000000, 1, 0, 120);
     baudrates[12000000] = calc_result(12000000, 0, 0, 120);
+
+    baudrates[(12000000*16/(2*16+15))-1] = calc_result(round(12000000/3.000), 3, 0, 120);
+    baudrates[ 12000000*16/(2*16+15)   ] = calc_result(round(12000000/3.000), 3, 0, 120);
+    baudrates[(12000000*16/(2*16+15))+1] = calc_result(round(12000000/2.875), 2, 7, 120);
+    baudrates[ 12000000*16/(2*16+13)   ] = calc_result(round(12000000/2.875), 2, 7, 120);
+    baudrates[(12000000*16/(2*16+13))+1] = calc_result(round(12000000/2.750), 2, 6, 120);
+    baudrates[ 12000000*16/(2*16+11)   ] = calc_result(round(12000000/2.750), 2, 6, 120);
+    baudrates[(12000000*16/(2*16+11))+1] = calc_result(round(12000000/2.625), 2, 5, 120);
+    baudrates[ 12000000*16/(2*16+ 9)   ] = calc_result(round(12000000/2.625), 2, 5, 120);
+    baudrates[(12000000*16/(2*16+ 9))+1] = calc_result(round(12000000/2.500), 2, 1, 120);
+    baudrates[ 12000000*16/(2*16+ 7)   ] = calc_result(round(12000000/2.500), 2, 1, 120);
+    baudrates[(12000000*16/(2*16+ 7))+1] = calc_result(round(12000000/2.375), 2, 4, 120);
+    baudrates[ 12000000*16/(2*16+ 5)   ] = calc_result(round(12000000/2.375), 2, 4, 120);
+    baudrates[(12000000*16/(2*16+ 5))+1] = calc_result(round(12000000/2.250), 2, 2, 120);
+    baudrates[ 12000000*16/(2*16+ 3)   ] = calc_result(round(12000000/2.250), 2, 2, 120);
+    baudrates[(12000000*16/(2*16+ 3))+1] = calc_result(round(12000000/2.125), 2, 3, 120);
+    baudrates[ 12000000*16/(2*16+ 1)   ] = calc_result(round(12000000/2.125), 2, 3, 120);
+    baudrates[(12000000*16/(2*16+ 1))+1] = calc_result(round(12000000/2.000), 2, 0, 120);
 
     BOOST_FOREACH(const enum ftdi_chip_type &test_chip_type, test_types)
     {
