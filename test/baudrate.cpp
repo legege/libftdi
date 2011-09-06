@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(TypeAMFixedBaudrates)
     test_baudrates(ftdi, baudrates);
 }
 
-BOOST_AUTO_TEST_CASE(Type_BM_232C_R_FixedBaudrates)
+BOOST_AUTO_TEST_CASE(TypeBMFixedBaudrates)
 {
     // Unify testing of chips behaving the same
     std::vector<enum ftdi_chip_type> test_types;
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(Type_BM_232C_R_FixedBaudrates)
     }
 }
 
-BOOST_AUTO_TEST_CASE(Type_x232H_FixedBaudrates)
+BOOST_AUTO_TEST_CASE(TypeHFixedBaudrates)
 {
     // Unify testing of chips behaving the same
     std::vector<enum ftdi_chip_type> test_types;
