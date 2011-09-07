@@ -39,7 +39,7 @@ public:
         ftdi = ftdi_new();
     }
 
-    ~BaseFTDIFixture()
+    virtual ~BaseFTDIFixture()
     {
         delete ftdi;
         ftdi = NULL;
