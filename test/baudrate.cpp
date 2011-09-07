@@ -1,7 +1,7 @@
 /**@file
 @brief Test baudrate calculator code
 
-@author Thomas Jarosch
+@author Thomas Jarosch and Uwe Bonnes
 */
 
 /***************************************************************************
@@ -106,6 +106,7 @@ static void test_baudrates(ftdi_context *ftdi, const map<int, calc_result> &baud
             break;
         default:;
         }
+
         // Aid debugging since this test is a generic function
         BOOST_CHECK_MESSAGE(res->actual_baudrate == calc_baudrate && res->divisor == divisor && res->fractional_bits == fractional_bits
                             && res->clock == clock,
@@ -199,6 +200,7 @@ BOOST_AUTO_TEST_CASE(TypeBMFixedBaudrates)
     baudrates[(3000000*16/(2*16+ 3))+1] = calc_result(round(3000000/2.125), 2, 3, 48);
     baudrates[ 3000000*16/(2*16+ 1)   ] = calc_result(round(3000000/2.125), 2, 3, 48);
     baudrates[(3000000*16/(2*16+ 1))+1] = calc_result(round(3000000/2.000), 2, 0, 48);
+
     BOOST_FOREACH(const enum ftdi_chip_type &test_chip_type, test_types)
     {
         ftdi->type = test_chip_type;
