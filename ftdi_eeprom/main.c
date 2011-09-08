@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     int _read = 0, _erase = 0, _flash = 0;
 
     int my_eeprom_size = 0;
-    unsigned char eeprom_buf[FTDI_MAX_EEPROM_SIZE];
+    unsigned char *eeprom_buf = NULL;
     char *filename;
     int size_check;
     int i, argc_filename;
@@ -264,9 +264,16 @@ int main(int argc, char *argv[])
         printf("serial = \"%s\"\n", eeprom->serial);
         */
 
+        eeprom_buf = malloc(my_eeprom_size);
+        ftdi_get_eeprom_buf(ftdi, eeprom_buf, my_eeprom_size);
+
+        if (eeprom_buf == NULL)
+        {
+            fprintf(stderr, "Malloc failed, aborting\n");
+            goto cleanup;
+        }
         if (filename != NULL && strlen(filename) > 0)
         {
-            ftdi_get_eeprom_buf(ftdi, eeprom_buf, my_eeprom_size);
 
             FILE *fp = fopen (filename, "wb");
             fwrite (eeprom_buf, 1, my_eeprom_size, fp);
@@ -368,6 +375,8 @@ int main(int argc, char *argv[])
     }
 
 cleanup:
+    if (eeprom_buf)
+        free(eeprom_buf);
     if (_read > 0 || _erase > 0 || _flash > 0)
     {
         printf("FTDI close: %d\n", ftdi_usb_close(ftdi));
