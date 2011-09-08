@@ -383,6 +383,7 @@ cleanup:
     }
 
     ftdi_deinit (ftdi);
+    ftdi_free (ftdi);
 
     cfg_free(cfg);
 
