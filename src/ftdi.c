@@ -964,34 +964,30 @@ int ftdi_usb_close(struct ftdi_context *ftdi)
     return rtn;
 }
 
-/**
-    ftdi_convert_baudrate returns nearest supported baud rate to that requested.
+/*  ftdi_to_clkbits_AM For the AM device, convert a requested baudrate 
+                    to encoded divisor and the achievable baudrate
     Function is only used internally
     \internal
+
+    See AN120
+   clk/1   -> 0
+   clk/1.5 -> 1
+   clk/2   -> 2
+   From /2, 0.125/ 0.25 and 0.5 steps may be taken
+   The fractional part has frac_code encoding
 */
-static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
-                                 unsigned short *value, unsigned short *index)
+static int ftdi_to_clkbits_AM(int baudrate, unsigned long *encoded_divisor)
+
 {
+    static const char frac_code[8] = {0, 3, 2, 4, 1, 5, 6, 7};
     static const char am_adjust_up[8] = {0, 0, 0, 1, 0, 3, 2, 1};
     static const char am_adjust_dn[8] = {0, 0, 0, 1, 0, 1, 2, 3};
-    static const char frac_code[8] = {0, 3, 2, 4, 1, 5, 6, 7};
     int divisor, best_divisor, best_baud, best_baud_diff;
-    unsigned long encoded_divisor;
+    divisor = 24000000 / baudrate;
     int i;
 
-    if (baudrate <= 0)
-    {
-        // Return error
-        return -1;
-    }
-
-    divisor = 24000000 / baudrate;
-
-    if (ftdi->type == TYPE_AM)
-    {
-        // Round down to supported fraction (AM only)
-        divisor -= am_adjust_dn[divisor & 7];
-    }
+    // Round down to supported fraction (AM only)
+    divisor -= am_adjust_dn[divisor & 7];
 
     // Try this divisor and the one above it (because division rounds down)
     best_divisor = 0;
@@ -1009,11 +1005,6 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
             // Round up to minimum supported divisor
             try_divisor = 8;
         }
-        else if (ftdi->type != TYPE_AM && try_divisor < 12)
-        {
-            // BM doesn't support divisors 9 through 11 inclusive
-            try_divisor = 12;
-        }
         else if (divisor < 16)
         {
             // AM doesn't support divisors 9 through 15 inclusive
@@ -1021,23 +1012,12 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
         }
         else
         {
-            if (ftdi->type == TYPE_AM)
+            // Round up to supported fraction (AM only)
+            try_divisor += am_adjust_up[try_divisor & 7];
+            if (try_divisor > 0x1FFF8)
             {
-                // Round up to supported fraction (AM only)
-                try_divisor += am_adjust_up[try_divisor & 7];
-                if (try_divisor > 0x1FFF8)
-                {
-                    // Round down to maximum supported divisor value (for AM)
-                    try_divisor = 0x1FFF8;
-                }
-            }
-            else
-            {
-                if (try_divisor > 0x1FFFF)
-                {
-                    // Round down to maximum supported divisor value (for BM)
-                    try_divisor = 0x1FFFF;
-                }
+                // Round down to maximum supported divisor value (for AM)
+                try_divisor = 0x1FFF8;
             }
         }
         // Get estimated baud rate (to nearest integer)
@@ -1065,19 +1045,128 @@ static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
         }
     }
     // Encode the best divisor value
-    encoded_divisor = (best_divisor >> 3) | (frac_code[best_divisor & 7] << 14);
+    *encoded_divisor = (best_divisor >> 3) | (frac_code[best_divisor & 7] << 14);
     // Deal with special cases for encoded value
-    if (encoded_divisor == 1)
+    if (*encoded_divisor == 1)
     {
-        encoded_divisor = 0;    // 3000000 baud
+        *encoded_divisor = 0;    // 3000000 baud
     }
-    else if (encoded_divisor == 0x4001)
+    else if (*encoded_divisor == 0x4001)
     {
-        encoded_divisor = 1;    // 2000000 baud (BM only)
+        *encoded_divisor = 1;    // 2000000 baud (BM only)
+    }
+    return best_baud;
+}
+
+/*  ftdi_to_clkbits Convert a requested baudrate for a given system clock  and predivisor
+                    to encoded divisor and the achievable baudrate
+    Function is only used internally
+    \internal
+
+    See AN120
+   clk/1   -> 0
+   clk/1.5 -> 1
+   clk/2   -> 2
+   From /2, 0.125 steps may be taken.
+   The fractional part has frac_code encoding
+
+   value[13:0] of value is the divisor
+   index[9] mean 12 MHz Base(120 MHz/10) rate versus 3 MHz (48 MHz/16) else
+
+   H Type have all features above with
+   {index[8],value[15:14]} is the encoded subdivisor
+
+   FT232R, FT2232 and FT232BM have no option for 12 MHz and with 
+   {index[0],value[15:14]} is the encoded subdivisor
+
+   AM Type chips have only four fractional subdivisors at value[15:14]
+   for subdivisors 0, 0.5, 0.25, 0.125
+*/
+static int ftdi_to_clkbits(int baudrate, unsigned int clk, int clk_div, unsigned long *encoded_divisor)
+{
+    static const char frac_code[8] = {0, 3, 2, 4, 1, 5, 6, 7};
+    int best_baud = 0;
+    int divisor, best_divisor;
+    if (baudrate >=  clk/clk_div)
+    {
+        *encoded_divisor = 0;
+        best_baud = clk/clk_div;
+    }
+    else if (baudrate >=  clk/(clk_div + clk_div/2))
+    {
+        *encoded_divisor = 1;
+        best_baud = clk/(clk_div + clk_div/2);
+    }
+    else if (baudrate >=  clk/(2*clk_div))
+    {
+        *encoded_divisor = 2;
+        best_baud = clk/(2*clk_div);
+    }
+    else
+    {
+        /* We divide by 16 to have 3 fractional bits and one bit for rounding */
+        divisor = clk*16/clk_div / baudrate;
+        if (divisor & 1) /* Decide if to round up or down*/
+            best_divisor = divisor /2 +1;
+        else
+            best_divisor = divisor/2;
+        if(best_divisor > 0x20000)
+            best_divisor = 0x1ffff;
+        best_baud = clk*16/clk_div/best_divisor;
+        if (best_baud & 1) /* Decide if to round up or down*/
+            best_baud = best_baud /2 +1;
+        else
+            best_baud = best_baud /2;
+        *encoded_divisor = (best_divisor >> 3) | (frac_code[best_divisor & 0x7] << 14);
+    }
+    return best_baud;
+} 
+/**
+    ftdi_convert_baudrate returns nearest supported baud rate to that requested.
+    Function is only used internally
+    \internal
+*/
+static int ftdi_convert_baudrate(int baudrate, struct ftdi_context *ftdi,
+                                 unsigned short *value, unsigned short *index)
+{
+    int best_baud;
+    unsigned long encoded_divisor;
+
+    if (baudrate <= 0)
+    {
+        // Return error
+        return -1;
+    }
+
+#define H_CLK 120000000
+#define C_CLK  48000000
+    if ((ftdi->type == TYPE_2232H) || (ftdi->type == TYPE_4232H) || (ftdi->type == TYPE_232H ))
+    {
+        if(baudrate*10 > H_CLK /0x3fff)
+        {
+            /* On H Devices, use 12 000 000 Baudrate when possible
+               We have a 14 bit divisor, a 1 bit divisor switch (10 or 16) 
+               three fractional bits and a 120 MHz clock
+               Assume AN_120 "Sub-integer divisors between 0 and 2 are not allowed" holds for
+               DIV/10 CLK too, so /1, /1.5 and /2 can be handled the same*/
+            best_baud = ftdi_to_clkbits(baudrate, H_CLK, 10, &encoded_divisor);
+            encoded_divisor |= 0x20000; /* switch on CLK/10*/
+        }
+        else
+            best_baud = ftdi_to_clkbits(baudrate, C_CLK, 16, &encoded_divisor);
+    }
+    else if ((ftdi->type == TYPE_BM) || (ftdi->type == TYPE_2232C) || (ftdi->type == TYPE_R ))
+    {
+        best_baud = ftdi_to_clkbits(baudrate, C_CLK, 16, &encoded_divisor);
+    }
+    else
+    {
+        best_baud = ftdi_to_clkbits_AM(baudrate, &encoded_divisor);
     }
     // Split into "value" and "index" values
     *value = (unsigned short)(encoded_divisor & 0xFFFF);
-    if (ftdi->type == TYPE_2232C || ftdi->type == TYPE_2232H || ftdi->type == TYPE_4232H || ftdi->type == TYPE_232H )
+    if (ftdi->type == TYPE_2232H || 
+        ftdi->type == TYPE_4232H || ftdi->type == TYPE_232H )
     {
         *index = (unsigned short)(encoded_divisor >> 8);
         *index &= 0xFF00;
