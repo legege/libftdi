@@ -13,11 +13,17 @@ int main(void)
 {
     int ret;
     struct ftdi_context ftdic;
+    struct ftdi_version_info version;
     if (ftdi_init(&ftdic) < 0)
     {
         fprintf(stderr, "ftdi_init failed\n");
         return EXIT_FAILURE;
     }
+
+    version = ftdi_get_library_version();
+    printf("Initialized libftdi %s (major: %d, minor: %d, micro: %d, snapshot ver: %s)\n",
+        version.version_str, version.major, version.minor, version.micro,
+        version.snapshot_str);
 
     if ((ret = ftdi_usb_open(&ftdic, 0x0403, 0x6001)) < 0)
     {
