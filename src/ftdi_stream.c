@@ -73,7 +73,7 @@ ftdi_readstream_cb(struct libusb_transfer *transfer)
        uint8_t *ptr = transfer->buffer;
        int length = transfer->actual_length;
        int numPackets = (length + packet_size - 1) / packet_size;
-       int res;
+       int res = 0;
 
        for (i = 0; i < numPackets; i++)
        {
