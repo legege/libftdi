@@ -101,6 +101,12 @@ add_subdirectory(examples)
 add_subdirectory(packages)
 add_subdirectory(test)
 
+# "make dist" target
+set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${VERSION_STRING})
+add_custom_target(dist
+    COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD
+            | bzip2 > ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar.bz2
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 
 # Documentation
