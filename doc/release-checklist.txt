@@ -3,12 +3,7 @@
 
 - Update version number in the following files:
   - CMakeLists.txt
-  - configure.in
   - README
-
-- Increase .so library version:
-  - src/Makefile.am
-  - ftdipp/Makefile.am
 
 - Run "make dist"
 
