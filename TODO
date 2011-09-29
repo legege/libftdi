@@ -2,16 +2,12 @@
 Build related:
 - Rename the library and header file,
   so libftdi 0.x and 1.x can co-exist
-- Remove autoconf support
 
 API extentions:
 - Make EEPROM structure opaque
-- Function to query the library version,
-   either as string or as integers. Maybe both.
 - TO DECIDE: Make ftdi structure opaque?
 
 Misc:
-- Fix baudrate unit test for AM type chips
 - Resolve TODO entries in ftdi_eeprom
 - Look into merging ftdi_eeprom and examples/eeprom
 - "To deal with ftdi_context"  <-- Xiaofan: What was meant by this?
