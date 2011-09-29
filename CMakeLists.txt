@@ -1,7 +1,7 @@
 # Project
 project(libftdi)
 set(MAJOR_VERSION 0)
-set(MINOR_VERSION 17)
+set(MINOR_VERSION 99)
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION})
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 
@@ -101,6 +101,12 @@ add_subdirectory(examples)
 add_subdirectory(packages)
 add_subdirectory(test)
 
+# "make dist" target
+set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${VERSION_STRING})
+add_custom_target(dist
+    COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD
+            | bzip2 > ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar.bz2
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 
 # Documentation

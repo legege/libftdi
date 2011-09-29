@@ -1,4 +1,0 @@
-default: all
-
-all:
-	autoreconf --install

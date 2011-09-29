@@ -10,22 +10,6 @@
 .kdev4/
 build/
 
-# Automake
-Makefile
-Makefile.in
-autom4te.cache
-aclocal.m4
-libtool
-stamp-h1
-configure
-config.*
-*.substvars
-ltmain.sh
-missing
-install-sh
-depcomp
-INSTALL
-
 # kdevelop
 *.kdevelop.pcs
 *.kdevses
@@ -46,9 +30,6 @@ examples/find_all
 examples/find_all_pp
 examples/serial_test
 examples/simple
-
-# python bindings
-bindings/python/setup.py
 
 # Backup files and stuff from patches
 *.orig
