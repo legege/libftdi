@@ -10,6 +10,9 @@
 %ignore ftdi_write_data_async;
 %ignore ftdi_async_complete;
 
+%immutable ftdi_version_info::version_str;
+%immutable ftdi_version_info::snapshot_str;
+
 %include ftdi.h
 %{
 #include <ftdi.h>
