@@ -27,6 +27,7 @@ This exception does not invalidate any other reasons why a work based
 on this file might be covered by the GNU General Public License.
 */
 #include "ftdi.hpp"
+#include "ftdi_i.h"
 #include "ftdi.h"
 
 namespace Ftdi

@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ftdi_i.h"
 #include "ftdi.h"
 #include "ftdi_version_i.h"
 

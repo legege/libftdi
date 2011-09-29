@@ -4,7 +4,6 @@ Build related:
   so libftdi 0.x and 1.x can co-exist
 
 API extentions:
-- Make EEPROM structure opaque
 - TO DECIDE: Make ftdi structure opaque?
 
 Misc:

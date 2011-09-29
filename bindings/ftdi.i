@@ -15,6 +15,11 @@
 #include <ftdi.h>
 %}
 
+%include ftdi_i.h
+%{
+#include <ftdi_i.h>
+%}
+
 extern "C" {
 
 %apply char *OUTPUT { unsigned char *buf };
