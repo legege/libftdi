@@ -272,16 +272,6 @@ int Context::set_error_char(unsigned char errorch, unsigned char enable)
     return ftdi_set_error_char(d->ftdi, errorch, enable);
 }
 
-int Context::bitbang_enable(unsigned char bitmask)
-{
-    return ftdi_set_bitmode(d->ftdi, bitmask, BITMODE_BITBANG);
-}
-
-int Context::bitbang_disable()
-{
-    return ftdi_disable_bitbang(d->ftdi);
-}
-
 int Context::set_bitmode(unsigned char bitmask, unsigned char mode)
 {
     return ftdi_set_bitmode(d->ftdi, bitmask, mode);
@@ -290,6 +280,11 @@ int Context::set_bitmode(unsigned char bitmask, unsigned char mode)
 int Context::set_bitmode(unsigned char bitmask, enum ftdi_mpsse_mode mode)
 {
     return ftdi_set_bitmode(d->ftdi, bitmask, mode);
+}
+
+int Context::bitbang_disable()
+{
+    return ftdi_disable_bitbang(d->ftdi);
 }
 
 int Context::read_pins(unsigned char *pins)

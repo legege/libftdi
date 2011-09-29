@@ -1902,21 +1902,19 @@ int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunks
     return 0;
 }
 
-
 /**
-    Enable bitbang mode.
-
-    \deprecated use \ref ftdi_set_bitmode with mode BITMODE_BITBANG instead
+    Enable/disable bitbang modes.
 
     \param ftdi pointer to ftdi_context
     \param bitmask Bitmask to configure lines.
            HIGH/ON value configures a line as output.
+    \param mode Bitbang mode: use the values defined in \ref ftdi_mpsse_mode
 
     \retval  0: all fine
     \retval -1: can't enable bitbang mode
     \retval -2: USB device unavailable
 */
-int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask)
+int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned char mode)
 {
     unsigned short usb_val;
 
@@ -1924,15 +1922,12 @@ int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask)
         ftdi_error_return(-2, "USB device unavailable");
 
     usb_val = bitmask; // low byte: bitmask
-    /* FT2232C: Set bitbang_mode to 2 to enable SPI */
-    usb_val |= (ftdi->bitbang_mode << 8);
+    usb_val |= (mode << 8);
+    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_SET_BITMODE_REQUEST, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) < 0)
+        ftdi_error_return(-1, "unable to configure bitbang mode. Perhaps not a BM/2232C type chip?");
 
-    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE,
-                                SIO_SET_BITMODE_REQUEST, usb_val, ftdi->index,
-                                NULL, 0, ftdi->usb_write_timeout) < 0)
-        ftdi_error_return(-1, "unable to enter bitbang mode. Perhaps not a BM type chip?");
-
-    ftdi->bitbang_enabled = 1;
+    ftdi->bitbang_mode = mode;
+    ftdi->bitbang_enabled = (mode == BITMODE_RESET) ? 0 : 1;
     return 0;
 }
 
@@ -1957,34 +1952,6 @@ int ftdi_disable_bitbang(struct ftdi_context *ftdi)
     return 0;
 }
 
-/**
-    Enable/disable bitbang modes.
-
-    \param ftdi pointer to ftdi_context
-    \param bitmask Bitmask to configure lines.
-           HIGH/ON value configures a line as output.
-    \param mode Bitbang mode: use the values defined in \ref ftdi_mpsse_mode
-
-    \retval  0: all fine
-    \retval -1: can't enable bitbang mode
-    \retval -2: USB device unavailable
-*/
-int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned char mode)
-{
-    unsigned short usb_val;
-
-    if (ftdi == NULL || ftdi->usb_dev == NULL)
-        ftdi_error_return(-2, "USB device unavailable");
-
-    usb_val = bitmask; // low byte: bitmask
-    usb_val |= (mode << 8);
-    if (libusb_control_transfer(ftdi->usb_dev, FTDI_DEVICE_OUT_REQTYPE, SIO_SET_BITMODE_REQUEST, usb_val, ftdi->index, NULL, 0, ftdi->usb_write_timeout) < 0)
-        ftdi_error_return(-1, "unable to configure bitbang mode. Perhaps not a 2232C type chip?");
-
-    ftdi->bitbang_mode = mode;
-    ftdi->bitbang_enabled = (mode == BITMODE_RESET) ? 0 : 1;
-    return 0;
-}
 
 /**
     Directly read pin state, circumventing the read buffer. Useful for bitbang mode.

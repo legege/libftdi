@@ -474,9 +474,8 @@ extern "C"
     struct ftdi_transfer_control *ftdi_read_data_submit(struct ftdi_context *ftdi, unsigned char *buf, int size);
     int ftdi_transfer_data_done(struct ftdi_transfer_control *tc);
 
-    int DEPRECATED(ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask));
-    int ftdi_disable_bitbang(struct ftdi_context *ftdi);
     int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned char mode);
+    int ftdi_disable_bitbang(struct ftdi_context *ftdi);
     int ftdi_read_pins(struct ftdi_context *ftdi, unsigned char *pins);
 
     int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency);
