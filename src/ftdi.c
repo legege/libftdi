@@ -35,6 +35,7 @@
 #include <stdlib.h>
 
 #include "ftdi.h"
+#include "ftdi_version_i.h"
 
 #define ftdi_error_return(code, str) do {  \
         ftdi->error_str = str;             \
@@ -257,6 +258,23 @@ void ftdi_set_usbdev (struct ftdi_context *ftdi, libusb_device_handle *usb)
     ftdi->usb_dev = usb;
 }
 
+/**
+ * @brief Get libftdi library version
+ *
+ * @return ftdi_version_info Library version information
+ **/
+struct ftdi_version_info ftdi_get_library_version()
+{
+    struct ftdi_version_info ver;
+
+    ver.major = FTDI_MAJOR_VERSION;
+    ver.minor = FTDI_MINOR_VERSION;
+    ver.micro = FTDI_MICRO_VERSION;
+    ver.version_str = FTDI_VERSION_STRING;
+    ver.snapshot_str = FTDI_SNAPSHOT_VERSION;
+
+    return ver;
+}
 
 /**
     Finds all ftdi devices with given VID:PID on the usb bus. Creates a new

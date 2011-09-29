@@ -498,6 +498,23 @@ typedef struct
 typedef int (FTDIStreamCallback)(uint8_t *buffer, int length,
                                  FTDIProgressInfo *progress, void *userdata);
 
+/**
+ * Provide libftdi version information
+ * major: Library major version
+ * minor: Library minor version
+ * micro: Currently unused, ight get used for hotfixes.
+ * version_str: Version as (static) string
+ * snapshot_str: Git snapshot version if known. Otherwise "unknown" or empty string.
+*/
+struct ftdi_version_info
+{
+    int major;
+    int minor;
+    int micro;
+    const char *version_str;
+    const char *snapshot_str;
+};
+
 
 #ifdef __cplusplus
 extern "C"
@@ -511,6 +528,8 @@ extern "C"
     void ftdi_deinit(struct ftdi_context *ftdi);
     void ftdi_free(struct ftdi_context *ftdi);
     void ftdi_set_usbdev (struct ftdi_context *ftdi, struct libusb_device_handle *usbdev);
+
+    struct ftdi_version_info ftdi_get_library_version();
 
     int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devlist,
                           int vendor, int product);
