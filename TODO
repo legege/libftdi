@@ -9,8 +9,6 @@ API extentions:
 Misc:
 - Resolve TODO entries in ftdi_eeprom
 - Look into merging ftdi_eeprom and examples/eeprom
-- "To deal with ftdi_context"  <-- Xiaofan: What was meant by this?
-  Maybe the same as "Make ftdi structure opaque?"
 
 Documentation:
 - Mention libusb-1.0 dependency
