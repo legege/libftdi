@@ -50,7 +50,7 @@ double get_prec_time()
 
 int main(int argc, char **argv)
 {
-    struct ftdi_context ftdic;
+    struct ftdi_context *ftdi;
     int i, t;
     unsigned char *txbuf;
     unsigned char *rxbuf;
@@ -111,16 +111,16 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (ftdi_init(&ftdic) < 0)
+    if ((ftdi = ftdi_new()) == 0)
     {
-        fprintf(stderr, "ftdi_init failed\n");
+        fprintf(stderr, "ftdi_new failed\n");
         retval = EXIT_FAILURE;
         goto done;
     }
 
-    if (ftdi_usb_open_string(&ftdic, devicedesc) < 0)
+    if (ftdi_usb_open_string(ftdi, devicedesc) < 0)
     {
-        fprintf(stderr,"Can't open ftdi device: %s\n",ftdi_get_error_string(&ftdic));
+        fprintf(stderr,"Can't open ftdi device: %s\n",ftdi_get_error_string(ftdi));
         retval = EXIT_FAILURE;
         goto do_deinit;
     }
@@ -132,12 +132,12 @@ int main(int argc, char **argv)
         set_baud=baud/16;
     }
 
-    ftdi_set_baudrate(&ftdic,set_baud);
-    printf("real baudrate used: %d\n",(test_mode==BITMODE_RESET) ? ftdic.baudrate : ftdic.baudrate*16);
+    ftdi_set_baudrate(ftdi,set_baud);
+    printf("real baudrate used: %d\n",(test_mode==BITMODE_RESET) ? ftdi->baudrate : ftdi->baudrate*16);
 
-    if (ftdi_set_bitmode(&ftdic, 0xFF,test_mode) < 0)
+    if (ftdi_set_bitmode(ftdi, 0xFF,test_mode) < 0)
     {
-        fprintf(stderr,"Can't set mode: %s\n",ftdi_get_error_string(&ftdic));
+        fprintf(stderr,"Can't set mode: %s\n",ftdi_get_error_string(ftdi));
         retval = EXIT_FAILURE;
         goto do_close;
     }
@@ -165,10 +165,10 @@ int main(int argc, char **argv)
             txbuf[i]=(i%2) ? 0xff : 0;
     }
 
-    if (ftdi_write_data_set_chunksize(&ftdic, txchunksize) < 0 ||
-            ftdi_read_data_set_chunksize(&ftdic, txchunksize) < 0)
+    if (ftdi_write_data_set_chunksize(ftdi, txchunksize) < 0 ||
+            ftdi_read_data_set_chunksize(ftdi, txchunksize) < 0)
     {
-        fprintf(stderr,"Can't set chunksize: %s\n",ftdi_get_error_string(&ftdic));
+        fprintf(stderr,"Can't set chunksize: %s\n",ftdi_get_error_string(ftdi));
         retval = EXIT_FAILURE;
         goto do_close;
     }
@@ -176,14 +176,14 @@ int main(int argc, char **argv)
     if (test_mode==BITMODE_SYNCBB)
     {
         // completely clear the receive buffer before beginning
-        while (ftdi_read_data(&ftdic, rxbuf, txchunksize)>0);
+        while (ftdi_read_data(ftdi, rxbuf, txchunksize)>0);
     }
 
     start=get_prec_time();
 
     // don't wait for more data to arrive, take what we get and keep on sending
     // yes, we really would like to have libusb 1.0+ with async read/write...
-    ftdic.usb_read_timeout=1;
+    ftdi->usb_read_timeout=1;
 
     i=0;
     while (i < datasize)
@@ -192,10 +192,10 @@ int main(int argc, char **argv)
         if (i+sendsize > datasize)
             sendsize=datasize-i;
 
-        if ((sendsize=ftdi_write_data(&ftdic, txbuf, sendsize)) < 0)
+        if ((sendsize=ftdi_write_data(ftdi, txbuf, sendsize)) < 0)
         {
             fprintf(stderr,"write failed at %d: %s\n",
-                    i, ftdi_get_error_string(&ftdic));
+                    i, ftdi_get_error_string(ftdi));
             retval = EXIT_FAILURE;
             goto do_close;
         }
@@ -205,16 +205,16 @@ int main(int argc, char **argv)
         if (test_mode==BITMODE_SYNCBB)
         {
             // read the same amount of data as sent
-            ftdi_read_data(&ftdic, rxbuf, sendsize);
+            ftdi_read_data(ftdi, rxbuf, sendsize);
         }
     }
 
     duration=get_prec_time()-start;
     printf("and took %.4f seconds, this is %.0f baud or factor %.3f\n",duration,(plan*baud)/duration,plan/duration);
 do_close:
-    ftdi_usb_close(&ftdic);
+    ftdi_usb_close(ftdi);
 do_deinit:
-    ftdi_deinit(&ftdic);
+    ftdi_free(ftdi);
 done:
     if(rxbuf)
         free(rxbuf);

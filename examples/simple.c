@@ -12,11 +12,11 @@
 int main(void)
 {
     int ret;
-    struct ftdi_context ftdic;
+    struct ftdi_context *ftdi;
     struct ftdi_version_info version;
-    if (ftdi_init(&ftdic) < 0)
-    {
-        fprintf(stderr, "ftdi_init failed\n");
+    if ((ftdi = ftdi_new()) == 0)
+   {
+        fprintf(stderr, "ftdi_new failed\n");
         return EXIT_FAILURE;
     }
 
@@ -25,29 +25,29 @@ int main(void)
         version.version_str, version.major, version.minor, version.micro,
         version.snapshot_str);
 
-    if ((ret = ftdi_usb_open(&ftdic, 0x0403, 0x6001)) < 0)
+    if ((ret = ftdi_usb_open(ftdi, 0x0403, 0x6001)) < 0)
     {
-        fprintf(stderr, "unable to open ftdi device: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
-        ftdi_deinit(&ftdic);
+        fprintf(stderr, "unable to open ftdi device: %d (%s)\n", ret, ftdi_get_error_string(ftdi));
+        ftdi_free(ftdi);
         return EXIT_FAILURE;
     }
 
     // Read out FTDIChip-ID of R type chips
-    if (ftdic.type == TYPE_R)
+    if (ftdi->type == TYPE_R)
     {
         unsigned int chipid;
-        printf("ftdi_read_chipid: %d\n", ftdi_read_chipid(&ftdic, &chipid));
+        printf("ftdi_read_chipid: %d\n", ftdi_read_chipid(ftdi, &chipid));
         printf("FTDI chipid: %X\n", chipid);
     }
 
-    if ((ret = ftdi_usb_close(&ftdic)) < 0)
+    if ((ret = ftdi_usb_close(ftdi)) < 0)
     {
-        fprintf(stderr, "unable to close ftdi device: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
-        ftdi_deinit(&ftdic);
+        fprintf(stderr, "unable to close ftdi device: %d (%s)\n", ret, ftdi_get_error_string(ftdi));
+        ftdi_free(ftdi);
         return EXIT_FAILURE;
     }
 
-    ftdi_deinit(&ftdic);
+    ftdi_free(ftdi);
 
     return EXIT_SUCCESS;
 }

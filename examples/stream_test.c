@@ -136,7 +136,7 @@ readCallback(uint8_t *buffer, int length, FTDIProgressInfo *progress, void *user
 
 int main(int argc, char **argv)
 {
-   struct ftdi_context ftdic;
+   struct ftdi_context *ftdi;
    int err, c;
    FILE *of = NULL;
    char const *outfile  = 0;
@@ -172,38 +172,38 @@ int main(int argc, char **argv)
        usage(argv[0]);
    }
    
-   if (ftdi_init(&ftdic) < 0)
+   if ((ftdi = ftdi_new()) == 0)
    {
-       fprintf(stderr, "ftdi_init failed\n");
+       fprintf(stderr, "ftdi_new failed\n");
        return EXIT_FAILURE;
    }
    
-   if (ftdi_set_interface(&ftdic, INTERFACE_A) < 0)
+   if (ftdi_set_interface(ftdi, INTERFACE_A) < 0)
    {
        fprintf(stderr, "ftdi_set_interface failed\n");
-       ftdi_deinit(&ftdic);
+       ftdi_free(ftdi);
        return EXIT_FAILURE;
    }
    
-   if (ftdi_usb_open_desc(&ftdic, 0x0403, 0x6010, descstring, NULL) < 0)
+   if (ftdi_usb_open_desc(ftdi, 0x0403, 0x6010, descstring, NULL) < 0)
    {
-       fprintf(stderr,"Can't open ftdi device: %s\n",ftdi_get_error_string(&ftdic));
-       ftdi_deinit(&ftdic);
+       fprintf(stderr,"Can't open ftdi device: %s\n",ftdi_get_error_string(ftdi));
+       ftdi_free(ftdi);
        return EXIT_FAILURE;
    }
    
    /* A timeout value of 1 results in may skipped blocks */
-   if(ftdi_set_latency_timer(&ftdic, 2))
+   if(ftdi_set_latency_timer(ftdi, 2))
    {
-       fprintf(stderr,"Can't set latency, Error %s\n",ftdi_get_error_string(&ftdic));
-       ftdi_usb_close(&ftdic);
-       ftdi_deinit(&ftdic);
+       fprintf(stderr,"Can't set latency, Error %s\n",ftdi_get_error_string(ftdi));
+       ftdi_usb_close(ftdi);
+       ftdi_free(ftdi);
        return EXIT_FAILURE;
    }
    
-/*   if(ftdi_usb_purge_rx_buffer(&ftdic) < 0)
+/*   if(ftdi_usb_purge_rx_buffer(ftdi) < 0)
    {
-       fprintf(stderr,"Can't rx purge\n",ftdi_get_error_string(&ftdic));
+       fprintf(stderr,"Can't rx purge\n",ftdi_get_error_string(ftdi));
        return EXIT_FAILURE;
        }*/
    if (outfile)
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
            outputFile = of;
    signal(SIGINT, sigintHandler);
    
-   err = ftdi_readstream(&ftdic, readCallback, NULL, 8, 256);
+   err = ftdi_readstream(ftdi, readCallback, NULL, 8, 256);
    if (err < 0 && !exitRequested)
        exit(1);
    
@@ -224,23 +224,23 @@ int main(int argc, char **argv)
    }
    fprintf(stderr, "Capture ended.\n");
    
-   if (ftdi_set_bitmode(&ftdic,  0xff, BITMODE_RESET) < 0)
+   if (ftdi_set_bitmode(ftdi,  0xff, BITMODE_RESET) < 0)
    {
-       fprintf(stderr,"Can't set synchronous fifo mode, Error %s\n",ftdi_get_error_string(&ftdic));
-       ftdi_usb_close(&ftdic);
-       ftdi_deinit(&ftdic);
+       fprintf(stderr,"Can't set synchronous fifo mode, Error %s\n",ftdi_get_error_string(ftdi));
+       ftdi_usb_close(ftdi);
+       ftdi_free(ftdi);
        return EXIT_FAILURE;
    }
-   ftdi_usb_close(&ftdic);
-   ftdi_deinit(&ftdic);
+   ftdi_usb_close(ftdi);
+   ftdi_free(ftdi);
    signal(SIGINT, SIG_DFL);
    if (check && outfile)
    {
        if ((outputFile = fopen(outfile,"r")) == 0)
        {
            fprintf(stderr,"Can't open logfile %s, Error %s\n", outfile, strerror(errno));
-           ftdi_usb_close(&ftdic);
-           ftdi_deinit(&ftdic);
+           ftdi_usb_close(ftdi);
+           ftdi_free(ftdi);
            return EXIT_FAILURE;
        }
        check_outfile(descstring);

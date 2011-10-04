@@ -47,7 +47,7 @@ void ftdi_fatal (struct ftdi_context *ftdi, char *str)
 
 int main(int argc, char **argv)
 {
-    struct ftdi_context ftdic;
+    struct ftdi_context *ftdi;
     int i, t;
     unsigned char data;
     int delay = 100000; /* 100 thousand microseconds: 1 tenth of a second */
@@ -62,32 +62,31 @@ int main(int argc, char **argv)
         }
     }
 
-    if (ftdi_init(&ftdic) < 0)
+    if ((ftdi = ftdi_new()) == 0)
     {
-        fprintf(stderr, "ftdi_init failed\n");
-        ftdi_deinit(&ftdic);
+        fprintf(stderr, "ftdi_bew failed\n");
         return EXIT_FAILURE;
     }
 
-    if (ftdi_usb_open(&ftdic, 0x0403, 0x6001) < 0)
-        ftdi_fatal (&ftdic, "Can't open ftdi device");
+    if (ftdi_usb_open(ftdi, 0x0403, 0x6001) < 0)
+        ftdi_fatal (ftdi, "Can't open ftdi device");
 
-    if (ftdi_set_bitmode(&ftdic, 0xFF, BITMODE_BITBANG) < 0)
-        ftdi_fatal (&ftdic, "Can't enable bitbang");
+    if (ftdi_set_bitmode(ftdi, 0xFF, BITMODE_BITBANG) < 0)
+        ftdi_fatal (ftdi, "Can't enable bitbang");
 
     for (i=optind; i < argc ; i++)
     {
         sscanf (argv[i], "%x", &t);
         data = t;
-        if (ftdi_write_data(&ftdic, &data, 1) < 0)
+        if (ftdi_write_data(ftdi, &data, 1) < 0)
         {
             fprintf(stderr,"write failed for 0x%x: %s\n",
-                    data, ftdi_get_error_string(&ftdic));
+                    data, ftdi_get_error_string(ftdi));
         }
         usleep(delay);
     }
 
-    ftdi_usb_close(&ftdic);
-    ftdi_deinit(&ftdic);
+    ftdi_usb_close(ftdi);
+    ftdi_free(ftdi);
     exit (0);
 }
