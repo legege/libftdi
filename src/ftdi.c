@@ -149,11 +149,22 @@ struct ftdi_context *ftdi_new(void)
     \retval  0: all fine
     \retval -1: unknown interface
     \retval -2: USB device unavailable
+    \retval -3: Device already open, interface can't be set in that state
 */
 int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface)
 {
     if (ftdi == NULL)
         ftdi_error_return(-2, "USB device unavailable");
+
+    if (ftdi->usb_dev != NULL)
+    {
+        int check_interface = interface;
+        if (check_interface == INTERFACE_ANY)
+            check_interface = INTERFACE_A;
+
+        if (ftdi->index != check_interface)
+            ftdi_error_return(-3, "Interface can not be changed on an already open device");
+    }
 
     switch (interface)
     {
