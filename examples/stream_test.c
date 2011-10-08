@@ -107,7 +107,7 @@ readCallback(uint8_t *buffer, int length, FTDIProgressInfo *progress, void *user
            }
            else if (rem)
                start += 0x4000;
-           if (rem != 0);
+           if (rem != 0)
            {
                blocks ++;
                offset = 16-rem;
