@@ -79,7 +79,7 @@ struct ftdi_eeprom
 
     /* Special function of FT232R/FT232H devices (and possibly others as well) */
     /** CBUS pin function. See CBUS_xxx defines. */
-    int cbus_function[9];
+    int cbus_function[10];
     /** Select hight current drive on R devices. */
     int high_current;
     /** Select hight current drive on A channel (2232C */
