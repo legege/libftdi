@@ -9,18 +9,17 @@ import ftdi
 
 def main():
     """Main program"""
-    context = ftdi.ftdi_context()
-    ftdi.ftdi_init(context)
+    context = ftdi.new()
 
-    version_info = ftdi.ftdi_get_library_version()
+    version_info = ftdi.get_library_version()
     print("[FTDI version] major: %d, minor: %d, micro: %d" \
                ", version_str: %s, snapshot_str: %s" %
                (version_info.major, version_info.minor, version_info.micro,
                version_info.version_str, version_info.snapshot_str))
 
-    print("ftdi_open(): %d" % ftdi.ftdi_usb_open(context, 0x403, 0x6010))
-    print("ftdi_set_baudrate(): %d" % ftdi.ftdi_set_baudrate(context, 9600))
+    print("ftdi.usb_open(): %d" % ftdi.usb_open(context, 0x0403, 0x6001))
+    print("ftdi.set_baudrate(): %d" % ftdi.set_baudrate(context, 9600))
 
-    ftdi.ftdi_deinit(context)
+    ftdi.free(context)
 
 main()
