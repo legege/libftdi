@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """Python example program.
 
 Small program to demonstrate the usage
@@ -17,7 +20,7 @@ def main():
                (version_info.major, version_info.minor, version_info.micro,
                version_info.version_str, version_info.snapshot_str))
 
-    print("ftdi.usb_open(): %d" % ftdi.usb_open(context, 0x0403, 0x6001))
+    print("ftdi.usb_open(): %d" % ftdi.usb_open(context, 0x0403, 0x6010))
     print("ftdi.set_baudrate(): %d" % ftdi.set_baudrate(context, 9600))
 
     ftdi.free(context)
