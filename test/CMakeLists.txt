@@ -8,7 +8,7 @@ if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
 
     enable_testing()
 
-    INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/src)
+    INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
 
     set(cpp_tests
         basic.cpp
