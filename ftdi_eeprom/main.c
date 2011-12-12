@@ -346,6 +346,7 @@ int main(int argc, char *argv[])
         {
             if (filename != NULL && strlen(filename) > 0)
             {
+                eeprom_buf = malloc(my_eeprom_size);
                 FILE *fp = fopen(filename, "rb");
                 fread(eeprom_buf, 1, my_eeprom_size, fp);
                 fclose(fp);
