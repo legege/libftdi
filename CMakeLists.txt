@@ -43,14 +43,14 @@ set(CPACK_COMPONENT_SHAREDLIBS_GROUP "Development")
 set(CPACK_COMPONENT_STATICLIBS_GROUP "Development")
 set(CPACK_COMPONENT_HEADERS_GROUP    "Development")
 
-if(UNIX AND NOT CMAKE_CROSSCOMPILING AND NOT EXISTS "/etc/debian_version")
-  if(CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT LIB_SUFFIX)
-    set(LIB_SUFFIX "64")
-  endif()
-endif()
+# automatically set lib suffix
+if ( UNIX AND NOT APPLE AND NOT CMAKE_CROSSCOMPILING AND NOT EXISTS "/etc/debian_version" )
+  if ( CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT LIB_SUFFIX )
+    set ( LIB_SUFFIX 64 )
+  endif ()
+endif ()
 
 if(NOT APPLE)
-  # Create suffix to eventually install in lib64
   if(CMAKE_SIZEOF_VOID_P EQUAL 4)
       SET(PACK_ARCH "")
     else(CMAKE_SIZEOF_VOID_P EQUAL 8)
