@@ -316,6 +316,11 @@ int Context::get_strings()
 
 int Context::get_strings_and_reopen()
 {
+    if ( d->dev == 0 )
+    {
+        d->dev = libusb_get_device(d->ftdi->usb_dev);
+    }
+
     // Get device strings (closes device)
     int ret=get_strings();
     if (ret < 0)
