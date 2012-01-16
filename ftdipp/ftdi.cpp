@@ -132,6 +132,7 @@ int Context::open(struct libusb_device *dev)
 int Context::close()
 {
     d->open = false;
+    d->dev = 0;
     return ftdi_usb_close(d->ftdi);
 }
 
