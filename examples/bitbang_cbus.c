@@ -41,7 +41,6 @@ int main(void)
     unsigned char buf[1];
     unsigned char bitmask;
     char input[10];
-    int retval = 0;
 
     if ((ftdi = ftdi_new()) == 0)
     {
@@ -71,7 +70,7 @@ int main(void)
             fprintf(stderr, "set_bitmode failed for 0x%x, error %d (%s)\n", bitmask, f, ftdi_get_error_string(ftdi));
             ftdi_usb_close(ftdi);
             ftdi_deinit(ftdi);
-            retval = -1;
+            exit(-1);
         }
 
         // read CBUS

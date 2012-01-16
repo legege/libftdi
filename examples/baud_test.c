@@ -220,5 +220,5 @@ done:
         free(rxbuf);
     if(txbuf)
         free(txbuf);
-    exit (0);
+    exit (retval);
 }
