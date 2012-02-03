@@ -38,9 +38,10 @@
 %clear char * manufacturer, char * description, char * serial;
 %clear int mnf_len, int desc_len, int serial_len;
 
-%apply char *OUTPUT { unsigned char *buf };
+%typemap(in,numinputs=1) (unsigned char *buf, int size) %{ $2 = PyInt_AsLong($input);$1 = (unsigned char*)malloc($2*sizeof(char)); %}
+%typemap(argout) (unsigned char *buf, int size) %{ if(result<0) $2=0; $result = SWIG_Python_AppendOutput($result, PyString_FromStringAndSize((char*)$1, $2)); free($1); %}
     int ftdi_read_data(struct ftdi_context *ftdi, unsigned char *buf, int size);
-%clear unsigned char *buf;
+%clear (unsigned char *buf, int size);
 
 %apply int *OUTPUT { unsigned int *chunksize };
     int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize);
@@ -63,14 +64,10 @@
     int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value value_name, int* value);
 %clear int* value;
 
-%apply char *OUTPUT { unsigned char *buf };
-%typemap(in,numinputs=0) unsigned char *buf(char temp[FTDI_MAX_EEPROM_SIZE]) %{ $1 = ($1_ltype) temp; %}
-%typemap(freearg,match="in") unsigned char *buf "";
-%typemap(argout,fragment="SWIG_FromCharPtrAndSize") unsigned char *buf %{ $result = SWIG_Python_AppendOutput($result, SWIG_FromCharPtrAndSize((char*)$1,FTDI_MAX_EEPROM_SIZE)); %}
-%typemap(default,noblock=1) int size { $1 = 128; }
+%typemap(in,numinputs=1) (unsigned char *buf, int size) %{ $2 = PyInt_AsLong($input);$1 = (unsigned char*)malloc($2*sizeof(char)); %}
+%typemap(argout) (unsigned char *buf, int size) %{ if(result<0) $2=0; $result = SWIG_Python_AppendOutput($result, PyString_FromStringAndSize((char*)$1, $2)); free($1); %}
     int ftdi_get_eeprom_buf(struct ftdi_context *ftdi, unsigned char * buf, int size);
-%clear unsigned char *buf;
-%clear int size;
+%clear (unsigned char *buf, int size);
 
 %apply short *OUTPUT { unsigned short *eeprom_val };
     int ftdi_read_eeprom_location (struct ftdi_context *ftdi, int eeprom_addr, unsigned short *eeprom_val);

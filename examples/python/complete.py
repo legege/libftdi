@@ -63,6 +63,14 @@ ftdi.disable_bitbang( ftdic )
 print ''
 
 
+# read pins
+ret, pins = ftdi.read_pins( ftdic )
+print 'pins:',
+if ( ret == 0 ):
+    print '%02x' % ord( pins[0] )
+print ''    
+
+
 # read chip id
 ret, chipid = ftdi.read_chipid( ftdic )
 print 'FDTI chip id: %X\n' % chipid
@@ -76,9 +84,10 @@ if (ret==0):
 
 print 'complete eeprom:'
 ret = ftdi.read_eeprom( ftdic )
-ret, eeprom = ftdi.get_eeprom_buf ( ftdic )
+size = 128
+ret, eeprom = ftdi.get_eeprom_buf ( ftdic, size )
 if ( ret == 0 ):
-    for i in range( 128 ):
+    for i in range( size ):
         print '%02x' % ord( eeprom[i] ),
         if ( i % 8 == 7 ):
             print ''
