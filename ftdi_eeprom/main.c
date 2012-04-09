@@ -346,6 +346,8 @@ int main(int argc, char *argv[])
         else
             printf ("Writing to file: %s\n", filename);
 
+        if (eeprom_buf == NULL)
+            eeprom_buf = malloc(my_eeprom_size);
         ftdi_get_eeprom_buf(ftdi, eeprom_buf, my_eeprom_size);
 
         fwrite(eeprom_buf, my_eeprom_size, 1, fp);
