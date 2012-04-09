@@ -107,7 +107,6 @@ int main(int argc, char *argv[])
         CFG_INT("product_id", 0, 0),
         CFG_BOOL("self_powered", cfg_true, 0),
         CFG_BOOL("remote_wakeup", cfg_true, 0),
-        CFG_STR_LIST("chip_type", "{BM,R,other}", 0),
         CFG_BOOL("in_is_isochronous", cfg_false, 0),
         CFG_BOOL("out_is_isochronous", cfg_false, 0),
         CFG_BOOL("suspend_pull_downs", cfg_false, 0),
@@ -240,29 +239,7 @@ int main(int argc, char *argv[])
     
     if (_read > 0)
     {
-
-        ftdi_eeprom_decode(ftdi, 0);
-        /* Debug output */
-        /*
-        const char* chip_types[] = {"other", "BM", "R"};
-        printf("vendor_id = \"%04x\"\n", eeprom->vendor_id);
-        printf("product_id = \"%04x\"\n", eeprom->product_id);
-        printf("chip_type = \"%s\"\n",
-          (eeprom->chip_type > 0x06) || (eeprom->chip_type & 0x01) ? "unknown":
-          chip_types[eeprom->chip_type>>1]);
-        printf("self_powered = \"%s\"\n", eeprom->self_powered?"true":"false");
-        printf("remote_wakeup = \"%s\"\n", eeprom->remote_wakeup?"true":"false");
-        printf("max_power = \"%d\"\n", eeprom->max_power);
-        printf("in_is_isochronous = \"%s\"\n", eeprom->in_is_isochronous?"true":"false");
-        printf("out_is_isochronous = \"%s\"\n", eeprom->out_is_isochronous?"true":"false");
-        printf("suspend_pull_downs = \"%s\"\n", eeprom->suspend_pull_downs?"true":"false");
-        printf("use_serial = \"%s\"\n", eeprom->use_serial?"true":"false");
-        printf("change_usb_version = \"%s\"\n", eeprom->change_usb_version?"true":"false");
-        printf("usb_version = \"%d\"\n", eeprom->usb_version);
-        printf("manufacturer = \"%s\"\n", eeprom->manufacturer);
-        printf("product = \"%s\"\n", eeprom->product);
-        printf("serial = \"%s\"\n", eeprom->serial);
-        */
+        ftdi_eeprom_decode(ftdi, 0 /* debug: 1 */);
 
         eeprom_buf = malloc(my_eeprom_size);
         ftdi_get_eeprom_buf(ftdi, eeprom_buf, my_eeprom_size);
