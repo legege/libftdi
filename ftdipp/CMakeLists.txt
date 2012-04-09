@@ -25,7 +25,7 @@ if (FTDIPP)
         add_library(ftdipp SHARED ${cpp_sources})
 
         math(EXPR VERSION_FIXUP "${MAJOR_VERSION} + 1")    # Compatiblity with previous releases
-        set_target_properties(ftdipp PROPERTIES VERSION ${VERSION_FIXUP}.${MINOR_VERSION}.0 SOVERSION 1)
+        set_target_properties(ftdipp PROPERTIES VERSION ${VERSION_FIXUP}.${MINOR_VERSION}.0 SOVERSION 2)
 
         # Static library
         add_library(ftdipp-static STATIC ${cpp_sources})

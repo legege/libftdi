@@ -24,7 +24,7 @@ set(c_headers     ftdi.h)
 add_library(ftdi SHARED ${c_sources})
 
 math(EXPR VERSION_FIXUP "${MAJOR_VERSION} + 1")    # Compatiblity with previous releases
-set_target_properties(ftdi PROPERTIES VERSION ${VERSION_FIXUP}.${MINOR_VERSION}.0 SOVERSION 1)
+set_target_properties(ftdi PROPERTIES VERSION ${VERSION_FIXUP}.${MINOR_VERSION}.0 SOVERSION 2)
 
 # Static library
 add_library(ftdi-static STATIC ${c_sources})
