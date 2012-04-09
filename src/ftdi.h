@@ -301,7 +301,13 @@ enum ftdi_eeprom_value
     POWER_SAVE         = 45,
     CLOCK_POLARITY     = 46,
     DATA_ORDER         = 47,
-    FLOW_CONTROL       = 48
+    FLOW_CONTROL       = 48,
+    CHANNEL_C_DRIVER   = 49,
+    CHANNEL_D_DRIVER   = 50,
+    CHANNEL_A_RS485    = 51,
+    CHANNEL_B_RS485    = 52,
+    CHANNEL_C_RS485    = 53,
+    CHANNEL_D_RS485    = 54,
 };
 
 /**
@@ -353,6 +359,8 @@ enum ftdi_cbush_func {/* FIXME: Recheck value, especially the last */
 #define CHANNEL_IS_OPTO 0x2
 #define CHANNEL_IS_CPU  0x4
 #define CHANNEL_IS_FT1284 0x8
+
+#define CHANNEL_IS_RS485 0x10
 
 #define DRIVE_4MA  0
 #define DRIVE_8MA  1

@@ -2369,7 +2369,6 @@ int ftdi_eeprom_initdefaults(struct ftdi_context *ftdi, char * manufacturer,
             strcpy(eeprom->serial, serial);
     }
 
-
     if (ftdi->type == TYPE_R)
     {
         eeprom->max_power = 90;
@@ -2840,8 +2839,83 @@ int ftdi_eeprom_build(struct ftdi_context *ftdi)
 
             break;
         case TYPE_4232H:
+            if (eeprom->channel_a_driver == DRIVER_VCP)
+                output[0x00] |= DRIVER_VCP;
+            else
+                output[0x00] &= ~DRIVER_VCP;
+            if (eeprom->channel_b_driver == DRIVER_VCP)
+                output[0x01] |= DRIVER_VCP;
+            else
+                output[0x01] &= ~DRIVER_VCP;
+            if (eeprom->channel_c_driver == DRIVER_VCP)
+                output[0x00] |= (DRIVER_VCP << 4);
+            else
+                output[0x00] &= ~(DRIVER_VCP << 4);
+            if (eeprom->channel_d_driver == DRIVER_VCP)
+                output[0x01] |= (DRIVER_VCP << 4);
+            else
+                output[0x01] &= ~(DRIVER_VCP << 4);
+
+            if (eeprom->suspend_pull_downs == 1)
+                output[0x0a] |= 0x4;
+            else
+                output[0x0a] &= ~0x4;
+
+            if (eeprom->channel_a_rs485enable)
+                output[0x0b] |= CHANNEL_IS_RS485 << 0;
+            else
+                output[0x0b] &= ~(CHANNEL_IS_RS485 << 0);
+            if (eeprom->channel_b_rs485enable)
+                output[0x0b] |= CHANNEL_IS_RS485 << 1;
+            else
+                output[0x0b] &= ~(CHANNEL_IS_RS485 << 1);
+            if (eeprom->channel_c_rs485enable)
+                output[0x0b] |= CHANNEL_IS_RS485 << 2;
+            else
+                output[0x0b] &= ~(CHANNEL_IS_RS485 << 2);
+            if (eeprom->channel_d_rs485enable)
+                output[0x0b] |= CHANNEL_IS_RS485 << 3;
+            else
+                output[0x0b] &= ~(CHANNEL_IS_RS485 << 3);
+
+            if (eeprom->group0_drive > DRIVE_16MA)
+                output[0x0c] |= DRIVE_16MA;
+            else
+                output[0x0c] |= eeprom->group0_drive;
+            if (eeprom->group0_schmitt == IS_SCHMITT)
+                output[0x0c] |= IS_SCHMITT;
+            if (eeprom->group0_slew == SLOW_SLEW)
+                output[0x0c] |= SLOW_SLEW;
+
+            if (eeprom->group1_drive > DRIVE_16MA)
+                output[0x0c] |= DRIVE_16MA<<4;
+            else
+                output[0x0c] |= eeprom->group1_drive<<4;
+            if (eeprom->group1_schmitt == IS_SCHMITT)
+                output[0x0c] |= IS_SCHMITT<<4;
+            if (eeprom->group1_slew == SLOW_SLEW)
+                output[0x0c] |= SLOW_SLEW<<4;
+
+            if (eeprom->group2_drive > DRIVE_16MA)
+                output[0x0d] |= DRIVE_16MA;
+            else
+                output[0x0d] |= eeprom->group2_drive;
+            if (eeprom->group2_schmitt == IS_SCHMITT)
+                output[0x0d] |= IS_SCHMITT;
+            if (eeprom->group2_slew == SLOW_SLEW)
+                output[0x0d] |= SLOW_SLEW;
+
+            if (eeprom->group3_drive > DRIVE_16MA)
+                output[0x0d] |= DRIVE_16MA<<4;
+            else
+                output[0x0d] |= eeprom->group3_drive<<4;
+            if (eeprom->group3_schmitt == IS_SCHMITT)
+                output[0x0d] |= IS_SCHMITT<<4;
+            if (eeprom->group3_slew == SLOW_SLEW)
+                output[0x0d] |= SLOW_SLEW<<4;
+
             output[0x18] = eeprom->chip;
-            fprintf(stderr,"FIXME: Build FT4232H specific EEPROM settings\n");
+
             break;
         case TYPE_232H:
             output[0x00] = type2bit(eeprom->channel_a_type, TYPE_232H);
@@ -3097,7 +3171,7 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
     else if (ftdi->type == TYPE_R)
     {
         /* TYPE_R flags D2XX, not VCP as all others*/
-        eeprom->channel_a_driver = (~buf[0x00]) & DRIVER_VCP;
+        eeprom->channel_a_driver = ~buf[0x00] & DRIVER_VCP;
         eeprom->high_current     = buf[0x00] & HIGH_CURRENT_DRIVE_R;
         if ( (buf[0x01]&0x40) != 0x40)
             fprintf(stderr,
@@ -3119,15 +3193,26 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
         eeprom->cbus_function[3] = (buf[0x15] >> 4) & 0x0f;
         eeprom->cbus_function[4] = buf[0x16] & 0x0f;
     }
-    else if ((ftdi->type == TYPE_2232H) ||(ftdi->type == TYPE_4232H))
+    else if ((ftdi->type == TYPE_2232H) || (ftdi->type == TYPE_4232H))
     {
-        eeprom->channel_a_type   = bit2type(buf[0x00] & 0x7);
         eeprom->channel_a_driver = buf[0x00] & DRIVER_VCP;
-        eeprom->channel_b_type   = bit2type(buf[0x01] & 0x7);
         eeprom->channel_b_driver = buf[0x01] & DRIVER_VCP;
 
         if (ftdi->type == TYPE_2232H)
+        {
+            eeprom->channel_a_type   = bit2type(buf[0x00] & 0x7);
+            eeprom->channel_b_type   = bit2type(buf[0x01] & 0x7);
             eeprom->suspend_dbus7    = buf[0x01] & SUSPEND_DBUS7_BIT;
+        }
+        else
+        {
+            eeprom->channel_c_driver = (buf[0x00] >> 4) & DRIVER_VCP;
+            eeprom->channel_d_driver = (buf[0x01] >> 4) & DRIVER_VCP;
+            eeprom->channel_a_rs485enable = buf[0x0b] & (CHANNEL_IS_RS485 << 0);
+            eeprom->channel_b_rs485enable = buf[0x0b] & (CHANNEL_IS_RS485 << 1);
+            eeprom->channel_c_rs485enable = buf[0x0b] & (CHANNEL_IS_RS485 << 2);
+            eeprom->channel_d_rs485enable = buf[0x0b] & (CHANNEL_IS_RS485 << 3);
+        }
 
         eeprom->chip = buf[0x18];
         eeprom->group0_drive   =  buf[0x0c]       & DRIVE_16MA;
@@ -3269,7 +3354,6 @@ int ftdi_eeprom_decode(struct ftdi_context *ftdi, int verbose)
                     fprintf(stdout,"C%d Function: %s\n", i,
                             cbush_mux[eeprom->cbus_function[i]]);
             }
-
         }
 
         if (ftdi->type == TYPE_R)
@@ -3374,6 +3458,24 @@ int ftdi_get_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
             break;
         case CHANNEL_B_DRIVER:
             *value = ftdi->eeprom->channel_b_driver;
+            break;
+        case CHANNEL_C_DRIVER:
+            *value = ftdi->eeprom->channel_c_driver;
+            break;
+        case CHANNEL_D_DRIVER:
+            *value = ftdi->eeprom->channel_d_driver;
+            break;
+        case CHANNEL_A_RS485:
+            *value = ftdi->eeprom->channel_a_rs485enable;
+            break;
+        case CHANNEL_B_RS485:
+            *value = ftdi->eeprom->channel_b_rs485enable;
+            break;
+        case CHANNEL_C_RS485:
+            *value = ftdi->eeprom->channel_c_rs485enable;
+            break;
+        case CHANNEL_D_RS485:
+            *value = ftdi->eeprom->channel_d_rs485enable;
             break;
         case CBUS_FUNCTION_0:
             *value = ftdi->eeprom->cbus_function[0];
@@ -3543,6 +3645,24 @@ int ftdi_set_eeprom_value(struct ftdi_context *ftdi, enum ftdi_eeprom_value valu
             break;
         case CHANNEL_B_DRIVER:
             ftdi->eeprom->channel_b_driver = value;
+            break;
+        case CHANNEL_C_DRIVER:
+            ftdi->eeprom->channel_c_driver = value;
+            break;
+        case CHANNEL_D_DRIVER:
+            ftdi->eeprom->channel_d_driver = value;
+            break;
+        case CHANNEL_A_RS485:
+            ftdi->eeprom->channel_a_rs485enable = value;
+            break;
+        case CHANNEL_B_RS485:
+            ftdi->eeprom->channel_b_rs485enable = value;
+            break;
+        case CHANNEL_C_RS485:
+            ftdi->eeprom->channel_c_rs485enable = value;
+            break;
+        case CHANNEL_D_RS485:
+            ftdi->eeprom->channel_d_rs485enable = value;
             break;
         case CBUS_FUNCTION_0:
             ftdi->eeprom->cbus_function[0] = value;

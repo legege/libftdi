@@ -68,7 +68,7 @@ struct ftdi_eeprom
     /** serial number */
     char *serial;
 
-    /* 2232D/H(/FT4432H?) specific */
+    /* 2232D/H specific */
     /* Hardware type, 0 = RS232 Uart, 1 = 245 FIFO, 2 = CPU FIFO, 
        4 = OPTO Isolate */
     int channel_a_type;
@@ -76,6 +76,13 @@ struct ftdi_eeprom
     /*  Driver Type, 1 = VCP */
     int channel_a_driver;
     int channel_b_driver;
+    int channel_c_driver;
+    int channel_d_driver;
+    /* 4232H specific */
+    int channel_a_rs485enable;
+    int channel_b_rs485enable;
+    int channel_c_rs485enable;
+    int channel_d_rs485enable;
 
     /* Special function of FT232R/FT232H devices (and possibly others as well) */
     /** CBUS pin function. See CBUS_xxx defines. */

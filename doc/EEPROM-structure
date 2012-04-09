@@ -9,27 +9,27 @@ Type   |  Use extra EEPROM space
 FT2XXB |  No
 
 Byte.BIT| TYPE_AM TYPE_BM   TYPE_2232C       TYPE_R          TYPE_2232H       TYPE_4232H
-00.0    |      0       0   channel_a_type                    channel_a_type   channel_a_type
-00.1    |      0       0   channel_a_type                    channel_a_type   channel_a_type
-00.2    |      0       0   channel_a_type   high_current     channel_a_type   channel_a_type
+00.0    |      0       0   channel_a_type                    channel_a_type   0
+00.1    |      0       0   channel_a_type                    channel_a_type   0
+00.2    |      0       0   channel_a_type   high_current     channel_a_type   0
 00.3    |      0       0   channel_a_driver channel_a_driver channel_a_driver channel_a_driver
 00.4    |      0       0   high_current_a   0                0                0
 00.5    |      0       0   0                0                0                0
 00.6    |      0       0   0                0                0                0
-00.7    |      0       0   0                0                SUSPEND_DBUS7    0
+00.7    |      0       0   0                0                SUSPEND_DBUS7    channel_c_driver
 
 On TYPE_R 00.3 set mean D2XX, on other devices VCP
 
-01.0    |      0       0   channel_b_type                    channel_b_type   channel_b_type
-01.1    |      0       0   channel_b_type                    channel_b_type   channel_b_type
-01.2    |      0       0   channel_b_type   0                channel_b_type   channel_b_type
+01.0    |      0       0   channel_b_type                    channel_b_type   0
+01.1    |      0       0   channel_b_type                    channel_b_type   0
+01.2    |      0       0   channel_b_type   0                channel_b_type   0
 01.3    |      0       0   channel_b_driver 0                channel_b_driver channel_b_driver
 01.4    |      0       0   high_current_b   0                0                0
 01.5    |      0       0   0                0                0                0
 01.6    |      0       0   0                                 0                0
-01.7    |      0       0   0                0                0                0
+01.7    |      0       0   0                0                0                channel_d_driver
 
-Fixme: Missing 4232H validation and channel_c_driver, channel_d_driver, channel_a|b|c|d_rs484enable
+Fixme: Missing 4232H validation
 
 02     | Vendor ID (VID) LSB (all)
 03     | Vendor ID (VID) MSB (all)
@@ -45,18 +45,22 @@ Fixme: Missing 4232H validation and channel_c_driver, channel_d_driver, channel_
        |
 09     | Max power (mA/2)
        |
-Byte.BIT| TYPE_AM TYPE_BM            TYPE_2232C        TYPE_R       TYPE_2232H       TYPE_4232H
-0a.0    | 0       IsoIn              IsoIn part A      0            0                0
-0a.1    | 0       IsoOut             IsoOut part A     0            0                0
-0a.2    | 0       suspend_pull_down suspend_pull_down               suspend_pull_down
-0a.3    | 0       use_serial                                        use_serial
+Byte.BIT| TYPE_AM TYPE_BM            TYPE_2232C         TYPE_R       TYPE_2232H        TYPE_4232H
+0a.0    | 0       IsoIn              IsoIn part A       0            0                 0
+0a.1    | 0       IsoOut             IsoOut part A      0            0                 0
+0a.2    | 0       suspend_pull_down  suspend_pull_down               suspend_pull_down suspend_pull_down
+0a.3    | 0       use_serial                                         use_serial        use_serial
 0a.4    | 0       change_usb_version change_usb_version
-0a.5    | 0       0                  IsoIn part B      0            0                0
-0a.6    | 0       0                  IsoOut part B     0            0                0
+0a.5    | 0       0                  IsoIn part B       0            0                 0
+0a.6    | 0       0                  IsoOut part B      0            0                 0
 0a.7    | 0 - reserved
 
-       |
-0b     | TYPE_R Bitmask Invert, 0 else
+0b      | TYPE_R Bitmask Invert, 0 else
+Byte.BIT| TYPE_4232H
+0b.4    | channel_a_rs485enable
+0b.5    | channel_b_rs485enable
+0b.6    | channel_c_rs485enable
+0b.7    | channel_d_rs485enable
 
 Byte   | TYPE_AM TYPE_BM     TYPE_2232C   TYPE_R       TYPE_2232H       TYPE_4232H
 0c     | 0       USB-VER-LSB USB-VER-LSB  0            ?                ?

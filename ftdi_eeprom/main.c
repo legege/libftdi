@@ -297,6 +297,15 @@ int main(int argc, char *argv[])
     if (cfg_getbool(cfg, "invert_ri")) invert |= INVERT_RI;
     eeprom_set_value(ftdi, INVERT, invert);
 
+    eeprom_set_value(ftdi, CHANNEL_A_DRIVER, DRIVER_VCP);
+    eeprom_set_value(ftdi, CHANNEL_B_DRIVER, DRIVER_VCP);
+    eeprom_set_value(ftdi, CHANNEL_C_DRIVER, DRIVER_VCP);
+    eeprom_set_value(ftdi, CHANNEL_D_DRIVER, DRIVER_VCP);
+    eeprom_set_value(ftdi, CHANNEL_A_RS485, 0);
+    eeprom_set_value(ftdi, CHANNEL_B_RS485, 0);
+    eeprom_set_value(ftdi, CHANNEL_C_RS485, 0);
+    eeprom_set_value(ftdi, CHANNEL_D_RS485, 0);
+
     if (_erase > 0)
     {
         printf("FTDI erase eeprom: %d\n", ftdi_erase_eeprom(ftdi));
