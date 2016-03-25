@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
         CFG_BOOL("change_usb_version", cfg_false, 0),
         CFG_INT("usb_version", 0, 0),
         CFG_INT("default_pid", 0x6001, 0),
+        CFG_INT("default_vid", 0x0403, 0),
         CFG_INT("max_power", 0, 0),
         CFG_STR("manufacturer", "Acme Inc.", 0),
         CFG_STR("product", "USB Serial Converter", 0),
@@ -216,11 +217,12 @@ int main(int argc, char *argv[])
         if (i != 0)
         {
             int default_pid = cfg_getint(cfg, "default_pid");
+            int default_vid = cfg_getint(cfg, "default_vid");
             printf("Unable to find FTDI devices under given vendor/product id: 0x%X/0x%X\n", vendor_id, product_id);
             printf("Error code: %d (%s)\n", i, ftdi_get_error_string(ftdi));
-            printf("Retrying with default FTDI pid=%#04x.\n", default_pid);
+            printf("Retrying with default FTDI vid=%#04x, pid=%#04x.\n", default_vid, default_pid);
 
-            i = ftdi_usb_open(ftdi, 0x0403, default_pid);
+            i = ftdi_usb_open(ftdi, default_vid, default_pid);
             if (i != 0)
             {
                 printf("Error: %s\n", ftdi->error_str);
